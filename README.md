@@ -3,8 +3,13 @@ Software for monitoring and controlling your home on a tablet phone or computer
 See www.casaan.nl for demo
 
 
-This softare uses the inotify module in php that has to be installed:
+This softare uses the websockets which has to be installed in apache.
 
-apt-get install php-dev
-pecl install inotify
-add "extension=exension=inotify.so" to your php.ini
+Add the folowing rule to your website config file of apache (usually in
+/etc/apache2/sites-enabled):
+ProxyPass "/wscasaan" "ws://localhost:58880/"
+
+Also enable the proxy_wstunnel module:
+sudo a2enmod proxy_wstunnel
+sudo service apache2 restart
+
