@@ -14,7 +14,10 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <mysql.h>
-  
+#include <inttypes.h>
+#include <math.h>
+#include <time.h>  
+
 // Device is a comport like /dev/ttyUSB1
 #define DEVICE "/dev/watermeter"
 #define METERFILE "/usr/domotica/watermeter/waterreading"
@@ -25,7 +28,7 @@
 
 
 
-int writetodatabase(double waterreading, double waterflow) {
+int writetodatabase(double waterreading_m3, double waterflow_m3h) {
    MYSQL *conn;
    MYSQL_RES *res;
    MYSQL_ROW row;
@@ -47,7 +50,7 @@ int writetodatabase(double waterreading, double waterflow) {
    /* send SQL query */
    
    char sqlquerystring[180];
-   sprintf (sqlquerystring, "INSERT INTO watermeter (m3, lm) VALUES (%.3lf,%.3lf);", waterreading, waterflow);
+   sprintf (sqlquerystring, "INSERT INTO watermeter (m3, m3h) VALUES (%.3lf,%.3lf);", waterreading_m3, waterflow_m3h);
    if (mysql_query(conn, sqlquerystring)) {
       fprintf(stderr, "%s\n", mysql_error(conn));
       exit(1);
@@ -143,13 +146,18 @@ int write_database(int waterreading)
 int main(int argc, char** argv)
 {
     int omode = O_RDONLY;
-    double waterreading = 0;
-    waterreading = read_waterreading (METERFILE);
-    double waterflow = 0;
+    double waterreading_m3 = -1;
+    waterreading_m3 = read_waterreading (METERFILE);
+    double waterflow_m3h = -1;
     
     int server_fd = create_tcpserver();
   
-    writetodatabase(waterreading, waterflow);    
+    struct timespec spec;
+
+    clock_gettime(CLOCK_REALTIME, &spec);
+	
+	
+    writetodatabase(waterreading_m3, waterflow_m3h);    
     
     int fd = -1;
     // detect DCD changes forever
@@ -176,7 +184,7 @@ int main(int argc, char** argv)
         }
         else
         {
-          printf("Waterreading = %.3lf, ctsstate=%d\r", waterreading, ctsstate);
+          printf("Waterreading = %.3lf, ctsstate=%d\r", waterreading_m3, ctsstate);
           fflush(stdout);
 
         }          
@@ -202,9 +210,16 @@ int main(int argc, char** argv)
             if (client_fd < 0) printf("Could not establish new connection\n");
             else printf ("Tcp client connected!");
             char json[80];
-            sprintf (json, "{\"watermeter\":{\"now\":{\"lm\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow, waterreading);
+            if (waterflow_m3h >= 0)
+            {
+              sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
+            }
+            else
+            {
+              sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":null},\"total\":{\"m3\":null}}}");
+            }
             write (client_fd,json,strlen(json));
-            writetodatabase (waterflow, waterreading);
+            writetodatabase (waterreading_m3,waterflow_m3h);
           }          
           
           if (FD_ISSET(fd, &set))
@@ -213,10 +228,18 @@ int main(int argc, char** argv)
             ctsstate = get_cts_state(fd);
             if ((ctsstate != pctsstate))
             { 
-              waterreading+=0.0005;
-              write_waterreading(METERFILE, waterreading);
-              write_tcpclients(waterreading);
-              write_database(waterreading);
+				long tv_nsecold = spec.tv_nsec;
+				clock_gettime(CLOCK_REALTIME, &spec);
+				write_waterreading(METERFILE, waterreading_m3);
+
+				long ms = round((spec.tv_nsec - tv_nsecold) / 1.0e6);
+				waterflow_m3h = 0.0005 * (1000 / ms) * 3600;
+				waterreading_m3+=0.0005;
+
+				char json[80];
+				sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
+				if (client_fd) write (client_fd,json,strlen(json));
+				writetodatabase (waterreading_m3, waterflow_m3h);
             }
           // block until line changes state
 //          if(ioctl(fd, TIOCMIWAIT, TIOCM_CTS) < 0)

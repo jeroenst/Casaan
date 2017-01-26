@@ -1,90 +1,120 @@
 <?php
 
-$smartmeterdata = json_decode ('
+$casaandata = json_decode ('
 {
-		"smartmeter": {
-			"electricity": {
-				"now":
-				{
-					"watt": null
-				},
-				"total":
-				{
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
-				},
-				"hour":
-				{			
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
-				},
-				"today":
-				{			
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
-				},
-				"week":
-				{			
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
-				},
-				"month":
-				{			
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
-				},
-				"year":
-				{			
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
-				}
-			},
-			"gas":
-			{
-				"now":
-				{
-					"m3h": null
-				},
-				"total":
-				{
-					"m3used": null
-				},
-				"hour":
-				{
-					"m3used": null
-				},
-				"today":
-				{
-					"m3used": null
-				},
-				"week":
-				{
-					"m3used": null
-				},
-				"month":
-				{
-					"m3used": null
-				},
-				"year":
-				{
-					"m3used": null
-				}
-			}
+	"electricitymeter": {
+		"now": {
+			"kw_using": null,
+			"kw_providing": null
+		},
+		"total": {
+			"kwh_used1": null,
+			"kwh_used2": null,
+			"kwh_provided1": null,
+			"kwh_provided2": null
+		},
+		"hour": {
+			"kwh_used1": null,
+			"kwh_used2": null,
+			"kwh_provided1": null,
+			"kwh_provided2": null
+		},
+		"today": {
+			"kwh_used1": null,
+			"kwh_used2": null,
+			"kwh_provided1": null,
+			"kwh_provided2": null
+		},
+		"week": {
+			"kwh_used1": null,
+			"kwh_used2": null,
+			"kwh_provided1": null,
+			"kwh_provided2": null
+		},
+		"month": {
+			"kwh_used1": null,
+			"kwh_used2": null,
+			"kwh_provided1": null,
+			"kwh_provided2": null
+		},
+		"year": {
+			"kwh_used1": null,
+			"kwh_used2": null,
+			"kwh_provided1": null,
+			"kwh_provided2": null
 		}
+	},
+	"sunelectricity": {
+		"now": {
+			"kw": null
+		},
+		"total": {
+			"kwh": null
+		},
+		"hour": {
+			"kwh": null
+		},
+		"today": {
+			"kwh": null
+		},
+		"week": {
+			"kwh": null
+		},
+		"month": {
+			"kwh": null
+		},
+		"year": {
+			"kwh": null
+		}
+	},
+	"gasmeter": {
+		"now": {
+			"m3h": null
+		},
+		"total": {
+			"m3": null
+		},
+		"hour": {
+			"m3": null
+		},
+		"today": {
+			"m3": null
+		},
+		"week": {
+			"m3": null
+		},
+		"month": {
+			"m3": null
+		},
+		"year": {
+			"m3": null
+		}
+	},
+	"watermeter": {
+		"now": {
+			"m3h": null
+		},
+		"total": {
+			"m3": null
+		},
+		"hour": {
+			"m3": null
+		},
+		"today": {
+			"m3": null
+		},
+		"week": {
+			"m3": null
+		},
+		"month": {
+			"m3": null
+		},
+		"year": {
+			"m3": null
+		}
+	}
 }
-');
+', true);
 
 
 error_reporting(E_ALL);
@@ -235,7 +265,7 @@ function socketreceivedata($sock)
     global $temperaturesocket;
     global $websocket;
     global $readsocks;
-    global $smartmeterdata;
+    global $casaandata;
     global $activewebsockets;
     
             if (($sock == $websocket))
@@ -250,25 +280,31 @@ function socketreceivedata($sock)
                 if (($sock == $smartmetersocket))
                 {
                         echo ("Received data from smartmeter:\n".$recvdata."\n\n");
-                        sendtowebsockets($recvdata);
+                        $casaandata["electricitymeter"]=array_merge($casaandata["electricitymeter"], json_decode($recvdata, true)["electricitymeter"]);
+                        $casaandata["gasmeter"]=array_merge($casaandata["gasmeter"], json_decode($recvdata, true)["gasmeter"]);
+                        sendtowebsockets("{ \"electricitymeter\":".json_encode($casaandata["electricitymeter"])."}");
+                        sendtowebsockets("{ \"gasmeter\":".json_encode($casaandata["gasmeter"])."}");
                 }
                 
                 else if (($sock == $watermetersocket))
                 {
                         echo ("Received data from watermeter:\n".$recvdata."\n\n");
-                        sendtowebsockets($recvdata);
+                        $casaandata["watermeter"]=array_merge($casaandata["watermeter"], json_decode($recvdata, true)["watermeter"]);
+                        sendtowebsockets("{ \"watermeter\":".json_encode($casaandata["watermeter"])."}");
                 }
  
                 else if (($sock == $sunelectricitysocket))
                 {
                         echo ("Received data from sunelectricity:\n".$recvdata."\n\n");
-                        sendtowebsockets($recvdata);
+                        $casaandata["sunelectricity"]=array_merge($casaandata["sunelectricity"], json_decode($recvdata, true)["sunelectricity"]);
+                        sendtowebsockets("{ \"sunelectricity\":".json_encode($casaandata["sunelectricity"])."}");
                 }
                 
                 else if (($sock == $temperaturesocket))
                 {
                         echo ("Received data from temperature:\n".$recvdata."\n\n");
-                        sendtowebsockets($recvdata);
+                        $casaandata["temperature"]=array_merge($casaandata["temperature"], json_decode($recvdata, true)["temperature"]);
+                        sendtowebsockets("{ \"temperature\":".json_encode($casaandata["temperature"])."}");
                 }
                 else
                 {		
@@ -280,32 +316,42 @@ function socketreceivedata($sock)
                       echo ("Sending websocket header to client...\n");
                       socket_write ($sock, $reply);
                       echo ("Sending data to websock client...\n");
-                      socket_write($sock, websocketEncode(json_encode($smartmeterdata)));
+                      socket_write($sock, websocketEncode(json_encode($casaandata)));
                       array_push($activewebsockets, $sock);
                     }
                     else
                     {
                       $receivedMessage = websocketDecode($recvdata);
                       echo ("Received from websocket client:\n" . $receivedMessage . "\n\n");
-                      if (trim($receivedMessage) == "getsmartmeterdata")
+                      if (trim($receivedMessage) == "getcasaandata")
                       {
-                        echo ("Sending smartmeterdata to websocketclient...\n");
-                        socket_write($sock, websocketEncode(json_encode($smartmeterdata)));
+                        echo ("Sending casaandata to websocketclient...\n");
+                        socket_write($sock, websocketEncode(json_encode($casaandata)));
+                      }
+                      if (trim($receivedMessage) == "getelectricitydata")
+                      {
+                        echo ("Sending casaandata to websocketclient...\n");
+                        socket_write($sock, websocketEncode(json_encode($casaandata["electricity"])));
+                      }
+                      if (trim($receivedMessage) == "getcasaandata")
+                      {
+                        echo ("Sending casaandata to websocketclient...\n");
+                        socket_write($sock, websocketEncode(json_encode($casaandata["gas"])));
                       }
                       if (trim($receivedMessage) == "getwatertmeterdata")
                       {
                         echo ("Sending watermeterdata to websocketclient...\n");
-                        socket_write($sock, websocketEncode(json_encode($watermeterdata)));
+                        socket_write($sock, websocketEncode(json_encode($casaandata["watermeter"])));
                       }
                       if (trim($receivedMessage) == "getsunelectricitydata")
                       {
                         echo ("Sending sunelectricitydata to websocketclient...\n");
-                        socket_write($sock, websocketEncode(json_encode($sunelectricitydata)));
+                        socket_write($sock, websocketEncode(json_encode($casaandata["sunelectricity"])));
                       }
                       if (trim($receivedMessage) == "gettemperaturedata")
                       {
                         echo ("Sending temperaturedata to websocketclient...\n");
-                        socket_write($sock, websocketEncode(json_encode($temperaturedata)));
+                        socket_write($sock, websocketEncode(json_encode($casaandata["temperature"])));
                       }
                     }
                  }
@@ -433,7 +479,7 @@ function sendtowebsockets($msg)
    foreach ($activewebsockets as $sock) 
    {
      socket_write($sock, websocketEncode($msg));
-     echo ("Sending data to websocketclient...\n");
+     echo ("Sending data to websocketclients:\n".$msg."\n\n");
    }
 }
 

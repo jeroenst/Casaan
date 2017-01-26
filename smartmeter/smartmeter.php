@@ -5,10 +5,11 @@
 
 $data = json_decode ('
 {
-			"electricity": {
+			"electricitymeter": {
 				"now":
 				{
-					"watt": 200
+					"kw_using": null,
+					"kw_providing": null
 				},
 				"total":
 				{
@@ -18,7 +19,7 @@ $data = json_decode ('
 					"kwhprovided2": null
 				}
 			},
-			"gas":
+			"gasmeter":
 			{
 				"now":
 				{
@@ -67,13 +68,13 @@ while(1)
                 echo ("\nNew tcpsocket client connected!\n\n");
                 array_push($tcpsocketClients, $conn);
                 echo ("Sending data to tcp client\n");
-                fwrite($conn, json_encode($data). "\n\n");
+                fwrite($conn, json_encode($data));
             }
             else
             {
                 $sock_data = fread($i, 1024);
                 if (strlen($sock_data) === 0) { // connection closed
-                    $key_to_del = array_search($i, $websocketClients, TRUE);
+                    $key_to_del = array_search($i, $tcpsocketClients, TRUE);
                     unset($tcpsocketClients[$key_to_del]);
                 } else if ($sock_data === FALSE) {
                     echo "Something bad happened";
@@ -85,7 +86,7 @@ while(1)
                       if (trim($sock_data) == "getsmartmeterdata") 
                       {
                         echo ("Sending smartmeterdata to tcpsocketclient...\n");
-                        fwrite($conn, json_encode($data)."\n\n");
+                        fwrite($conn, json_encode($data));
                       }
               }
             }
@@ -122,8 +123,9 @@ $Electricity_Used_2 = 0;
 $Electricity_Provided_1 = 0;
 $Electricity_Provided_2 = 0;
 $Gas_Used = 0;
-$Mysql_con = mysql_connect("server","domotica","dom8899");
-$Mysql_table="utilities";
+$Mysql_con = mysql_connect("localhost","casaan","casaan");
+$Mysql_electricity_table="electricitymeter";
+$Mysql_gas_table="gasmeter";
 
 echo ($serial->_dHandle."\n");
 
