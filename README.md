@@ -3,7 +3,7 @@ Software for monitoring and controlling your home on a tablet phone or computer
 See www.casaan.nl for demo
 
 
-This softare uses the websockets which has to be installed in apache.
+This software uses the websockets proxy which has to be installed in apache.
 
 
 
