@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons.css">
+  <link rel="stylesheet" type="text/css" href="css/casaan.css">
+ <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casaan</title>
+
+
+
+
+
+
+</head>
+
+<body>
+
+<div class="mainarea">
+<div class="submainarea">
+
+<div id="electricitytoday" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html?type=hours';">
+<div class="boxtitle">Dag</div>
+<canvas id="sunelectricitybar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="sunelectricitytoday"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="providedelectricitytoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Week</div>
+<canvas class="boxverticalbar" id="electricitybar"></canvas>
+<div class="boxvalue" id="sunelectricityweek"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="providedelectricitythisweek"></div>
+</div><span id="portraitbr2"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Maand</div>
+<canvas id="waterbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="watercurrent"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="watertoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Jaar</div>
+<canvas id="gasbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="gascurrent"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="gastoday"></div>
+</div>
+<br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Gisteren</div>
+<canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="sunelectricitycurrent"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="sunelectricitytoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Vorige week</div>
+<canvas class="boxverticalbar" id="electricitybar"></canvas>
+<div class="boxvalue" id="electricitycurrent"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="electricityusedtoday"></div>
+</div><span id="portraitbr2"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Vorige maand</div>
+<canvas id="waterbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="watercurrent"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="watertoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricitygraph.html';">
+<div class="boxtitle">Vorig jaar</div>
+<canvas id="gasbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="gascurrent"></div>
+<div class="boxlabel2small">Totaal</div>
+<div class="boxvalue2" id="gastoday"></div>
+</div>
+
+</div>
+</div>
+
+<ul class="tab">
+        <div></div>
+        <div><li class="label"><a href="index.html">Casaan</a></li></div>
+        <div><li class="backbutton"><a href="javascript:void(0)" onclick="location.href='index.html';">Terug</a></li></div>
+</ul>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/jquery.tempgauge.js"></script>
+<script src="js/xml2json.js"></script>
+<script src="rgraph/libraries/RGraph.common.core.js"></script>
+<script src="rgraph/libraries/RGraph.vprogress.js"></script>
+<script src="js/casaan.js"></script>
+ <script>
+
+
+var vprogress;
+	
+window.onresize = autochangesizes;
+
+$( document ).ready(function() {
+	autochangesizes();
+	startsse('getdatasse.php?smartmeter=1');
+	createBars();
+});
+
+
+function createBars()
+{
+    waterbar = new RGraph.VProgress(
+		{
+			id: 'waterbar',
+            min: 0,
+            max: 10,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#699:#5ff:#5ff)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+	
+    gasbar = new RGraph.VProgress(
+		{
+			id: 'gasbar',
+            min: 0,
+            max: 3,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#996:#ff5:#ff5)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+	
+    electricitybar = new RGraph.VProgress(
+		{
+			id: 'electricitybar',
+            min: 0,
+            max: 2000,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#777:#BBB:#BBB)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+	
+    sunelectricitybar = new RGraph.VProgress(
+		{
+			id: 'sunelectricitybar',
+            min: 0,
+            max: 2000,
+            value: 1000,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#696:#7d7:#7d7)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+}
+
+
+</script>
+
+
+</body>
+</html>
+

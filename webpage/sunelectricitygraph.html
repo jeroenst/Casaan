@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+ <link rel="stylesheet" type="text/css" href="css/casaan.css">
+ <head>
+<meta charset="UTF-8">
+<title>Casaan</title>
+</head>
+
+<body>
+
+<div class="mainarea">
+
+<div class="fullscreen-floating-box">
+</div>
+<div id="Hours" class="graph">
+<div class="boxtext" id="plottyhours"></div>
+</div>
+
+<div id="Days" class="graph">
+<div class="boxtext" id="plottydays"></div>
+</div>
+
+<div id="Weeks" class="graph" style="display:none">
+<div class="boxtext" id="plottyweeks"></div>
+</div>
+
+<div id="Months" class="graph" style="display:none">
+<div class="boxtext" id="plottymonths"></div>
+</div>
+
+<div id="Years" class="graph" style="display:none">
+<div class="boxtext" id="plottyyears"></div>
+</div>
+</div>
+
+<ul class="tab">
+	<div><li class="menuitem"><a href="javascript:void(0)" onclick="openGraph('Hours')">Uren</a></li>
+	<li class="menuitem"><a href="javascript:void(0)" onclick="openGraph('Days')">Dagen</a></li>
+	<li class="menuitem"><a href="javascript:void(0)" onclick="openGraph('Weeks')">Weken</a></li>
+	<li class="menuitem"><a href="javascript:void(0)" onclick="openGraph('Months')">Maanden</a></li>
+	<li class="menuitem"><a href="javascript:void(0)" onclick="openGraph('Years')">Jaren</a></li></div>
+        <div ><li class="label"><a href="index.html">Casaan</a></li></div>
+        <div><li class="backbutton"><a href="javascript:void(0)" onclick="location.href='index.html';">Terug</a></li></div>
+</ul>
+
+
+<script src="js/jquery.min.js"></script>
+<script src="js/xml2json.js"></script>
+<script src="js/plotty.js"></script>
+<script src="js/casaan.js"></script>
+<script>
+
+window.onresize = autochangesizes;
+
+ 
+$(document).ready(function() {
+	autochangesizes();
+	myTimer();
+	drawHours();
+	var myVar = setInterval(myTimer, 60000);
+});
+ 
+function myTimer()
+{
+}
+ 
+function openGraph(graphName) {
+    var i;
+    var x = document.getElementsByClassName("graph");
+    for (i = 0; i < x.length; i++) {
+        x[i].style.display = "none"; 
+    }
+    document.getElementById(graphName).style.display = "block"; 
+	
+	if (graphName == "Hours") drawHours();
+	if (graphName == "Days") drawDays();
+	if (graphName == "Weeks") drawWeeks();
+	if (graphName == "Months") drawMonths();
+	if (graphName == "Years") drawYears();
+}
+
+
+function drawHours() {
+var trace1 = {
+  x: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'], 
+  y: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4] ,
+  type: 'scatter',
+	fill: 'tozeroy',
+  name: 'Zonnestroom',
+  line: {
+	color: '#55AA55'
+	}
+};
+
+var layout = {
+	title: 'Opgewekte Zonnestroom',
+	xaxis: {title: 'Uur'},
+	yaxis: {title: 'kwh'},
+	margin: {t: 40, b: 40, l:40, r:5},
+};
+
+var data = [trace1];
+Plotly.newPlot('plottyhours', data, layout, {displayModeBar: false});
+}
+
+function drawDays()
+{
+var trace1 = {
+  x: ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'], 
+  y: [10, 15, 13, 17, 10, 2 ,14], 
+  type: 'scatter',
+  name: 'Zonnestroom',
+	fill: 'tozeroy',
+  line: {
+	color: '#55AA55'
+	}
+};
+
+var layout = {
+	title: 'Opgewekte Zonnestroom',
+	xaxis: {title: 'Dag'},
+	yaxis: {title: 'kwh'},
+	margin: {t: 40, b: 40, l:40, r:5},
+};
+
+var data = [trace1];
+Plotly.newPlot('plottydays', data, layout, {displayModeBar: false});
+}
+
+function drawWeeks()
+{
+var trace1 = {
+  x: ['40', '41', '42', '43', '44', '45', '46'], 
+  y: [10, 15, 13, 17, 10, 2 ,14], 
+  type: 'scatter',
+	fill: 'tozeroy',
+  name: 'Zonnestroom',
+  line: {
+	color: '#55AA55'
+	}
+};
+
+var layout = {
+	title: 'Opgewekte Zonnestroom',
+	xaxis: {title: 'Week'},
+	yaxis: {title: 'kwh'},
+	margin: {t: 40, b: 40, l:40, r:5},
+};
+
+var data = [trace1];
+Plotly.newPlot('plottyweeks', data, layout, {displayModeBar: false});
+}
+
+function drawMonths()
+{
+var trace1 = {
+  x: ['Sep', 'Okt', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug'], 
+  y: [9, 8, 7, 4, 4, 3, 4, 6, 7, 9, 10, 11, 10], 
+  type: 'scatter',
+	fill: 'tozeroy',
+  name: 'Zonnestroom',
+  line: {
+	color: '#55AA55'
+	}
+};
+
+var layout = {
+	title: 'Opgewekte Zonnestroom',
+	xaxis: {title: 'Maanden'},
+	yaxis: {title: 'kwh'},
+	margin: {t: 40, b: 40, l:40, r:5},
+};
+
+var data = [trace1];
+Plotly.newPlot('plottymonths', data, layout, {displayModeBar: false});
+}
+
+function drawYears()
+{
+var trace1 = {
+  x: ['2013', '2014', '2015', '2016'], 
+  y: [2000, 2100, 2020, 1900], 
+  type: 'scatter',
+  name: 'Zonnestroom',
+  line: {
+	color: '#55AA55'
+	}
+};
+
+var layout = {
+	title: 'Opgewekte Zonnestroom',
+	xaxis: {title: 'Jaar'},
+	yaxis: {title: 'kwh'},
+	margin: {t: 40, b: 40, l:40, r:5},
+};
+
+var data = [trace1];
+Plotly.newPlot('plottyyears', data, layout, {displayModeBar: false});
+}
+
+
+</script>
+
+
+</body>
+</html>
+

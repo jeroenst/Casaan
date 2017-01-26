@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+ <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons.css">
+ <link rel="stylesheet" type="text/css" href="css/casaan.css">
+ <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Casaan</title>
+</head>
+
+<body>
+
+<div class="mainarea">
+<div class="submainarea"><div class="floating-box">
+<div class="boxtitle">Lokaal</div>
+<div class="boxtime" id=time></div>
+<div class="boxdate" id="date"></div>
+</div><div class="floating-box">
+<div class="boxtitle">Londen</div>
+<div class="boxtime" id=timeen></div>
+<div class="boxdate" id="dateen"></div>
+</div><div class="floating-box">
+<div class="boxtitle">New York</div>
+<div class="boxtime" id=timeny></div>
+<div class="boxdate" id="dateny"></div>
+</div><div class="floating-box">
+<div class="boxtitle">Changhai</div>
+<div class="boxtime" id=timech></div>
+<div class="boxdate" id="datech"></div>
+</div><br><div class="floating-box">
+<div class="boxtitle">Zon</div>
+<div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
+<div class="boxlowertext"><span id="sun">Op: -<BR>Onder: -</span></div>
+</div><div class="floating-box">
+<div class="boxtitle">Maan</div>
+<div class="boxweathericon"><span class="wi wi-moon-waxing-crescent-2"></span></div>
+<div class="boxlowertext"><span id="moon">Op: -<BR>Onder: -</span></div>
+</div><div class="floating-box">
+<div class="boxtitle">Tij</div>
+<div class="boxweathericon"><span class="wi wi-flood"></span></div>
+<div class="boxlowertext"><span id="tij">Hoog: -<BR>Laag: -</span></div>
+</div><div class="floating-box" onclick="location.href='index.html';">
+<div class="boxcenterbig"></div>
+</div></div></div>
+
+<ul class="tab">
+        <div></div>
+        <div><li class="label"><a href="index.html">Casaan</a></li></div>
+        <div><li class="backbutton"><a href="javascript:void(0)" onclick="location.href='index.html';">Terug</a></li></div>
+</ul>
+
+<script src="js/jquery.min.js"></script>
+<script src="js/jqmeter.js"></script>
+<script src="js/jquery.tempgauge.js"></script>
+<script src="suncalc/suncalc.js"></script>
+<script src="js/casaan.js"></script>
+
+    <script>
+window.onresize = autochangesizes; 
+    $( document ).ready(function() {
+      myTimer();
+	   autochangesizes();
+       var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
+       document.getElementById("sun").innerHTML = "Op: "+
+       times.sunrise.getHours()+":"+times.sunrise.getMinutes() + "<BR>Onder:  " +
+       times.sunset.getHours()+":"+times.sunset.getMinutes();
+
+       var moontimes = SunCalc.getMoonTimes(new Date(), 51.5, -0.1);
+       document.getElementById("moon").innerHTML = "Op: "+
+       moontimes.rise.getHours()+":"+moontimes.rise.getMinutes() + "<BR>Onder:  " +
+       moontimes.set.getHours()+":"+moontimes.set.getMinutes();
+    });
+ 
+    </script>
+
+<script>
+
+var myVar = setInterval(myTimer, 1000);
+
+function myTimer() {
+    var d = new Date();
+    document.getElementById("time").innerHTML =
+    d.toLocaleTimeString('nl-NL', { hour: 'numeric',minute:
+    '2-digit' });
+
+    document.getElementById("date").innerHTML =
+    d.toLocaleString('nl-NL', {day:
+    'numeric',month: '2-digit',year: 'numeric' });
+
+    document.getElementById("timeen").innerHTML =
+    d.toLocaleTimeString('nl-NL', { timeZone: 'Europe/London', hour: 'numeric',minute:
+    '2-digit' });
+
+    document.getElementById("dateen").innerHTML =
+    d.toLocaleString('nl-NL', { timeZone: 'Europe/London', day:
+    'numeric',month: '2-digit',year: 'numeric' });
+
+    document.getElementById("timeny").innerHTML =
+    d.toLocaleTimeString('nl-NL', {
+    timeZone: 'America/New_York', hour: 'numeric',minute:
+    '2-digit'});
+
+    document.getElementById("dateny").innerHTML =
+    d.toLocaleString('nl-NL', { timeZone: 'America/New_york', day:
+    'numeric',month: '2-digit',year: 'numeric' });
+
+    document.getElementById("timech").innerHTML =
+    d.toLocaleTimeString('nl-NL', {
+    timeZone: 'Asia/Shanghai', hour: 'numeric',minute:
+    '2-digit' });
+   
+    document.getElementById("datech").innerHTML =
+    d.toLocaleString('nl-NL', { timeZone: 'Asia/Shanghai', day:
+    'numeric',month: '2-digit',year: 'numeric' });
+
+   
+   
+var dd = d.getDate();
+var mm = d.getMonth()+1; //January is 0!
+
+var yyyy = d.getFullYear();
+if(dd<10){
+    dd='0'+dd;
+} 
+if(mm<10){
+    mm='0'+mm;
+} 
+var today = dd+'-'+mm+'-'+yyyy;
+document.getElementById("date").innerHTML = today;
+
+}
+
+$('#insidetemperaturegauge').tempGauge({
+ width:60,
+ borderWidth:2,
+ showLabel:false,
+ showScale:false,
+ maxTemp: 30,
+ minTemp: 10,
+ defaulttemp: 20
+});
+
+$('#outsidetemperaturegauge').tempGauge({
+ width:60,
+ borderWidth:2,
+ showLabel:false,
+ showscale: false,
+ fillColor: "#5555fb",
+ maxTemp:30,
+ minTemp:-10,
+ defaulttemp: -5
+});
+ 
+
+$('#waterbar').jQMeter({
+  meterOrientation:'vertical',
+  goal:'$10,000',
+  raised:'$6,600',
+  width:'30px',
+  height:'120px',
+  bgColor: "#444",
+  barColor: "#55bfbf",
+  counterSpeed: 2000,
+  animationSpeed: 2000,
+  displayTotal: false
+});
+
+$('#insidetemperaturebar').jQMeter({
+  meterOrientation:'vertical',
+  goal:'$10,000',
+  raised:'$6,600',
+  width:'30px',
+  height:'120px',
+  bgColor: "#444",
+  barColor: "#ff5555",
+  counterSpeed: 2000,
+  animationSpeed: 2000,
+  displayTotal: false
+});
+
+$('#outsidetemperaturebar').jQMeter({
+  meterOrientation:'vertical',
+  goal:'$10,000',
+  raised:'$6,600',
+  width:'30px',
+  height:'120px',
+  bgColor: "#444",
+  barColor: "#55bfbf",
+  counterSpeed: 2000,
+  animationSpeed: 2000,
+  displayTotal: false
+});
+
+$('#electricitybar').jQMeter({
+  meterOrientation:'vertical',
+  goal:'$10,000',
+  raised:'$6,600',
+  width:'30px',
+  height:'120px',
+  bgColor: "#444",
+  barColor: "#bfbfbf",
+  counterSpeed: 2000,
+  animationSpeed: 2000,
+  displayTotal: false
+});
+
+$('#sunelectricitybar').jQMeter({
+  meterOrientation:'vertical',
+  goal:'$10,000',
+  raised:'$6,600',
+  width:'30px',
+  height:'120px',
+  bgColor: "#444",
+  barColor: "#55bf55",
+  counterSpeed: 2000,
+  animationSpeed: 2000,
+  displayTotal: false
+});
+
+$('#gasbar').jQMeter({
+  meterOrientation:'vertical',
+  goal:'$10,000',
+  raised:'$6,600',
+  width:'30px',
+  height:'120px',
+  bgColor: "#444",
+  barColor: "#efef55",
+  counterSpeed: 2000,
+  animationSpeed: 2000,
+  displayTotal: false
+});
+
+</script>
+
+
+</body>
+</html>
+

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+ <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons.css">
+ <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons-wind.css">
+ <link rel="stylesheet" type="text/css" href="css/casaan.css">
+ <head>
+<meta charset="UTF-8">
+<title>Casaan</title>
+</head>
+
+<body>
+<div class="mainarea">
+<div class="fullscreen-floating-box">
+<div class="fullscreen-boxtext"><span class="weathertexttodaylong"></span></div>
+</div>
+</div>
+
+<ul class="tab">
+	<div class="left"><img class="buienradaricon" src="icon/buienradar.svg"></img></div>
+	<div><li class="label"><a href="index.html">Casaan</a></li></div>
+	<div><li class="backbutton"><a href="javascript:void(0)" onclick="location.href='weather.html';">Terug</a></li> </div>
+</ul>
+
+
+
+
+<script src="js/jquery.min.js"></script>
+<script src="js/xml2json.js"></script>
+<script src="js/casaan.js"></script>
+<script>
+
+window.onresize = autochangesizes;
+ 
+$(document).ready(function() {
+var myVar = setInterval(myTimer, 600000);
+myTimer();
+autochangesizes();
+});
+ 
+
+
+
+function myTimer() {
+var x2jObj = null;
+$.get('https://xml.buienradar.nl', function (xmlDocument) {
+    x2jObj = X2J.parseXml(xmlDocument); //X2J.parseXml(xmlDocument, '/');         
+    //x2jObj is called jNode   
+	console.log(x2jObj);
+    document.getElementsByClassName("weathertexttodaylong")[0].innerHTML =
+    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_vandaag[0].tekst[0].jValue;
+});
+}
+
+
+</script>
+
+
+</body>
+</html>
+
