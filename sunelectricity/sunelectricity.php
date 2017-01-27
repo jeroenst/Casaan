@@ -5,6 +5,7 @@
 // Thanks to Lennart Kuhlmeier for providing PVOUT_GROWATT.PY on http://www.sisand.dk/?page_id=139 
 //
 
+$serialdevice = '/dev/ttyUSB0';
 
 $data = json_decode ('
 {
@@ -47,15 +48,18 @@ if (!$tcpsocket) {
     exit(1);
 }
 
+$tcpsockets = array();
 $tcpsocketClients = array();
-array_push($tcpsocketClients, $tcpsocket);
+array_push($tcpsockets, $tcpsocket);
+
+date_default_timezone_set ("Europe/Amsterdam");
 
 
 // First we must specify the device. This works on both linux and windows (if
 // your linux serial device is /dev/ttyS0 for COM1, etc)
 while(1)
 {
-        $readmask = $tcpsocketClients;
+        $readmask = $tcpsockets;
         $writemask = NULL;
         $errormask = NULL;
         $mod_fd = stream_select($readmask, $writemask, $errormask, 1);
@@ -65,6 +69,7 @@ while(1)
             {
                 $conn = stream_socket_accept($tcpsocket);
                 echo ("\nNew tcpsocket client connected!\n\n");
+                array_push($tcpsockets, $conn);
                 array_push($tcpsocketClients, $conn);
                 echo ("Sending data to tcp client\n");
                 fwrite($conn, json_encode($data). "\n\n");
@@ -73,13 +78,17 @@ while(1)
             {
                 $sock_data = fread($i, 1024);
                 if (strlen($sock_data) === 0) { // connection closed
-                    $key_to_del = array_search($i, $websocketClients, TRUE);
+                    $key_to_del = array_search($i, $tcpsocketClients, TRUE);
                     unset($tcpsocketClients[$key_to_del]);
+                    $key_to_del = array_search($i, $tcpsockets, TRUE);
+                    unset($tcpsockets[$key_to_del]);
                 } else if ($sock_data === FALSE) {
                     echo "Something bad happened";
                     fclose($i);
                     $key_to_del = array_search($i, $tcpsocketClients, TRUE);
                     unset($tcpsocketClients[$key_to_del]);
+                    $key_to_del = array_search($i, $tcpsockets, TRUE);
+                    unset($tcpsockets[$key_to_del]);
                 } else {
                       echo ("Received from tcpsocket client: [" . $sock_data . "]\n");
                       if (trim($sock_data) == "getsunelectricitydata") 
@@ -92,39 +101,57 @@ while(1)
           }
 
 
-$serialready=0;
-$receivedpacket="";
-$start_time = time();
-$write_database_timeout = 10; // write database every 10 minutes
-$write_database_timer = time();
-
-$Electricity_Usage = 0;
-$Electricity_Used_1 = 0;
-$Electricity_Used_2 = 0;
-$Electricity_Provided_1 = 0;
-$Electricity_Provided_2 = 0;
-$Gas_Used = 0;
-
-date_default_timezone_set ("Europe/Amsterdam");
-
-echo "Opening SerialModbus Port...\n";
+          echo "Opening SerialModbus Port...\n";
 // Then we need to open it
   if (!$modbus->deviceOpened())
   {
-    $modbus->deviceInit('/dev/ttyUSB0',9600,'none',8,1,'none');
+    $modbus->deviceInit($serialdevice,9600,'none',8,1,'none');
     $modbus->deviceOpen();
   }
 
   if ($modbus->deviceOpened())
   {
-    $data["sunelectricity"]["now"]["pv"]["watt"]=hexdec($modbus->sendQuery(1,4,"3002",1)[0])/10;
-    $data["sunelectricity"]["now"]["pv"]["volt"]=hexdec($modbus->sendQuery(1,4,"3003",1)[0])/10;
-    $data["sunelectricity"]["now"]["pv"]["amp"]=hexdec($modbus->sendQuery(1,4,"3004",1)[0])/10;
-    $data["sunelectricity"]["now"]["out"]["watt"]=hexdec($modbus->sendQuery(1,4,"300C",1)[0])/10;
-    $data["sunelectricity"]["now"]["out"]["frequency"]=hexdec($modbus->sendQuery(1,4,"300D",1)[0])/10;
-    $data["sunelectricity"]["now"]["out"]["volt"]=hexdec($modbus->sendQuery(1,4,"300E",1)[0])/100;
-    $data["sunelectricity"]["today"]["kwh"]=hexdec($modbus->sendQuery(1,4,"301B",1)[0])/10;
-    $data["sunelectricity"]["total"]["kwh"]=hexdec($modbus->sendQuery(1,4,"301D",1)[0])/10;
+    // Read pv watts
+    $value=$modbus->sendQuery(1,4,"3002",1);
+    if ($value != 0) 
+    {
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["now"]["pv"]["watt"]=$value;
+
+    // Read pv volt
+    $value=$modbus->sendQuery(1,4,"3003",1);
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["now"]["pv"]["volt"]=$value;
+
+    // Read pv amps
+    $value=$modbus->sendQuery(1,4,"3004",1);
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["now"]["pv"]["amp"]=$value;
+
+    // Read output watts
+    $value=$modbus->sendQuery(1,4,"300C",1);
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["now"]["out"]["watt"]=$value;
+
+    // Read output frequency
+    $value=$modbus->sendQuery(1,4,"300D",1);
+    if ($value != 0) $value = hexdec($value)[0]/100; else $value = null;
+    $data["sunelectricity"]["now"]["out"]["frequency"]=$value;
+
+    // Read output voltage
+    $value=$modbus->sendQuery(1,4,"300E",1);
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["now"]["out"]["volt"]=$value;
+
+    // Read kwh provided today
+    $value=$modbus->sendQuery(1,4,"301B",1);
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["today"]["kwh"]=$value;
+
+    // Read kwh provided total
+    $value=$modbus->sendQuery(1,4,"301D",1);
+    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
+    $data["sunelectricity"]["total"]["kwh"]=$value;
 
     echo (json_encode($data)."\n\n");
     
@@ -173,6 +200,8 @@ Wh_total=float(value[0])*100
     if (!$result = $mysqli->query($sql)) echo ("Error writing values to database!\n");
     $mysqli->close();
   }
+  }
+  else echo ("Connection to growwatt inverter failed!\n");
   sleep(1);
 }
 
