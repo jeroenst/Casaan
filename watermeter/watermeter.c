@@ -18,13 +18,19 @@
 #include <math.h>
 #include <time.h>  
 #include <sys/wait.h>
+#include <iostream>
 
-
+using namespace std;
 
 // Device is a comport like /dev/ttyUSB1
-#define DEVICE "/dev/watermeter"
-#define METERFILE "/usr/domotica/watermeter/waterreading"
 
+string device = "/dev/ttyUSB0";
+string mysqlserver = "localhost";
+string mysqlusername = "casaan";
+string mysqlpassword = "casaan"; /* set me first */
+string mysqldatabase = "casaan";
+string datafile = "watermeter.dat";
+int  port = 5883;
 
 #define BUFFER_SIZE 1024
 #define on_error(...) { fprintf(stderr, __VA_ARGS__); fflush(stderr); exit(1); }
@@ -37,19 +43,14 @@ int writetodatabase(double waterreading_m3, double waterflow_m3h)
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 
-	char *server = "localhost";
-	char *user = "casaan";
-	char *password = "casaan"; /* set me first */
-	char *database = "casaan";
-
 	conn = mysql_init(NULL);
 
 	/* Connect to database */
-	if (!mysql_real_connect(conn, server,
-				user, password, database, 0, NULL, 0)) {
+	if (!mysql_real_connect(conn, mysqlserver.c_str(), mysqlusername.c_str(), mysqlpassword.c_str(), mysqldatabase.c_str(), 0, NULL, 0)) {
 		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
 	}
+	else
+	{
 
 	/* send SQL query */
 
@@ -70,8 +71,9 @@ int writetodatabase(double waterreading_m3, double waterflow_m3h)
 	/* close connection */
 	mysql_free_result(res);
 	mysql_close(conn);
-
 	return 0;
+	}
+	return 1;
 }
 
 int create_tcpserver()
@@ -138,10 +140,34 @@ int get_cts_state(int fd)
 
 int   main(int argc, char * argv[])
 {
+	if (argc > 1)
+	{
+		printf ("\nReading configfile: %s\n", argv[1]);
+		FILE *conf_fp = fopen (argv[1], "r");
+		while(!feof(conf_fp)) 
+		{
+			string name(100, 0);;
+			string setting(100, 0);;
+			fscanf(conf_fp, "\n%39[^=]=%s", &name[0], &setting[0]);
+			if (strcmp(name.c_str(), "device") == 0) device = setting;
+			if (strcmp(name.c_str(), "datafile") == 0) datafile = setting;
+			if (strcmp(name.c_str(), "port") == 0) port = atoi(setting.c_str());
+			if (strcmp(name.c_str(), "mysqlpassword") == 0) mysqlpassword = setting;
+			if (strcmp(name.c_str(), "mysqlserver") == 0) mysqlserver = setting;
+			if (strcmp(name.c_str(), "mysqldatabase") == 0) mysqldatabase = setting;
+			if (strcmp(name.c_str(), "mysqlusername") == 0) mysqlusername = setting;
+			if (strcmp(name.c_str(), "mysqlpassword") == 0) mysqlpassword = setting;
+		}
+	}
+
+	printf ("\nWatermeter started\ndevice=%s\nport=%d\ndatafile=%s\nmysqlserver=%s\nmysqldatabase=%s\nmysqlusername=%s\n\n", device.c_str(), port, datafile.c_str(), mysqlserver.c_str(), mysqldatabase.c_str(), mysqlusername.c_str());
+	
+
 	double waterreading_m3 = -1;
-	waterreading_m3 = read_waterreading (METERFILE);
+	waterreading_m3 = read_waterreading (datafile.c_str());
 	double waterflow_m3h = -1;
 
+	
 	int pipefd[2];
 	pid_t cpid;
 	char buf;
@@ -270,13 +296,13 @@ int   main(int argc, char * argv[])
 
 		// open the serial stream
 		int fd;
-		while (fd = open(DEVICE, omode, 0777) < 0)
+		while (fd = open(device.c_str(), omode, 0777) < 0)
 		{
-			printf("Error opening serial device: %s\n", strerror(errno));
+			printf("Error opening serial device %s: %s\n", device.c_str(), strerror(errno));
 			sleep(1);
 		}
 
-		printf("Device opened: %s\n", DEVICE);
+		printf("Device opened: %s\n", device.c_str());
 
 
 		// detect DCD changes forever
@@ -312,7 +338,7 @@ int   main(int argc, char * argv[])
 				waterreading_m3+=0.0005;
 				
 				// Write waterreading to file
-				write_waterreading(METERFILE, waterreading_m3);
+				write_waterreading(datafile.c_str(), waterreading_m3);
 				
 				// Send values to child
 				char msg[80];
