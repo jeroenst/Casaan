@@ -229,7 +229,6 @@ int   main(int argc, char * argv[])
 			
 			if (FD_ISSET(client_fd, &set))
 			{
-				printf ("Client_fd!\n");
 				// Received message from tcp client!
 				char msg[80];
 				bzero(msg, 80);
@@ -237,11 +236,12 @@ int   main(int argc, char * argv[])
 				if (n < 0)
 				{
 					// Connection was closed
+					printf("TCP Client closed connection\n");
 					close(client_fd);
 				}
 				else
 				{
-					printf("server received %d bytes: %s", n, msg);
+					printf("server received %d bytes: %s\n", n, msg);
 					if (strcmp(msg, "getwatermeter") == 0)
 					{
 						char json[80];
@@ -260,11 +260,14 @@ int   main(int argc, char * argv[])
 			
 			if (FD_ISSET(pipefd[0], &set))
 			{
-				printf ("Pipe_fd!\n");
 				// Received new watermeter values from Parent!
 				char msg[80];
 				bzero(msg, 80);
-				if (!read(pipefd[0], &msg, 80)) exit(1);
+				if (!read(pipefd[0], &msg, 80)) 
+				{
+					printf ("Pipe to parent watermeter process has broken, exit..\n");
+					exit(1);
+				}
 				
 				int ctsstate;
 				sscanf(msg, "%lf %lf %d", &waterreading_m3, &waterflow_m3h, &ctsstate);
