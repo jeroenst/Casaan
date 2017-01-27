@@ -107,10 +107,29 @@ function startcasaanwebsocket()
 				if (data["electricitymeter"])
 				{
 					console.log("Received electricitymeter update");
-					var watt = data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"];;
-					var kwhusedtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
-						- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
-					if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
+					var watt =  "-";
+					try
+					{
+						watt = data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"];;
+					}
+					catch(err)
+					{
+					}
+					
+					
+					
+					var kwhusedtoday = "-";
+					try
+					{
+						var kwhusedtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
+							- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
+							if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
+					}
+					catch(err)
+					{
+					}
+					
+					
 					if (data["electricitymeter"]["now"]["kw_using"] == null)
 					{
 						watt = "-";
@@ -130,8 +149,16 @@ function startcasaanwebsocket()
 				if (data["gasmeter"])
 				{
 					console.log("Received gasmeter update");
-					var gasm3h = data["gasmeter"]["now"]["m3h"];
-					var gasm3today = data["gasmeter"]["today"]["m3"];
+					var gasm3h = "-";
+					var gasm3today = "-";
+					try
+					{
+						var gasm3h = data["gasmeter"]["now"]["m3h"];
+						var gasm3today = data["gasmeter"]["today"]["m3"];
+					}
+					catch(err)
+					{
+					}
 					
 					if (gasm3h == null) 
 					{
@@ -154,9 +181,20 @@ function startcasaanwebsocket()
 
 				if (data["watermeter"])
 				{
-                    console.log("Received watermeter update");
-                    var m3h = data["watermeter"]["now"]["m3h"];
-                    var m3today = data["watermeter"]["today"]["m3"];
+		                    console.log("Received watermeter update");
+
+                		    var m3h = "-";
+                		    var m3today = "-";
+                		    
+                		    try
+                		    {
+                		    	m3h = data["watermeter"]["now"]["m3h"];
+                		    	m3today = data["watermeter"]["today"]["m3"];
+				    }
+				    catch (err)
+				    {
+				    }
+
 					if (m3h == null)
 					{
 						lmin = "-";
@@ -178,11 +216,20 @@ function startcasaanwebsocket()
 				if (data["sunelectricity"])
 				{
 					console.log("Received sunelectricity update");
-					var kw = data["sunelectricity"]["now"]["kw"];
-					var kwbarvalue = kw * 1000;
-					var kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
-					if (kw == null) watt = "-"; else watt = kw*1000;
-					if (kwhtoday == null) kwhtoday = "-";
+					var kw = "-";
+					var kwhtoday = "-";
+					var kwbarvalue = 0;
+					
+					try
+					{					
+						kw = data["sunelectricity"]["now"]["out"]["watt"];
+						kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
+						if (kw == null) watt = "-"; else kwbarvalue = watt;
+						if (kwhtoday == null) kwhtoday = "-";
+					}
+					catch (err)
+					{
+					}
 
 					document.getElementById('sunelectricitycurrent').innerHTML = watt + " watt";
 					document.getElementById('sunelectricitytoday').innerHTML = kwhtoday + " kwh";

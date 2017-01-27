@@ -13,10 +13,10 @@ $data = json_decode ('
 				},
 				"total":
 				{
-					"kwhused1": null,
-					"kwhused2": null,
-					"kwhprovided1": null,
-					"kwhprovided2": null
+					"kwh_used1": null,
+					"kwh_used2": null,
+					"kwh_provided1": null,
+					"kwh_provided2": null
 				}
 			},
 			"gasmeter":
@@ -27,7 +27,7 @@ $data = json_decode ('
 				},
 				"total":
 				{
-					"m3used": null
+					"m3": null
 				}
 			}
 		

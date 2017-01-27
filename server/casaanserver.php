@@ -3,115 +3,12 @@
 $casaandata = json_decode ('
 {
 	"electricitymeter": {
-		"now": {
-			"kw_using": null,
-			"kw_providing": null
-		},
-		"total": {
-			"kwh_used1": null,
-			"kwh_used2": null,
-			"kwh_provided1": null,
-			"kwh_provided2": null
-		},
-		"hour": {
-			"kwh_used1": null,
-			"kwh_used2": null,
-			"kwh_provided1": null,
-			"kwh_provided2": null
-		},
-		"today": {
-			"kwh_used1": null,
-			"kwh_used2": null,
-			"kwh_provided1": null,
-			"kwh_provided2": null
-		},
-		"week": {
-			"kwh_used1": null,
-			"kwh_used2": null,
-			"kwh_provided1": null,
-			"kwh_provided2": null
-		},
-		"month": {
-			"kwh_used1": null,
-			"kwh_used2": null,
-			"kwh_provided1": null,
-			"kwh_provided2": null
-		},
-		"year": {
-			"kwh_used1": null,
-			"kwh_used2": null,
-			"kwh_provided1": null,
-			"kwh_provided2": null
-		}
 	},
 	"sunelectricity": {
-		"now": {
-			"kw": null
-		},
-		"total": {
-			"kwh": null
-		},
-		"hour": {
-			"kwh": null
-		},
-		"today": {
-			"kwh": null
-		},
-		"week": {
-			"kwh": null
-		},
-		"month": {
-			"kwh": null
-		},
-		"year": {
-			"kwh": null
-		}
 	},
 	"gasmeter": {
-		"now": {
-			"m3h": null
-		},
-		"total": {
-			"m3": null
-		},
-		"hour": {
-			"m3": null
-		},
-		"today": {
-			"m3": null
-		},
-		"week": {
-			"m3": null
-		},
-		"month": {
-			"m3": null
-		},
-		"year": {
-			"m3": null
-		}
 	},
 	"watermeter": {
-		"now": {
-			"m3h": null
-		},
-		"total": {
-			"m3": null
-		},
-		"hour": {
-			"m3": null
-		},
-		"today": {
-			"m3": null
-		},
-		"week": {
-			"m3": null
-		},
-		"month": {
-			"m3": null
-		},
-		"year": {
-			"m3": null
-		}
 	}
 }
 ', true);
