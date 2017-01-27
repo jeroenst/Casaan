@@ -159,37 +159,35 @@ int   main(int argc, char * argv[])
 		server_fd = create_tcpserver();
 	
 
-		fd_set set;
 		struct timeval timeout;
-		/* Initialize the file descriptor set. */
-		FD_ZERO (&set);
-		FD_SET (server_fd, &set);
-		FD_SET (pipefd[0], &set);
 		
 
-		/* Initialize the timeout data structure. */
-		timeout.tv_sec = 1;
-		timeout.tv_usec = 0;
 
 		/* select returns 0 if timeout, 1 if input available, -1 if error. */
 		while(1)
 		{
+			/* Initialize the timeout data structure. */
+			timeout.tv_sec = 10;
+			timeout.tv_usec = 0;
+
+			/* Initialize the file descriptor set. */
+			fd_set set;
 			FD_ZERO (&set);
 			FD_SET (server_fd, &set);
 			FD_SET (pipefd[0], &set);
 			if (client_fd > 0) FD_SET(client_fd, &set);
 			
 			select (FD_SETSIZE,&set, NULL, NULL, &timeout);
-			
 			if (FD_ISSET(server_fd, &set))
 			{
+				printf ("Server_fd!\n");
 				// Connection made on TCP socket!
 				socklen_t client_len = sizeof(client);
 				client_fd = accept(server_fd, (struct sockaddr *) &client, &client_len);
 				if (client_fd < 0) printf("Could not establish new connection\n");
 				else
 				{
-					printf ("Tcp client connected!");
+					printf ("Tcp client connected!\n");
 					char json[80];
 					if (waterflow_m3h >= 0)
 					{
@@ -202,8 +200,10 @@ int   main(int argc, char * argv[])
 					write (client_fd,json,strlen(json));
 				}
 			}      
+			
 			if (FD_ISSET(client_fd, &set))
 			{
+				printf ("Client_fd!\n");
 				// Received message from tcp client!
 				char msg[80];
 				bzero(msg, 80);
@@ -234,6 +234,7 @@ int   main(int argc, char * argv[])
 			
 			if (FD_ISSET(pipefd[0], &set))
 			{
+				printf ("Pipe_fd!\n");
 				// Received new watermeter values from Parent!
 				char msg[80];
 				bzero(msg, 80);
@@ -271,7 +272,7 @@ int   main(int argc, char * argv[])
 		int fd;
 		while (fd = open(DEVICE, omode, 0777) < 0)
 		{
-			printf("Error opening serial device: open() failed: %d: %s\n", errno, strerror(errno));
+			printf("Error opening serial device: %s\n", strerror(errno));
 			sleep(1);
 		}
 
