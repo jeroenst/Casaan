@@ -1,4 +1,4 @@
-kill `ps aux | grep casaanserver.php | awk '{print $2}'`
+sudo kill `ps aux | grep casaanserver.php | awk '{print $2}'`
 
 sudo kill `ps aux | grep smartmeter.php | awk '{print $2}'`
 nohup sudo php smartmeter/smartmeter.php >smartmeter.log 2>&1 &
