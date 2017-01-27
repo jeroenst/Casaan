@@ -202,7 +202,7 @@ Wh_total=float(value[0])*100
   }
   }
   else echo ("Connection to growwatt inverter failed!\n");
-  sleep(1);
+  sleep(5);
 }
 
 }
