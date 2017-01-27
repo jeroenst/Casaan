@@ -101,6 +101,8 @@ function startcasaanwebsocket()
             ws.onmessage = function (event)
             {
 				var data = JSON.parse(event.data);
+				
+				console.log ("Received from casaan server: " + event.data);
 
 				if (data["electricitymeter"])
 				{

@@ -17,7 +17,7 @@ $data = json_decode ('
 					  "watt": null,
 					  "volt": null,
 					  "amp": null
-					}
+					},
 					"out":
 					{
 					  "watt": null,
@@ -28,7 +28,7 @@ $data = json_decode ('
 				"today":
 				{
 					"kwh": null
-				}
+				},
 				"total":
 				{
 					"kwh": null
