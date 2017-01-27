@@ -163,9 +163,9 @@ int   main(int argc, char * argv[])
 	printf ("\nWatermeter started\ndevice=%s\nport=%d\ndatafile=%s\nmysqlserver=%s\nmysqldatabase=%s\nmysqlusername=%s\n\n", device.c_str(), port, datafile.c_str(), mysqlserver.c_str(), mysqldatabase.c_str(), mysqlusername.c_str());
 	
 
-	double waterreading_m3 = -1;
+	double waterreading_m3 = 0;
 	waterreading_m3 = read_waterreading (datafile.c_str());
-	double waterflow_m3h = -1;
+	double waterflow_m3h = 0;
 
 	
 	int pipefd[2];
@@ -264,7 +264,8 @@ int   main(int argc, char * argv[])
 				// Received new watermeter values from Parent!
 				char msg[80];
 				bzero(msg, 80);
-				read(pipefd[0], &msg, 80);
+				if (!read(pipefd[0], &msg, 80)) exit(1);
+				
 				int ctsstate;
 				sscanf(msg, "%lf %lf %d", &waterreading_m3, &waterflow_m3h, &ctsstate);
 				writetodatabase(waterreading_m3, waterflow_m3h);    
@@ -272,7 +273,7 @@ int   main(int argc, char * argv[])
 				char json[80];
 				if (waterflow_m3h >= 0)
 				{
-					sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
+					sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
 				}
 				else
 				{
@@ -315,7 +316,7 @@ int   main(int argc, char * argv[])
 		long tv_nsecold = spec.tv_nsec ;
 		while(1)
 		{
-			printf("Waterreading_m3 = %.3lf, Waterflow_m3h= %.31f, ctsstate=%d\r", waterreading_m3, waterflow_m3h,  ctsstate);
+			printf("Waterreading_m3 = %.3f, Waterflow_m3h= %.3f, ctsstate=%d\n", waterreading_m3, waterflow_m3h,  ctsstate);
 			fflush(stdout);
 
 			// block until line changes state
@@ -342,7 +343,7 @@ int   main(int argc, char * argv[])
 				
 				// Send values to child
 				char msg[80];
-				sprintf (msg,"%.3lf %.3lf %d", waterreading_m3, waterflow_m3h, ctsstate);
+				sprintf (msg,"%.3f %.3f %d", waterreading_m3, waterflow_m3h, ctsstate);
 				write(pipefd[1], msg, strlen(msg)); // send values to child
 			}
 		}
