@@ -1,39 +1,54 @@
 function autochangesizes()
 {
 	var element;
+	var elements;
+    var i;
 	if ((window.innerHeight/window.innerWidth) > 1)
 	{
 		// Portrait Mode
-		if (element = document.getElementById("portraitbr1")) element.innerHTML = "<BR>";
-		if (element = document.getElementById("portraitbr2")) element.innerHTML = "<BR>";
+		elements = document.getElementsByClassName("portraitbr");
+		for(i=0; i<elements.length; i++)
+		{
+			elements[i].innerHTML = "<BR>"
+		}
 	}
 	else
 	{
 		// Normal mode
-		if (element = document.getElementById("portraitbr1")) element.innerHTML = "";
-		if (element = document.getElementById("portraitbr2")) element.innerHTML = "";
+		// Portrait Mode
+		elements = document.getElementsByClassName("portraitbr");
+		for (i = 0; i < elements.length; i++) 
+		{
+			elements[i].innerHTML = "";
+		}
 	}
 
 
 	// Auto size footer bar items
 	var clientHeight = document.getElementsByClassName('tab')[0].clientHeight;
-	var elements = document.querySelectorAll('.label, .backbutton, .menuitem');
+	elements = document.querySelectorAll('.label, .backbutton, .menuitem');
 	for(var i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize =
-		(clientHeight / 2) + "px";
+		elements[i].style.fontSize = (clientHeight / 2) + "px";
 	}
 
 	var clientWidth = 1;
-	if (element = document.getElementsByClassName('fullscreen-floating-box')[0]) clientHeight = element.clientHeight;
-	if (element = document.getElementsByClassName('fullscreen-floating-box')[0]) clientWidth = element.clientWidth;
-	if (element = document.getElementsByClassName('floating-box')[0]) clientHeight = element.clientHeight;
-	if (element = document.getElementsByClassName('floating-box')[0]) clientWidth = element.clientWidth;
-
-	var elements = document.querySelectorAll('.boxtitle, .boxlabel2small, .boxweathertext');
-	for(var i=0; i<elements.length; i++)
+	
+	elements = document.getElementsByClassName("fullscreen-floating-box");
+	for(i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize = (clientHeight / 14) + "px";
+		clientHeight = elements[i].clientHeight;
+		clientWidth = elements[i].clientWidth;
+		if (clientWidth > 0) break;
+	}
+
+
+	elements = document.getElementsByClassName("floating-box");
+	for(i=0; i< elements.length; i++)
+	{
+		clientHeight = elements[i].clientHeight;
+		clientWidth = elements[i].clientWidth;
+		if (clientWidth > 0) break;
 	}
 
 	var elements = document.querySelectorAll('.fullscreen-boxtext');
@@ -43,13 +58,19 @@ function autochangesizes()
 		else elements[i].style.fontSize = (clientHeight + (clientWidth * 0.5))  / 35 + "px"
 	}
 
+	elements = document.querySelectorAll('.boxtitle, .boxlabelsmall, .boxlabel2small, .boxweathertext');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].style.fontSize =(clientHeight / 15) + "px";
+	}
+
 	elements = document.querySelectorAll('.wideboxtext');
 	for(i=0; i<elements.length; i++)
 	{
 		elements[i].style.fontSize =(clientHeight / 9) + "px";
 	}
 
-	elements = document.querySelectorAll('.boxdate, .boxvalue, .boxvalue2, .boxweathertemp, .boxlowertext');
+	elements = document.querySelectorAll('.boxdate, .boxvalue, .boxvalue2,.boxweathertemp, .boxlowertext');
 	for(i=0; i<elements.length; i++)
 	{
 		elements[i].style.fontSize =(clientHeight / 8) + "px";
@@ -181,21 +202,21 @@ function startcasaanwebsocket()
 
 				if (data["watermeter"])
 				{
-		                    console.log("Received watermeter update");
+	                console.log("Received watermeter update");
 
-                		    var m3h = "-";
-                		    var m3today = "-";
+           		    var m3h = "-";
+           		    var m3today = "-";
                 		    
-                		    try
-                		    {
-                		    	m3h = data["watermeter"]["now"]["m3h"];
-                		    	m3today = data["watermeter"]["today"]["m3"];
+           		    try
+           		    {
+           		    	m3h = data["watermeter"]["now"]["m3h"];
+           		    	m3today = data["watermeter"]["today"]["m3"];
 				    }
 				    catch (err)
 				    {
 				    }
 
-					if (m3h == null)
+					if (m3h == "-")
 					{
 						lmin = "-";
 						lminbar = 0;
@@ -277,16 +298,25 @@ function startcasaanwebsocket()
            }
 }
 
-
+function showPage(pageName) {
+    var i;
+    var x = document.getElementsByClassName("submainarea");
+    for (i = 0; i < x.length; i++) {
+        x[i].style.display = "none"; 
+    }
+if ((pageName == "sunelectricitypage") || (pageName == "electricitypage") || (pageName == "gaspage") || (pageName == "waterpage"))
+    document.getElementById("overviewpage").style.display = "inline-block"; 
+	else    document.getElementById(pageName).style.display = "inline-block"; 
+	autochangesizes();
+}
 
 
 function updateTime() {
     var d = new Date();
-    document.getElementById("time").innerHTML = d.toLocaleTimeString();
+    document.getElementById("time").innerHTML = d.toLocaleTimeString('nl');
 	var dd = d.getDate();
 	var mm = d.getMonth()+1; //January is 0!
-
-var yyyy = d.getFullYear();
+	var yyyy = d.getFullYear();
 if(dd<10){
     dd='0'+dd;
 }
@@ -299,25 +329,52 @@ document.getElementById("date").innerHTML = today;
 }
 
 // Get data from buienradar.nl
-function updateWeather()
-{
-	var x2jObj = null;
-	$.get('https://xml.buienradar.nl', function (xmlDocument)
-	{
-		x2jObj = X2J.parseXml(xmlDocument); //X2J.parseXml(xmlDocument, '/');
+
+function updateWeather() {
+var x2jObj = null;
+$.get('https://xml.buienradar.nl', function (xmlDocument) {
+    x2jObj = X2J.parseXml(xmlDocument); //X2J.parseXml(xmlDocument, '/');         
+    //x2jObj is called jNode   
 		console.log("Received buienradar update");
-		for (i in
-		x2jObj[0].buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation)
+		console.log(x2jObj);
+		for (i in x2jObj[0].buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation)
 		{
 			var station = x2jObj[0].buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation[i];
 			var stationnaam = station.stationnaam[0].jValue;
 			if (stationnaam == "Meetstation Eindhoven")
 			{
-				document.getElementById("tempnow").innerHTML = station.temperatuurGC[0].jValue + " &deg;C";
+				elements = document.getElementsByClassName('weathertemptoday');
+				for(var y=0; y<elements.length; y++)
+				{
+					elements[y].innerHTML = station.temperatuurGC[0].jValue + " &deg;C";
+				}
+				
 				var zin = station.icoonactueel[0].jAttr.zin;
-				document.getElementById("weathernow").innerHTML = zin;
+				elements = document.getElementsByClassName('weathertexttoday');
+				for(var y=0; y<elements.length; y++)
+				{
+					elements[y].innerHTML = zin;
+				}
+				document.getElementById("windnow").innerHTML = station.windsnelheidBF[0].jValue + " Bft<BR>" + station.windrichting[0].jValue;
 			}
 		}
-	});
-}
 
+	elements = document.getElementsByClassName('weatherlongtexttoday');
+	for(var y=0; y<elements.length; y++)
+	{
+		elements[y].innerHTML = x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_vandaag[0].samenvatting[0].jValue;
+	}
+
+    document.getElementById("temptomorrow").innerHTML =
+    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].mintemp[0].jValue + " / " + 
+	+ x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].maxtemp[0].jValue + " &deg;C";
+    
+    document.getElementById("tempaftertomorrow").innerHTML =
+    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].mintemp[0].jValue + " / " + 
+	+ x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].maxtemp[0].jValue + " &deg;C";
+
+    document.getElementById("tempafteraftertomorrow").innerHTML =
+    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].mintemp[0].jValue + " / " + 
+	+ x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].maxtemp[0].jValue + " &deg;C";
+});
+}

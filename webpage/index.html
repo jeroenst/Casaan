@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons.css">
+ <link rel="stylesheet" type="text/css" href="weather-icons/css/weather-icons-wind.css">
   <link rel="stylesheet" type="text/css" href="css/casaan.css">
  <head>
 <meta charset="UTF-8">
@@ -17,17 +18,16 @@
 <body>
 
 <div class="mainarea">
-<div class="submainarea">
-
+<div class="submainarea" id="mainpage">
 <div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='time.html';">
 <div class="boxtime" id="time"></div>
 <div class="boxdate" id="date"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='weather.html';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('weatherpage')">
 <div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
-<div class="boxtitle textextrasmall">Weer</div>
-<div class="boxweathertemp"><span id="tempnow"></span></div>
-<div class="boxweathertext"><span id="weathernow"></span></div>
-</div><span id="portraitbr1"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='domotica.html';">
+<div class="boxtitle">Weer</div>
+<div class="boxweathertemp weathertemptoday"></div>
+<div class="boxweathertext weathertexttoday"></div>
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='domotica.html';">
 <div class="boxtitle">Domotica</div>
 <div class="boxweathericon"><img src="icon/Bulb.png" width=60% height=60%></img></div>
 </div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='temperature.html';">
@@ -36,37 +36,122 @@
 <div class="boxlabel2small">ingesteld</div>
 <div class="boxvalue2"><div id="livingroomtemperatureset"></div></div>
 <div class="tempgauge" id="insidetempgauge"></div>
-</div><br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricity.html';">
+</div><br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('sunelectricitypage')">
 <div class="boxtitle">Zonnestroom</div>
 <canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="sunelectricitycurrent"></div>
 <div class="boxlabel2small">vandaag</div>
 <div class="boxvalue2" id="sunelectricitytoday"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='electricity.html';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('electricitypage')">
 <div class="boxtitle">Netstroom</div>
 <canvas class="boxverticalbar" id="electricitybar"></canvas>
 <div class="boxvalue" id="electricitycurrent"></div>
 <div class="boxlabel2small">vandaag</div>
 <div class="boxvalue2" id="electricityusedtoday"></div>
-</div><span id="portraitbr2"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='water.html';">
-<div class="boxtitle">Water</div>
-<canvas id="waterbar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="watercurrent"></div>
-<div class="boxlabel2small">vandaag</div>
-<div class="boxvalue2" id="watertoday"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='gas.html';">
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('gaspage')">
 <div class="boxtitle">Gas</div>
 <canvas id="gasbar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="gascurrent"></div>
 <div class="boxlabel2small">vandaag</div>
 <div class="boxvalue2" id="gastoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('waterpage')">
+<div class="boxtitle">Water</div>
+<canvas id="waterbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="watercurrent"></div>
+<div class="boxlabel2small">vandaag</div>
+<div class="boxvalue2" id="watertoday"></div>
+</div>
 </div>
 
+<div class="submainarea" id="overviewpage" style="display:none">
+<div id="electricitytoday" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=hours';">
+<div class="boxtitle">Dag</div>
+<canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="sunelectricitytoday"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="providedelectricitytoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=days';">
+<div class="boxtitle">Week</div>
+<canvas class="boxverticalbar" id="electricitybar"></canvas>
+<div class="boxvalue" id="sunelectricityweek"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="providedelectricitythisweek"></div>
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=weeks';">
+<div class="boxtitle">Maand</div>
+<canvas id="waterbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="watercurrent"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="watertoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=years';">
+<div class="boxtitle">Jaar</div>
+<canvas id="gasbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="gascurrent"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="gastoday"></div>
 </div>
+<br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=hourslastweek';">
+<div class="boxtitle">Gisteren</div>
+<canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="sunelectricitycurrent"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="sunelectricitytoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html';">
+<div class="boxtitle">Vorige week</div>
+<canvas class="boxverticalbar" id="electricitybar"></canvas>
+<div class="boxvalue" id="electricitycurrent"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="electricityusedtoday"></div>
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html';">
+<div class="boxtitle">Vorige maand</div>
+<canvas id="waterbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="watercurrent"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="watertoday"></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html';">
+<div class="boxtitle">Vorig jaar</div>
+<canvas id="gasbar" class="boxverticalbar"></canvas>
+<div class="boxvalue" id="gascurrent"></div>
+<div class="boxlabel2small">Teruggeleverd</div>
+<div class="boxvalue2" id="gastoday"></div>
+</div>
+</div>
+
+<div class="submainarea" id="weatherpage" style="display:none"><div class="floating-box">
+<div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
+<div class="boxtitle">Nu</div>
+<div class="boxweathertemp weathertemptoday"></div>
+<div class="boxweathertext weathertexttoday"></div>
+</div><div class="floating-box">
+<div class="boxtitle">Wind</div>
+<div class="boxweathericon"><span class="wi wi-wind towards-0-deg"></span></div>
+<div class="boxweathertemp"><span id="windnow"></span></div>
+</div><span id="portraitbr1"></span><div class="wide-floating-box" onclick="location.href='weathertext.html';">
+<div class="boxtitle">Weerbericht</div>
+<div class="wideboxtext weatherlongtexttoday"><span class="weathertexttoday"></span></div>
+</div><br><div class="floating-box">
+<div class="boxtitle">Morgen</div>
+<div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
+<div class="boxweathertemp"><span id="temptomorrow"></span><br><span id="weathertomorrow"></span></div>
+</div><div class="floating-box">
+<div class="boxtitle">Overmorgen</div>
+<div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
+<div class="boxweathertemp"><span id="tempaftertomorrow"></span><br><span id="weatheraftertomorrow"></span></div>
+</div><span id="portraitbr2"></span><div class="floating-box">
+<div class="boxtitle">Dag na overmorgen</div>
+<div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
+<div class="boxweathertemp"><span id="tempafteraftertomorrow"></span><br><span id="weatherafteraftertomorrow"></span></div>
+</div><div class="floating-box">
+<div class="boxcenterbig">
+</div>
+</div>
+</div>
+</div>
+
+
 </div>
 <ul class="tab">
 	<div></div>
-	<div><li class="label"><a href="index.html">Casaan</a></li></div>
+	<div><li class="label"><a onclick="showPage('mainpage')">Casaan</a></li></div>
 	<div></div>
 </ul>
 
