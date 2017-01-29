@@ -30,7 +30,7 @@ string mysqlusername = "casaan";
 string mysqlpassword = "casaan"; /* set me first */
 string mysqldatabase = "casaan";
 string datafile = "watermeter.dat";
-int  port = 5883;
+int  port = 58882;
 
 #define BUFFER_SIZE 1024
 #define on_error(...) { fprintf(stderr, __VA_ARGS__); fflush(stderr); exit(1); }
@@ -78,7 +78,6 @@ int writetodatabase(double waterreading_m3, double waterflow_m3h)
 
 int create_tcpserver()
 {
-	int port = 58882;
 	int server_fd, err;
 	
 	struct sockaddr_in server, client;
@@ -94,11 +93,17 @@ int create_tcpserver()
 	int opt_val = 1;
 	setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt_val, sizeof opt_val);
 
-	err = bind(server_fd, (struct sockaddr *) &server, sizeof(server));
-	if (err < 0) on_error("Could not bind socket\n");
+	while (err = bind(server_fd, (struct sockaddr *) &server, sizeof(server)) < 0)
+	{
+		if (err < 0) on_error("Could not bind socket\n");
+		sleep(1);
+	}
 
-	err = listen(server_fd, 128);
-	if (err < 0) on_error("Could not listen on socket\n");
+	while (err = listen(server_fd, 128) < 0)
+	{
+		on_error("Could not listen on socket\n");
+		sleep(1);
+	}
 
 	printf("TCP Server is listening on %d\n", port);
 
@@ -326,7 +331,7 @@ int   main(int argc, char * argv[])
 			if(ioctl(fd, TIOCMIWAIT, TIOCM_CTS) < 0)
 			{
 				printf("ioctl(TIOCMIWAIT) failed: %d: %s\n", errno, strerror(errno));
-				return -1;
+				sleep(1);
 			}
 
 			pctsstate = ctsstate;

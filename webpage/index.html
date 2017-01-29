@@ -8,18 +8,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Casaan</title>
 
-
-
-
-
-
 </head>
 
 <body>
 
 <div class="mainarea">
 <div class="submainarea" id="mainpage">
-<div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='time.html';">
+<div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('timepage')">
 <div class="boxtime" id="time"></div>
 <div class="boxdate" id="date"></div>
 </div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('weatherpage')">
@@ -27,10 +22,10 @@
 <div class="boxtitle">Weer</div>
 <div class="boxweathertemp weathertemptoday"></div>
 <div class="boxweathertext weathertexttoday"></div>
-</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='domotica.html';">
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('domoticapage')">
 <div class="boxtitle">Domotica</div>
 <div class="boxweathericon"><img src="icon/Bulb.png" width=60% height=60%></img></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='temperature.html';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('temperaturepage')">
 <div class="boxtitle">Huiskamer</div>
 <div class="boxvalue"><div id="livingroomtemperaturenow"></div></div>
 <div class="boxlabel2small">ingesteld</div>
@@ -64,50 +59,50 @@
 </div>
 
 <div class="submainarea" id="overviewpage" style="display:none">
-<div id="electricitytoday" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=hours';">
+<div id="electricitytoday" class="floating-box" style="cursor: pointer; cursor: hand;"  onclick="showPage('graphdaypage')">
 <div class="boxtitle">Dag</div>
 <canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="sunelectricitytoday"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="providedelectricitytoday"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=days';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphweekpage')">
 <div class="boxtitle">Week</div>
 <canvas class="boxverticalbar" id="electricitybar"></canvas>
 <div class="boxvalue" id="sunelectricityweek"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="providedelectricitythisweek"></div>
-</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=weeks';">
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphmonthpage')">
 <div class="boxtitle">Maand</div>
 <canvas id="waterbar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="watercurrent"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="watertoday"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=years';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphyearpage')">
 <div class="boxtitle">Jaar</div>
 <canvas id="gasbar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="gascurrent"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="gastoday"></div>
 </div>
-<br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html?type=hourslastweek';">
+<br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousdaypage')">
 <div class="boxtitle">Gisteren</div>
 <canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="sunelectricitycurrent"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="sunelectricitytoday"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousweekpage')">
 <div class="boxtitle">Vorige week</div>
 <canvas class="boxverticalbar" id="electricitybar"></canvas>
 <div class="boxvalue" id="electricitycurrent"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="electricityusedtoday"></div>
-</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html';">
+</div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousmonthpage')">
 <div class="boxtitle">Vorige maand</div>
 <canvas id="waterbar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="watercurrent"></div>
 <div class="boxlabel2small">Teruggeleverd</div>
 <div class="boxvalue2" id="watertoday"></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="location.href='sunelectricitygraph.html';">
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousyearpage')">
 <div class="boxtitle">Vorig jaar</div>
 <canvas id="gasbar" class="boxverticalbar"></canvas>
 <div class="boxvalue" id="gascurrent"></div>
@@ -145,6 +140,42 @@
 </div>
 </div>
 </div>
+
+
+<div class="submainarea" id="timepage" style="display:none"><div class="floating-box">
+<div class="boxtitle">Lokaal</div>
+<div class="boxtime" id="timenl"></div>
+<div class="boxdate" id="datenl"></div>
+</div><div class="floating-box">
+<div class="boxtitle">Londen</div>
+<div class="boxtime" id=timeen></div>
+<div class="boxdate" id="dateen"></div>
+</div><div class="floating-box">
+<div class="boxtitle">New York</div>
+<div class="boxtime" id=timeny></div>
+<div class="boxdate" id="dateny"></div>
+</div><div class="floating-box">
+<div class="boxtitle">Changhai</div>
+<div class="boxtime" id=timech></div>
+<div class="boxdate" id="datech"></div>
+</div><br><div class="floating-box">
+<div class="boxtitle">Zon</div>
+<div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
+<div class="boxlowertext"><span id="sun">Op: -<BR>Onder: -</span></div>
+</div><div class="floating-box">
+<div class="boxtitle">Maan</div>
+<div class="boxweathericon"><span class="wi wi-moon-waxing-crescent-2"></span></div>
+<div class="boxlowertext"><span id="moon">Op: -<BR>Onder: -</span></div>
+</div><div class="floating-box">
+<div class="boxtitle">Tij</div>
+<div class="boxweathericon"><span class="wi wi-flood"></span></div>
+<div class="boxlowertext"><span id="tij">Hoog: -<BR>Laag: -</span></div>
+</div><div class="floating-box" onclick="location.href='index.html';">
+<div class="boxcenterbig"></div>
+</div></div>
+
+<div class="submainarea" id="graphpage" style="display:none"><div class="fullscreen-floating-box">
+<div style="width:100%; height:100%" id="plottygraph"></div></div>
 </div>
 
 
@@ -152,15 +183,17 @@
 <ul class="tab">
 	<div></div>
 	<div><li class="label"><a onclick="showPage('mainpage')">Casaan</a></li></div>
-	<div></div>
+    <div><li class="backbutton" style="display:none"><a href="javascript:void(0)" onclick="showPage('previouspage')">Terug</a></li></div>
 </ul>
 
+<script src="js/plotty.js"></script>
 <script src="js/jquery.min.js"></script>
 <script src="js/jquery.tempgauge.js"></script>
 <script src="js/xml2json.js"></script>
 <script src="rgraph/libraries/RGraph.common.core.js"></script>
 <script src="rgraph/libraries/RGraph.vprogress.js"></script>
 <script src="js/casaan.js"></script>
+<script src="suncalc/suncalc.js"></script>
  <script>
 
 
@@ -175,7 +208,10 @@ $( document ).ready(function() {
 	updateTime();
 	updateWeather();
 	startcasaanwebsocket();
+	starttimepage();
 	createBars();
+//	showPage("mainpage");
+	
 });
 
 

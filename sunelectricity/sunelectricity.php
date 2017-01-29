@@ -41,11 +41,11 @@ include("PhpSerialModbus/PhpSerialModbus.php");
 $modbus = new PhpSerialModbus;
 
 
-// Initialize websocket
-$tcpsocket = stream_socket_server("tcp://0.0.0.0:58883", $errno, $errstr);
-if (!$tcpsocket) {
-    echo "$errstr ($errno)<br />\n";
-    exit(1);
+// Initialize tcpsocket
+while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:58883", $errno, $errstr)) 
+{
+    echo "$errstr ($errno)\n";
+    sleep(1);
 }
 
 $tcpsockets = array();

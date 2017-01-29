@@ -9,6 +9,8 @@ $casaandata = json_decode ('
 	"gasmeter": {
 	},
 	"watermeter": {
+	},
+	"temperature": {
 	}
 }
 ', true);
