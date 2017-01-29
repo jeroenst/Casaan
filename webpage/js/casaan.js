@@ -177,7 +177,7 @@ function startcasaanwebsocket()
             {
 				var data = JSON.parse(event.data);
 				
-				console.log ("Received from casaan server: " + event.data);
+// 				console.log ("Received from casaan server: " + event.data);
 				casaandata = Object.assign(casaandata,data);
 				if (data["electricitymeter"])
 				{
@@ -318,6 +318,10 @@ function startcasaanwebsocket()
 					sunelectricitybar.grow();
 				}
 
+				if (data["buienradarnl"])
+				{
+					updateWeather()
+				}
 				if (data["temperature"])
 				{
 					console.log("Received temperature update");
@@ -592,55 +596,48 @@ document.getElementById("date").innerHTML = today;
 // Get data from buienradar.nl
 
 function updateWeather() {
-var x2jObj = null;
-$.get('https://xml.buienradar.nl', function (xmlDocument) {
-    x2jObj = X2J.parseXml(xmlDocument); //X2J.parseXml(xmlDocument, '/');         
-	casaandata = Object.assign (casaandata, x2jObj[0]);
-    //x2jObj is called jNode   
 		console.log("Received buienradar update");
-		console.log(x2jObj);
-		for (i in casaandata.buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation)
+		for (i in casaandata.buienradarnl.weergegevens.actueel_weer.weerstations)
 		{
-			var station = casaandata.buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation[i];
-			var stationnaam = station.stationnaam[0].jValue;
+			var station = casaandata.buienradarnl.weergegevens.actueel_weer.weerstations[i].weerstation;
+			var stationnaam = station.stationnaam[0];
 			if (stationnaam == "Meetstation Eindhoven")
 			{
 				elements = document.getElementsByClassName('weathertemptoday');
 				for(var y=0; y<elements.length; y++)
 				{
-					elements[y].innerHTML = station.temperatuurGC[0].jValue + " &deg;C";
+					elements[y].innerHTML = station.temperatuurGC[0] + " &deg;C";
 				}
 				
-				var zin = station.icoonactueel[0].jAttr.zin;
+				var zin = station.icoonactueel["@attributes"].zin;
 				elements = document.getElementsByClassName('weathertexttoday');
 				for(var y=0; y<elements.length; y++)
 				{
 					elements[y].innerHTML = zin;
 				}
-				document.getElementById("windnow").innerHTML = station.windsnelheidBF[0].jValue + " Bft<BR>" + station.windrichting[0].jValue;
+				document.getElementById("windnow").innerHTML = station.windsnelheidBF + " Bft<BR>" + station.windrichting;
 			}
 		}
 
 	elements = document.getElementsByClassName('weatherlongtexttoday');
 	for(var y=0; y<elements.length; y++)
 	{
-		elements[y].innerHTML = casaandata.buienradarnl[0].weergegevens[0].verwachting_vandaag[0].samenvatting[0].jValue;
+		elements[y].innerHTML = casaandata.buienradarnl.weergegevens.verwachting_vandaag.samenvatting;
 	}
 
     document.getElementById("temptomorrow").innerHTML =
-    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].mintemp[0].jValue + " / " + 
-	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].maxtemp[0].jValue + " &deg;C";
+    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus1"].mintemp + " / " + 
+	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus1"].maxtemp + " &deg;C";
     
     document.getElementById("tempaftertomorrow").innerHTML =
-    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].mintemp[0].jValue + " / " + 
-	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].maxtemp[0].jValue + " &deg;C";
+    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus2"].mintemp + " / " + 
+	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus2"].maxtemp + " &deg;C";
 
     document.getElementById("tempafteraftertomorrow").innerHTML =
-    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].mintemp[0].jValue + " / " + 
-	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].maxtemp[0].jValue + " &deg;C";
+    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus3"].mintemp + " / " + 
+	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus3"].maxtemp + " &deg;C";
 
     document.getElementById("tempafterafteraftertomorrow").innerHTML =
-    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus4"][0].mintemp[0].jValue + " / " + 
-	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus4"][0].maxtemp[0].jValue + " &deg;C";
-});
+    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].mintemp + " / " + 
+	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].maxtemp + " &deg;C";
 }

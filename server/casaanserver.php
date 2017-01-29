@@ -1,5 +1,7 @@
 <?php
 
+$buienradartimeout = 10; // In minutes
+
 $casaandata = json_decode ('
 {
 	"electricitymeter": {
@@ -11,10 +13,15 @@ $casaandata = json_decode ('
 	"watermeter": {
 	},
 	"temperature": {
+	},
+	"buienradarnl": {
 	}
 }
 ', true);
 
+pcntl_signal(SIGTERM, "sig_handler");
+pcntl_signal(SIGHUP,  "sig_handler");
+pcntl_signal(SIGUSR1, "sig_handler");
 
 error_reporting(E_ALL);
 
@@ -53,8 +60,26 @@ $smartmetersocket = null;
 $watermetersocket = null;
 $sunelectricitysocket = null;
 $temperaturesocket = null;
+$buienradarsocket = null;
+
+$buienradarupdatetimeout = 0;
+$reconnecttimeout = 0;
+
 
 while (1) {
+    if ($buienradarupdatetimeout < time() - (60 * $buienradartimeout))
+    {
+      if ($buienradarsocket == null)
+      {
+              echo ("Connecting to buienradar server...\n");
+              $buienradarsocket = socketconnect('xml.buienradar.nl', 80);
+              $buienradarupdatetimeout = time();
+      }
+    }
+    
+    if ($reconnecttimeout < time() - 2)
+    {
+    $reconnecttimeout = time();
     if ($smartmetersocket == null)
     {
             echo ("Connecting to smartmeter server...\n");
@@ -78,13 +103,17 @@ while (1) {
             echo ("Connecting to temperature server...\n");
             $temperaturesocket = socketconnect('127.0.0.1', 58884);
     }
+    }
 
     $write = $writesocks;
     $read = $readsocks;
     $null = null;
 
-    sleep (1);
-    if (socket_select($read, $write, $null, 10))
+    if (socket_select($read, $write, $null, 10) === 0)
+    {
+      echo ("Select timeout!!\n");
+    }
+    else
     {
         foreach ($write as $sock) 
         {
@@ -103,6 +132,7 @@ while (1) {
             socketreceivedata($sock);
         }
     }
+    
 }
 
 foreach ($socks as $port => $sock) {
@@ -128,6 +158,7 @@ function socketconnected($sock)
     global $watermetersocket;
     global $smartmetersocket;
     global $sunelectricitysocket;
+    global $buienradarsocket;
     global $temperaturesocket;
     
                 if (($sock == $smartmetersocket))
@@ -150,6 +181,12 @@ function socketconnected($sock)
                     echo ("Connected to temperature server...\n");
                 }
 
+                if (($sock == $buienradarsocket))
+                {
+                    echo ("Connected to buienradar server...\n");
+                    socket_write($buienradarsocket, "GET / HTTP/1.1\nHost: xml.buienradar.nl\n\n");
+                }
+
     if(($key = array_search($sock, $writesocks)) !== false) {
                   unset($writesocks[$key]);
     }
@@ -162,11 +199,13 @@ function socketreceivedata($sock)
     global $smartmetersocket;
     global $sunelectricitysocket;
     global $temperaturesocket;
+    global $buienradarsocket;
     global $websocket;
     global $readsocks;
     global $casaandata;
     global $activewebsockets;
-    
+    global $buienradarsocket;
+sleep(1);
             if (($sock == $websocket))
             {
                 // IF DATA IS RECEIVED ON WEBSOCKET A NEW CLIENT HAS CONNECTED
@@ -174,9 +213,9 @@ function socketreceivedata($sock)
                 socket_set_nonblock($sock);
                 echo ("Connection from websocket client accepted...\n");
             }
-            else if (socket_recv($sock, $recvdata, 2048, MSG_DONTWAIT) > 0)
+            else if (socket_recv($sock, $recvdata, 100000, MSG_DONTWAIT) > 0)
             {
-                if (($sock == $smartmetersocket))
+                if ($sock == $smartmetersocket)
                 {
                         echo ("Received data from smartmeter:\n".$recvdata."\n\n");
                         $casaandata["electricitymeter"]=array_merge($casaandata["electricitymeter"], json_decode($recvdata, true)["electricitymeter"]);
@@ -185,25 +224,43 @@ function socketreceivedata($sock)
                         sendtowebsockets("{ \"gasmeter\":".json_encode($casaandata["gasmeter"])."}");
                 }
                 
-                else if (($sock == $watermetersocket))
+                else if ($sock == $watermetersocket)
                 {
                         echo ("Received data from watermeter:\n".$recvdata."\n\n");
                         $casaandata["watermeter"]=array_merge($casaandata["watermeter"], json_decode($recvdata, true)["watermeter"]);
                         sendtowebsockets("{ \"watermeter\":".json_encode($casaandata["watermeter"])."}");
                 }
  
-                else if (($sock == $sunelectricitysocket))
+                else if ($sock == $sunelectricitysocket)
                 {
                         echo ("Received data from sunelectricity:\n".$recvdata."\n\n");
                         $casaandata["sunelectricity"]=array_merge($casaandata["sunelectricity"], json_decode($recvdata, true)["sunelectricity"]);
                         sendtowebsockets("{ \"sunelectricity\":".json_encode($casaandata["sunelectricity"])."}");
                 }
                 
-                else if (($sock == $temperaturesocket))
+                else if ($sock == $temperaturesocket)
                 {
                         echo ("Received data from temperature:\n".$recvdata."\n\n");
                         $casaandata["temperature"]=array_merge($casaandata["temperature"], json_decode($recvdata, true)["temperature"]);
                         sendtowebsockets("{ \"temperature\":".json_encode($casaandata["temperature"])."}");
+                }
+                else if ($sock == $buienradarsocket)
+                {
+                        static $buienradardata;
+                        if ($first) $buienradardata = "";
+                        $buienradardata .= $recvdata;
+                        if (strpos($recvdata, '</buienradarnl>') !== false)
+                        {
+                          $first = strpos($buienradardata, '<buienradarnl>');
+                          $buienradardata = substr($buienradardata, $first);
+                          echo ("Received data from buienradar:\n".$buienradardata."\n\n");
+                          $simpleXml = simplexml_load_string($buienradardata);
+                          simplexml_to_array($simpleXml, $array);
+                          $casaandata["buienradarnl"]= $array["buienradarnl"];
+                          sendtowebsockets(json_encode($array));
+                          $buienradardata = "";
+                          socketdisconnect ($sock);
+                        }
                 }
                 else
                 {		
@@ -252,6 +309,11 @@ function socketreceivedata($sock)
                         echo ("Sending temperaturedata to websocketclient...\n");
                         socket_write($sock, websocketEncode(json_encode($casaandata["temperature"])));
                       }
+                      if (trim($receivedMessage) == "getbuienradardata")
+                      {
+                        echo ("Sending buienradardata to websocketclient...\n");
+                        socket_write($sock, websocketEncode(json_encode($casaandata["buienradar"])));
+                      }
                     }
                  }
             }
@@ -262,12 +324,18 @@ function socketreceivedata($sock)
             }
 }
 
+function socketdisconnect($sock)
+{
+  socketdisconnected($sock,0);
+}
+
 function socketdisconnected($sock, $errno)
 {
     global $readsocks;
     global $writesocks;
     global $activewebsockets;
     global $watermetersocket;
+    global $buienradarsocket;
     global $smartmetersocket;
     global $sunelectricitysocket;
     global $temperaturesocket;
@@ -296,6 +364,11 @@ function socketdisconnected($sock, $errno)
                 {
                     echo ("Disconnected from temperature ($reason)...\n");
                     $temperaturesocket = null;
+                }
+                else if (($sock == $buienradarsocket))
+                {
+                    echo ("Disconnected from buienradar ($reason)...\n");
+                    $buienradarsocket = null;
                 }
                 else
                 {
@@ -466,4 +539,93 @@ function websocketProcessHeader($message)
                     }
                     else return NULL;
 }
+
+
+function updatebuienradar()
+{
+global $casaandata;
+echo ("Updating buienradar...\n");
+$fileContents= file_get_contents('http://xml.buienradar.nl');
+//$fileContents = str_replace(array("\n", "\r", "\t"), '', $fileContents);
+//$fileContents = trim(str_replace('"', "'", $fileContents));
+$simpleXml = simplexml_load_string($fileContents);
+
+simplexml_to_array($simpleXml, $array);
+$casaandata["buienradarnl"]= $array["buienradarnl"];
+sendtowebsockets(json_encode($array));
+}
+
+function simplexml_to_json ($xml)
+{
+  simplexml_to_array ($xml, $array);
+  return json_encode ($array);
+}
+
+function simplexml_to_array ($xml, &$array) {
+
+  // Empty node : <node></node>
+  //$array[$xml->getName()][] = '';
+
+  // Nodes with children
+  foreach ($xml->children() as $child) {
+    $nrofsamechilds = 0;
+    foreach ($xml->children() as $searchchild)
+    {
+      if ($child->getName() == $searchchild->getName()) $nrofsamechilds++;
+    } 
+    if ($nrofsamechilds > 1)
+    {
+     simplexml_to_array($child, $array[$xml->getName()][]);
+    }
+    else
+    {
+     simplexml_to_array($child, $array[$xml->getName()]);
+    }
+  }
+
+  // Node attributes
+  foreach ($xml->attributes() as $key => $att) {
+      $array[$xml->getName()]['@attributes'][$key] = (string) $att;
+  }
+
+  // Node with value
+  if (trim((string) $xml) != '') {
+    $array[$xml->getName()][] = (string) $xml; 
+  }
+
+}
+
+
+
+function sig_handler($signo)
+{
+  global $readsocks;
+  global $writesocks;
+
+     switch ($signo) {
+         case SIGTERM:
+             // handle shutdown tasks
+             break;
+         case SIGHUP:
+             // handle restart tasks
+             break;
+         case SIGUSR1:
+             // handle sigusr1 tasks
+             break;
+         default:
+             // handle all other signals
+     }
+
+     foreach ($writesocks as $sock)
+     {
+          fclose($sock);
+     }
+     foreach ($readsock as $sock) {
+          fclose($sock);
+     }
+    exit(0);
+}
+
+
+
 ?>  
