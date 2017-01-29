@@ -89,6 +89,59 @@ function autochangesizes()
 		(clientHeight / 3.5) + "px";
 	}
 
+					var canvas = document.getElementById('insidetemperaturegauge');
+
+					if (canvas == null)
+					{
+						try
+						{
+							ctx = canvas.getContext('2d');
+							ctx.clearRect(0, 0, canvas.width, canvas.height);
+						}
+						catch (err)
+						{
+						}
+					}
+
+					$('#insidetemperaturegauge').tempGauge({
+                        width: clientHeight *0.4,
+                        borderWidth:2,
+                        showLabel:false,
+                        showScale:false,
+                        borderColor: "#EEEEEE",
+                        maxTemp: 25,
+                        minTemp: 15,
+					});
+
+					
+	var d = new Date();
+	d.setDate(d.getDate()+1);
+	var daynames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+	elements = document.getElementsByClassName('nametoday+1');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+	d.setDate(d.getDate()+1);
+	elements = document.getElementsByClassName('nametoday+2');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+	d.setDate(d.getDate()+1);
+	elements = document.getElementsByClassName('nametoday+3');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+	d.setDate(d.getDate()+1);
+	elements = document.getElementsByClassName('nametoday+4');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+
+					
 }
 
 var casaandata = {};
@@ -221,6 +274,9 @@ function startcasaanwebsocket()
 				    {
 				    }
 
+					if (m3h == null) m3h = "-";
+					if (m3today == null) m3today = "-";
+
 					if (m3h == "-")
 					{
 						lmin = "-";
@@ -231,7 +287,6 @@ function startcasaanwebsocket()
 						lmin = Math.round((m3h * 1000) /6)/10;
 						lminbar = lmin;
 					}
-					if (m3today == null) m3today = "-";
 
                     document.getElementById('watercurrent').innerHTML = lmin + " liter/min";
                     document.getElementById('watertoday').innerHTML = m3today + " m3";
@@ -269,13 +324,15 @@ function startcasaanwebsocket()
 					
 					var tempnow = "-";
 					var tempset = "-";
+
+					var canvas = document.getElementById('insidetemperaturegauge');
 					
 					if (canvas != null)
 					{
 						ctx = canvas.getContext('2d');
 						ctx.clearRect(0, 0, canvas.width, canvas.height);
 					}
-
+					
 					try
 					{
 						tempnow = data["temperature"]["livingroom"]["now"];
@@ -290,11 +347,6 @@ function startcasaanwebsocket()
 						document.getElementById('insidetempgauge').innerHTML = '<div id="insidetemperaturegauge">0</div>';
 						document.getElementById('livingroomtemperatureset').innerHTML = "- &deg;C";
 					}
-
-					var canvas = document.getElementById('insidetemperaturegauge');
-					
-					
-
 
 
 					$('#insidetemperaturegauge').tempGauge({
@@ -543,12 +595,13 @@ function updateWeather() {
 var x2jObj = null;
 $.get('https://xml.buienradar.nl', function (xmlDocument) {
     x2jObj = X2J.parseXml(xmlDocument); //X2J.parseXml(xmlDocument, '/');         
+	casaandata = Object.assign (casaandata, x2jObj[0]);
     //x2jObj is called jNode   
 		console.log("Received buienradar update");
 		console.log(x2jObj);
-		for (i in x2jObj[0].buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation)
+		for (i in casaandata.buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation)
 		{
-			var station = x2jObj[0].buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation[i];
+			var station = casaandata.buienradarnl[0].weergegevens[0].actueel_weer[0].weerstations[0].weerstation[i];
 			var stationnaam = station.stationnaam[0].jValue;
 			if (stationnaam == "Meetstation Eindhoven")
 			{
@@ -571,19 +624,23 @@ $.get('https://xml.buienradar.nl', function (xmlDocument) {
 	elements = document.getElementsByClassName('weatherlongtexttoday');
 	for(var y=0; y<elements.length; y++)
 	{
-		elements[y].innerHTML = x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_vandaag[0].samenvatting[0].jValue;
+		elements[y].innerHTML = casaandata.buienradarnl[0].weergegevens[0].verwachting_vandaag[0].samenvatting[0].jValue;
 	}
 
     document.getElementById("temptomorrow").innerHTML =
-    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].mintemp[0].jValue + " / " + 
-	+ x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].maxtemp[0].jValue + " &deg;C";
+    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].mintemp[0].jValue + " / " + 
+	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus1"][0].maxtemp[0].jValue + " &deg;C";
     
     document.getElementById("tempaftertomorrow").innerHTML =
-    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].mintemp[0].jValue + " / " + 
-	+ x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].maxtemp[0].jValue + " &deg;C";
+    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].mintemp[0].jValue + " / " + 
+	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus2"][0].maxtemp[0].jValue + " &deg;C";
 
     document.getElementById("tempafteraftertomorrow").innerHTML =
-    x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].mintemp[0].jValue + " / " + 
-	+ x2jObj[0].buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].maxtemp[0].jValue + " &deg;C";
+    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].mintemp[0].jValue + " / " + 
+	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus3"][0].maxtemp[0].jValue + " &deg;C";
+
+    document.getElementById("tempafterafteraftertomorrow").innerHTML =
+    casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus4"][0].mintemp[0].jValue + " / " + 
+	+ casaandata.buienradarnl[0].weergegevens[0].verwachting_meerdaags[0]["dag-plus4"][0].maxtemp[0].jValue + " &deg;C";
 });
 }

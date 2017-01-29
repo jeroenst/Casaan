@@ -170,7 +170,7 @@ int   main(int argc, char * argv[])
 
 	double waterreading_m3 = 0;
 	waterreading_m3 = read_waterreading (datafile.c_str());
-	double waterflow_m3h = 0;
+	double waterflow_m3h = -1;
 
 	
 	int pipefd[2];
