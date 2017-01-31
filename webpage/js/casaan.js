@@ -143,11 +143,115 @@ function autochangesizes()
 
 					
 }
+function createBars()
+{
+    waterbar = new RGraph.VProgress(
+		{
+			id: 'waterbar',
+            min: 0,
+            max: 10,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#699:#5ff:#5ff)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+	
+    gasbar = new RGraph.VProgress(
+		{
+			id: 'gasbar',
+            min: 0,
+            max: 3,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#996:#ff5:#ff5)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+	
+    electricitybar = new RGraph.VProgress(
+		{
+			id: 'electricitybar',
+            min: 0,
+            max: 2000,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#777:#BBB:#BBB)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+	
+    sunelectricitybar = new RGraph.VProgress(
+		{
+			id: 'sunelectricitybar',
+            min: 0,
+            max: 2000,
+            value: 0,
+            options: {
+                textAccessible: true,
+				tickmarks: false,
+				shadow: false,
+				colors: ['Gradient(#696:#7d7:#7d7)'],
+				gutterTop: 0,
+				gutterBottom: 0,
+				gutterLeft: 0,
+				gutterRight: 0
+				
+        }
+    }).draw();
+
+	var overviewpagebar = [];
+	for (i=0; i < 8; i++)
+	{
+		overviewpagebar[i] = new RGraph.VProgress(
+			{
+				id: 'overviewpagebar'+i,
+				min: 0,
+				max: 10,
+				value: 0,
+				options: {
+					textAccessible: true,
+					tickmarks: false,
+					shadow: false,
+					colors: ['Gradient(#699:#5ff:#5ff)'],
+					gutterTop: 0,
+					gutterBottom: 0,
+					gutterLeft: 0,
+					gutterRight: 0
+				
+			}
+		}).draw();
+	}
+}
 
 var casaandata = {};
 
-function startcasaanwebsocket()
+function startcasaan()
 {
+	autochangesizes();
+
+
     window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;   //compatibility for firefox and chrome
     var myIP;
     var pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};
@@ -176,7 +280,8 @@ function startcasaanwebsocket()
             ws.onmessage = function (event)
             {
 				var data = JSON.parse(event.data);
-				
+				objectnulltodash(data);
+			
 // 				console.log ("Received from casaan server: " + event.data);
 				casaandata = Object.assign(casaandata,data);
 				if (data["electricitymeter"])
@@ -288,7 +393,7 @@ function startcasaanwebsocket()
 						lminbar = lmin;
 					}
 
-                    document.getElementById('watercurrent').innerHTML = lmin + " liter/min";
+                    document.getElementById('watercurrent').innerHTML = lmin + " l/min";
                     document.getElementById('watertoday').innerHTML = m3today + " m3";
                     waterbar.value = lminbar;
                     waterbar.grow();
@@ -372,6 +477,12 @@ function startcasaanwebsocket()
                   setTimeout(function(){startcasaanwebsocket();}, 5000);
              };
            }
+
+	setInterval(updateTime, 1000);
+	setInterval(updateWeather, 600000);
+	updateTime();
+	starttimepage();
+	createBars();
 }
 
 var pageTimer;
@@ -380,14 +491,80 @@ var graphsource = "";
 var graphtitle = "";
 var graphylabel = "";
 
+function objectnulltodash(obj)
+{
+   for(key in obj){
+        if(obj[key] instanceof Object){
+            objectnulltodash(obj[key]);
+        }else{
+            if (obj[key] == null) obj[key] = "-";
+        }
+    }	
+}
+
+function fillOverviewPage(nodename)
+{
+	elements = document.getElementById("overviewpage").getElementsByClassName("floating-box");
+
+	var titels = [];
+	var unit = "";
+	var jsonitems = [];
+	var jsonunit = "";
+
+	if ((nodename == "sunelectricity") || (nodename == "electricity"))
+	{
+		titels = ["Vandaag", "Week", "Maand", "Jaar", "Gisteren", "Vorige Week", "Vorige Maand", "Vorig Jaar"];
+		unit = "kwh"
+		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
+		jsonunit = "kwh";
+	}
+	
+	if ((nodename == "gas") || (nodename == "water"))
+	{
+		titels = ["Vandaag", "Week", "Maand", "Jaar", "Gisteren", "Vorige Week", "Vorige Maand", "Vorig Jaar"];
+		unit = "m3"
+		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
+		jsonunit = "m3";
+	}
+
+	if (nodename == "temperature")
+	{
+		titels = ["Huiskamer", "Slaapkamer", "Badkamer", "Zolder", "Buiten", "Koelkast", "Diepvriezer", "CV"];
+		unit = " &deg;C"
+		jsonitems = ["huiskamer", "slaapkamer", "badkamer", "zolder", "buiten", "koelkast", "diepvriezer", "cv"];
+		jsonunit = "";
+	}
+
+	for (var key = 0; key < elements.length; key++)
+	{
+		var value = null;
+		try
+		{
+			value = casaandata[nodename][jsonitems[key]][jsonunit];
+		}
+		catch (err)
+		{
+			
+		}
+		if (value) value = value + " " + unit;
+		else value = "- " + unit;
+		
+		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
+		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value;
+		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = "";
+		elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = "";
+		elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = "";
+	}
+}
+
 function showPage(pageName) {
+	if (pageName == '') pageName = 'mainpage';
 	if (pageName == "previouspage")
 	{
 		previousPageName.pop();
-		var gotopage = previousPageName.pop();
-		if (gotopage == 'mainpage') previousPageName = ['mainpage'];
-	 	showPage (gotopage);
-		return 0;
+		var pageName = previousPageName.pop();
+		if (pageName == 'mainpage') previousPageName = ['mainpage'];
+		if (pageName == '') pageName = 'mainpage';
 	}
 	if (pageName == "mainpage")
 	{
@@ -409,85 +586,97 @@ function showPage(pageName) {
 	{
 		graphsource = "sunelectricity";
 		graphtitle = "Opgewekte Zonnestroom";
-		graphylabel = "kWh";
-    	document.getElementById("overviewpage").style.display = "inline-block"; 
+		graphylabel = "kwh";
+		document.getElementById("overviewpage").style.display = "inline-block"; 
+		fillOverviewPage("sunelectricity");
 	}
 	else if (pageName == "electricitypage")
 	{
 		graphsource = "electricitymeter";
-		graphylabel = "kWh";
+		graphylabel = "kwh";
 		graphtitle = "Netstroomgebruik";
-    	document.getElementById("overviewpage").style.display = "inline-block"; 
+		document.getElementById("overviewpage").style.display = "inline-block"; 
+		fillOverviewPage("electricity");
 	}
 	else if (pageName == "gaspage")
 	{
 		graphsource = "gasmeter";
 		graphylabel = "m3";
 		graphtitle = "Gasgebruik";
-    	document.getElementById("overviewpage").style.display = "inline-block"; 
+		document.getElementById("overviewpage").style.display = "inline-block"; 
+		fillOverviewPage("gas");
 	}
 	else if (pageName == "waterpage")
 	{
 		graphsource = "watermeter";
 		graphylabel = "m3";
 		graphtitle = "Watergebruik";
-    	document.getElementById("overviewpage").style.display = "inline-block"; 
+		document.getElementById("overviewpage").style.display = "inline-block"; 
+		fillOverviewPage("water");
+	}
+	else if (pageName == "temperaturepage")
+	{
+		graphsource = "temperature";
+		graphylabel = "&deg;C";
+		graphtitle = "Temperatuur";
+		document.getElementById("overviewpage").style.display = "inline-block"; 
+		fillOverviewPage("temperature");
 	}
     else if (pageName == "graphdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle, "Uur", graphylabel, labels, values);
+		drawgraph("graph", graphtitle, "Uur", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphweekpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-		var values = [10.0, 11.4,  8.2,  5,5,  7,7, 11,2, 9.9];
-		drawgraph("graph", graphtitle, "Dag", graphylabel, labels, values);
+		var values = [10.0, 11.4,  8.2,  5.5,  7.7, 11.2, 9.9];
+		drawgraph("graph", graphtitle, "Dag", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle, "Dag", graphylabel, labels, values);
+		drawgraph("graph", graphtitle, "Dag", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
-		drawgraph("graph", graphtitle, "Maand", graphylabel, labels, values);
+		drawgraph("graph", graphtitle, "Maand", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphpreviousdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle + " gisteren", "Uur", graphylabel, labels, values);
+		drawgraph("graph", graphtitle + " gisteren", "Uur", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphpreviousweekpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
 		var values = [10.0, 11.4,  8.2,  5,5,  7,7, 11,2, 9.9];
-		drawgraph("graph", graphtitle + " vorige week", "Dag", graphylabel, labels, values);
+		drawgraph("graph", graphtitle + " vorige week", "Dag", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphpreviousmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
 		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle  + " vorige maand", "Dag", graphylabel, labels, values);
+		drawgraph("graph", graphtitle  + " vorige maand", "Dag", graphylabel, labels, values, '#00FF00');
 	}
     else if (pageName == "graphpreviousyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
-		drawgraph("graph", graphtitle  + " vorig jaar", "Maand", graphylabel, labels, values);
+		drawgraph("graph", graphtitle  + " vorig jaar", "Maand", graphylabel, labels, values, '#00FF00');
 	}
 		
 		
@@ -498,7 +687,7 @@ function showPage(pageName) {
     if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 30000);
 }
 
-function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values)
+function drawgraphplotly(graphname, graphtitle, xtitle, ytitle, labels, values)
 {
 	var trace1 = 
 	{
@@ -522,7 +711,50 @@ function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values)
 	};
 
 	var data = [trace1];
-	Plotly.newPlot('plottygraph', data, layout, {displayModeBar: false});
+	Plotly.newPlot('graph', data, layout, {displayModeBar: false});
+}
+
+function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values, color)
+{
+    Highcharts.chart('graph', {
+        chart: {
+            type: 'line'
+        },
+        title: {
+            text: graphtitle
+        },
+        legend: {
+            enabled: false
+        },
+        exporting: { enabled: false },
+        xAxis: {
+            title: {
+                text: xtitle
+            },
+            categories: labels
+        },
+        yAxis: {
+            title: {
+                text: ytitle
+	    }
+        },
+        credits: {
+            enabled: false
+        },
+        colors: [ color ],
+        plotOptions: {
+            line: {
+                dataLabels: {
+                    enabled: true
+                },
+                enableMouseTracking: false
+            }
+        },
+        series: [{
+            name: ytitle,
+            data: values
+        }]
+    });
 }
 
 function starttimepage()
@@ -539,58 +771,20 @@ function starttimepage()
 }
 
 function updateTime() {
-    var d = new Date();
-    document.getElementById("time").innerHTML = d.toLocaleTimeString('nl');
+    moment.locale('nl');
+    document.getElementById("time").innerHTML = moment().format('LTS');
+    document.getElementById("date").innerHTML = moment().format('L');
+    document.getElementById("timenl").innerHTML = moment().format('LT');
+    document.getElementById("datenl").innerHTML = moment().format('L');
 
-    var d = new Date();
-    document.getElementById("timenl").innerHTML =
-    d.toLocaleTimeString('nl-NL', { hour: 'numeric',minute:
-    '2-digit' });
+    document.getElementById("timeen").innerHTML = moment().tz('Europe/London').format('LT');
+    document.getElementById("dateen").innerHTML = moment().tz('Europe/London').format('L');
 
-    document.getElementById("datenl").innerHTML =
-    d.toLocaleString('nl-NL', {day:
-    'numeric',month: '2-digit',year: 'numeric' });
+    document.getElementById("timeny").innerHTML = moment().tz('America/New_York').format('LT');
+    document.getElementById("dateny").innerHTML = moment().tz('America/New_york').format('L');
 
-    document.getElementById("timeen").innerHTML =
-    d.toLocaleTimeString('nl-NL', { timeZone: 'Europe/London', hour: 'numeric',minute:
-    '2-digit' });
-
-    document.getElementById("dateen").innerHTML =
-    d.toLocaleString('nl-NL', { timeZone: 'Europe/London', day:
-    'numeric',month: '2-digit',year: 'numeric' });
-
-    document.getElementById("timeny").innerHTML =
-    d.toLocaleTimeString('nl-NL', {
-    timeZone: 'America/New_York', hour: 'numeric',minute:
-    '2-digit'});
-
-    document.getElementById("dateny").innerHTML =
-    d.toLocaleString('nl-NL', { timeZone: 'America/New_york', day:
-    'numeric',month: '2-digit',year: 'numeric' });
-
-    document.getElementById("timech").innerHTML =
-    d.toLocaleTimeString('nl-NL', {
-    timeZone: 'Asia/Shanghai', hour: 'numeric',minute:
-    '2-digit' });
-   
-    document.getElementById("datech").innerHTML =
-    d.toLocaleString('nl-NL', { timeZone: 'Asia/Shanghai', day:
-    'numeric',month: '2-digit',year: 'numeric' });
-
-   
-
-	var dd = d.getDate();
-	var mm = d.getMonth()+1; //January is 0!
-	var yyyy = d.getFullYear();
-if(dd<10){
-    dd='0'+dd;
-}
-if(mm<10){
-    mm='0'+mm;
-}
-var today = dd+'-'+mm+'-'+yyyy;
-document.getElementById("date").innerHTML = today;
-
+    document.getElementById("timech").innerHTML = moment().tz('Asia/Shanghai').format('LT');
+    document.getElementById("datech").innerHTML = moment().tz('Asia/Shanghai').format('L');
 }
 
 // Get data from buienradar.nl

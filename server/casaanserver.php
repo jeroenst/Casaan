@@ -4,18 +4,6 @@ $buienradartimeout = 10; // In minutes
 
 $casaandata = json_decode ('
 {
-	"electricitymeter": {
-	},
-	"sunelectricity": {
-	},
-	"gasmeter": {
-	},
-	"watermeter": {
-	},
-	"temperature": {
-	},
-	"buienradarnl": {
-	}
 }
 ', true);
 

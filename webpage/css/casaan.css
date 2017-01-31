@@ -103,10 +103,9 @@ body {
     position: absolute;
 }
 
-.boxvalue, .boxlabel2small, .boxvalue2
+.boxvalue, .boxlabelsmall, .boxlabel2small, .boxvalue2
   {
     display: inline-block;
-    margin-top: 30%;
     width:auto;
     text-align: left;
     position: absolute;
@@ -115,16 +114,31 @@ body {
     font-size: 70%;
   }
 
-.boxlabel2small
+.boxvalue
 {
-    font-size:60%;
-    margin-top: 56%;
+    margin-top: 30%;
 }
-
+  
 .boxvalue2
 {
     margin-top: 65%;
 }
+
+.boxlabelsmall, .boxlabel2small
+{
+    font-size:60%;
+}
+
+.boxlabelsmall
+{
+    margin-top: 21%;
+}
+
+.boxlabel2small
+{
+    margin-top: 56%;
+}
+
 
 .boxtext, .boxtexttabs, .fullscreen-boxtext, .wideboxtext
   {

@@ -59,55 +59,63 @@
 </div>
 
 <div class="submainarea" id="overviewpage" style="display:none">
-<div id="electricitytoday" class="floating-box" style="cursor: pointer; cursor: hand;"  onclick="showPage('graphdaypage')">
+<div class="floating-box" style="cursor: pointer; cursor: hand;"  onclick="showPage('graphdaypage')">
 <div class="boxtitle">Dag</div>
-<canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="sunelectricitytoday"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="providedelectricitytoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar0"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphweekpage')">
 <div class="boxtitle">Week</div>
-<canvas class="boxverticalbar" id="electricitybar"></canvas>
-<div class="boxvalue" id="sunelectricityweek"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="providedelectricitythisweek"></div>
+<canvas class="boxverticalbar" id="overviewpagebar1"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphmonthpage')">
 <div class="boxtitle">Maand</div>
-<canvas id="waterbar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="watercurrent"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="watertoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar2"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphyearpage')">
 <div class="boxtitle">Jaar</div>
-<canvas id="gasbar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="gascurrent"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="gastoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar3"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div>
-<br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousdaypage')">
+<br><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousdaypage')">
 <div class="boxtitle">Gisteren</div>
-<canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="sunelectricitycurrent"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="sunelectricitytoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar4"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousweekpage')">
 <div class="boxtitle">Vorige week</div>
-<canvas class="boxverticalbar" id="electricitybar"></canvas>
-<div class="boxvalue" id="electricitycurrent"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="electricityusedtoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar5"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousmonthpage')">
 <div class="boxtitle">Vorige maand</div>
-<canvas id="waterbar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="watercurrent"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="watertoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar6"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('graphpreviousyearpage')">
 <div class="boxtitle">Vorig jaar</div>
-<canvas id="gasbar" class="boxverticalbar"></canvas>
-<div class="boxvalue" id="gascurrent"></div>
-<div class="boxlabel2small">Teruggeleverd</div>
-<div class="boxvalue2" id="gastoday"></div>
+<canvas class="boxverticalbar" id="overviewpagebar7"></canvas>
+<div class="boxlabelsmall"></div>
+<div class="boxvalue"></div>
+<div class="boxlabel2small"></div>
+<div class="boxvalue2"></div>
 </div>
 </div>
 
@@ -176,7 +184,7 @@
 </div></div>
 
 <div class="submainarea" id="graphpage" style="display:none"><div class="fullscreen-floating-box">
-<div style="width:100%; height:100%" id="plottygraph"></div></div>
+<div style="width:100%; height:100%" id="graph"></div></div>
 </div>
 
 
@@ -187,15 +195,20 @@
     <div><li class="backbutton" style="display:none"><a href="javascript:void(0)" onclick="showPage('previouspage')">Terug</a></li></div>
 </ul>
 
-<script src="js/plotty.js"></script>
+<script src="js/moment.js"></script>
+<script src="js/moment-with-locales.min.js"></script>
+<script src="js/moment-timezone-with-data.min.js"></script>
 <script src="js/jquery.min.js"></script>
 <script src="js/jquery.tempgauge.js"></script>
-<script src="js/xml2json.js"></script>
 <script src="rgraph/libraries/RGraph.common.core.js"></script>
 <script src="rgraph/libraries/RGraph.vprogress.js"></script>
-<script src="js/casaan.js"></script>
+<!-- <script src="js/plotty.js"></script> -->
 <script src="suncalc/suncalc.js"></script>
- <script>
+
+<script src="js/highcharts.js"></script>
+<script src="js/highcharts_exporting.js"></script>
+<script src="js/casaan.js"></script>
+<script>
 
 
 var vprogress;
@@ -203,96 +216,11 @@ var vprogress;
 window.onresize = autochangesizes;
 
 $( document ).ready(function() {
-	autochangesizes();
-	setInterval(updateTime, 1000);
-	setInterval(updateWeather, 600000);
-	updateTime();
-	startcasaanwebsocket();
-	starttimepage();
-	createBars();
-//	showPage("mainpage");
-	
+	startcasaan();
+	showPage(window.location.hash.substr(1));
 });
 
 
-function createBars()
-{
-    waterbar = new RGraph.VProgress(
-		{
-			id: 'waterbar',
-            min: 0,
-            max: 10,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#699:#5ff:#5ff)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
-	
-    gasbar = new RGraph.VProgress(
-		{
-			id: 'gasbar',
-            min: 0,
-            max: 3,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#996:#ff5:#ff5)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
-	
-    electricitybar = new RGraph.VProgress(
-		{
-			id: 'electricitybar',
-            min: 0,
-            max: 2000,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#777:#BBB:#BBB)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
-	
-    sunelectricitybar = new RGraph.VProgress(
-		{
-			id: 'sunelectricitybar',
-            min: 0,
-            max: 2000,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#696:#7d7:#7d7)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
-}
 
 
 </script>
