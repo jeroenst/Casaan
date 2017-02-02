@@ -43,15 +43,15 @@ function autochangesizes()
 		elements[i].style.fontSize = (clientHeight / 2) + "px";
 	}
 
-//	var clientWidth = 1;
+	//	var clientWidth = 1;
 	
-//	elements = document.getElementsByClassName("fullscreen-floating-box");
-//	for(i=0; i<elements.length; i++)
-//	{
-//		clientHeight = elements[i].clientHeight;
-//		clientWidth = elements[i].clientWidth;
-//		if (clientWidth > 0) break;
-//	}
+	//	elements = document.getElementsByClassName("fullscreen-floating-box");
+	//	for(i=0; i<elements.length; i++)
+	//	{
+	//		clientHeight = elements[i].clientHeight;
+	//		clientWidth = elements[i].clientWidth;
+	//		if (clientWidth > 0) break;
+	//	}
 
 	
 
@@ -106,29 +106,29 @@ function autochangesizes()
 
 
 
-					var canvas = document.getElementById('insidetemperaturegauge');
+	var canvas = document.getElementById('insidetemperaturegauge');
 
-					if (canvas == null)
-					{
-						try
-						{
-							ctx = canvas.getContext('2d');
-							ctx.clearRect(0, 0, canvas.width, canvas.height);
-						}
-						catch (err)
-						{
-						}
-					}
+	if (canvas == null)
+	{
+		try
+		{
+			ctx = canvas.getContext('2d');
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
+		catch (err)
+		{
+		}
+	}
 
-					$('#insidetemperaturegauge').tempGauge({
-                        width: clientHeight *0.4,
-                        borderWidth:2,
-                        showLabel:false,
-                        showScale:false,
-                        borderColor: "#EEEEEE",
-                        maxTemp: 25,
-                        minTemp: 15,
-					});
+	$('#insidetemperaturegauge').tempGauge({
+width: clientHeight *0.4,
+borderWidth:2,
+showLabel:false,
+showScale:false,
+borderColor: "#EEEEEE",
+maxTemp: 25,
+minTemp: 15,
+	});
 
 
 	clientHeight =  document.getElementsByClassName("fullboxtext")[0].clientHeight;
@@ -153,100 +153,100 @@ var electricitybar;
 var sunelectricitybar;
 function createBars()
 {
-    waterbar = new RGraph.VProgress(
-		{
-			id: 'waterbar',
-            min: 0,
-            max: 10,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#699:#5ff:#5ff)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
+	waterbar = new RGraph.VProgress(
+	{
+id: 'waterbar',
+min: 0,
+max: 10,
+value: 0,
+options: {
+textAccessible: true,
+tickmarks: false,
+shadow: false,
+colors: ['Gradient(#699:#5ff:#5ff)'],
+gutterTop: 0,
+gutterBottom: 0,
+gutterLeft: 0,
+gutterRight: 0
+			
+		}
+	}).draw();
 	
-    gasbar = new RGraph.VProgress(
-		{
-			id: 'gasbar',
-            min: 0,
-            max: 3,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#996:#ff5:#ff5)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
+	gasbar = new RGraph.VProgress(
+	{
+id: 'gasbar',
+min: 0,
+max: 3,
+value: 0,
+options: {
+textAccessible: true,
+tickmarks: false,
+shadow: false,
+colors: ['Gradient(#996:#ff5:#ff5)'],
+gutterTop: 0,
+gutterBottom: 0,
+gutterLeft: 0,
+gutterRight: 0
+			
+		}
+	}).draw();
 	
-    electricitybar = new RGraph.VProgress(
-		{
-			id: 'electricitybar',
-            min: 0,
-            max: 2000,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#777:#BBB:#BBB)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
+	electricitybar = new RGraph.VProgress(
+	{
+id: 'electricitybar',
+min: 0,
+max: 2000,
+value: 0,
+options: {
+textAccessible: true,
+tickmarks: false,
+shadow: false,
+colors: ['Gradient(#777:#BBB:#BBB)'],
+gutterTop: 0,
+gutterBottom: 0,
+gutterLeft: 0,
+gutterRight: 0
+			
+		}
+	}).draw();
 	
-    sunelectricitybar = new RGraph.VProgress(
-		{
-			id: 'sunelectricitybar',
-            min: 0,
-            max: 2000,
-            value: 0,
-            options: {
-                textAccessible: true,
-				tickmarks: false,
-				shadow: false,
-				colors: ['Gradient(#696:#7d7:#7d7)'],
-				gutterTop: 0,
-				gutterBottom: 0,
-				gutterLeft: 0,
-				gutterRight: 0
-				
-        }
-    }).draw();
+	sunelectricitybar = new RGraph.VProgress(
+	{
+id: 'sunelectricitybar',
+min: 0,
+max: 2000,
+value: 0,
+options: {
+textAccessible: true,
+tickmarks: false,
+shadow: false,
+colors: ['Gradient(#696:#7d7:#7d7)'],
+gutterTop: 0,
+gutterBottom: 0,
+gutterLeft: 0,
+gutterRight: 0
+			
+		}
+	}).draw();
 
 	var overviewpagebar = [];
 	for (i=0; i < 8; i++)
 	{
 		overviewpagebar[i] = new RGraph.VProgress(
-			{
-				id: 'overviewpagebar'+i,
-				min: 0,
-				max: 10,
-				value: 0,
-				options: {
-					textAccessible: true,
-					tickmarks: false,
-					shadow: false,
-					colors: ['Gradient(#699:#5ff:#5ff)'],
-					gutterTop: 0,
-					gutterBottom: 0,
-					gutterLeft: 0,
-					gutterRight: 0
+		{
+id: 'overviewpagebar'+i,
+min: 0,
+max: 10,
+value: 0,
+options: {
+textAccessible: true,
+tickmarks: false,
+shadow: false,
+colors: ['Gradient(#699:#5ff:#5ff)'],
+gutterTop: 0,
+gutterBottom: 0,
+gutterLeft: 0,
+gutterRight: 0
 				
 			}
 		}).draw();
@@ -258,247 +258,231 @@ function createBars()
 //
 function startcasaan()
 {
+	startcasaanwebsocket();
 	setInterval(updateTime, 1000);
 	setInterval(updateWeather, 600000);
 	updateTime();
 	autochangesizes();
 	starttimepage();
 	createBars();
+}
 
-	// Getting IP doesn't work for ms edge
-    var myIP;
-	try
+function startcasaanwebsocket()
+{	
+	var ws;
+	// Let us open a web socket
+	console.log ("Connecting to casaan server websocket...");
+	ws = new WebSocket("wss://" + window.location.hostname + "/wscasaan");
+
+	if ("WebSocket" in window)
 	{
-    window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;   //compatibility for firefox and chrome
-    var pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};
-    pc.createDataChannel("");    //create a bogus data channel
-    pc.createOffer(pc.setLocalDescription.bind(pc), noop);    // create offer and set local description
-    pc.onicecandidate = function(ice){  //listen for candidate events
-        if(!ice || !ice.candidate || !ice.candidate.candidate)  return;
-        myIP = /([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/.exec(ice.candidate.candidate)[1];
-        console.log('my IP: ', myIP);
-        pc.onicecandidate = noop;
-    };
-	}
-	catch (err)
-	{
-	}
-	
-	
-         var ws;
-        // Let us open a web socket
-         console.log ("Connecting to casaan server websocket...");
-         ws = new WebSocket("wss://" + window.location.hostname + "/wscasaan");
+		ws.onopen = function()
+		{
+			// Web Socket is connected, send data using send()
+			console.log ("Connected to casaan server websocket!");
+			ws.send("{casaanclient: []}");
+		};
 
-         if ("WebSocket" in window)
-         {
-            ws.onopen = function()
-            {
-                 // Web Socket is connected, send data using send()
-	         console.log ("Connected to casaan server websocket!");
-                 ws.send("{casaanclient:{\"ip\":\""+myIP+"\"}}");
-            };
-
-            ws.onmessage = function (event)
-            {
-				var data = JSON.parse(event.data);
-				objectnulltodash(data);
+		ws.onmessage = function (event)
+		{
+			var data = JSON.parse(event.data);
+			objectnulltodash(data);
 			
-// 				console.log ("Received from casaan server: " + event.data);
-				casaandata = Object.assign(casaandata,data);
-				if (data["electricitymeter"])
+			// 				console.log ("Received from casaan server: " + event.data);
+			casaandata = Object.assign(casaandata,data);
+			if (data["electricitymeter"])
+			{
+				console.log("Received electricitymeter update");
+				var watt =  "-";
+				try
 				{
-					console.log("Received electricitymeter update");
-					var watt =  "-";
-					try
-					{
-						watt = data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"];;
-					}
-					catch(err)
-					{
-					}
-					
-					
-					
-					var kwhusedtoday = "-";
-					try
-					{
-						var kwhusedtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
-							- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
-						
-						if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
-
-						if (data["electricitymeter"]["now"]["kw_using"] == null)
-						{
-							watt = "-";
-							wattbar = 0;
-						}
-						else
-						{
-							wattbar = watt;
-						}
-					}
-					catch(err)
-					{
-							watt = "-";							
-							wattbar = 0;
-					}
-					
-					
-					
-					document.getElementById('electricitycurrent').innerHTML = watt + " watt";
-					document.getElementById('electricityusedtoday').innerHTML = kwhusedtoday + " kwh";
-					electricitybar.value = wattbar;
-					electricitybar.grow();
+					watt = data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"];;
 				}
-
-				if (data["gasmeter"])
+				catch(err)
 				{
-					console.log("Received gasmeter update");
-					var gasm3h = "-";
-					var gasm3today = "-";
-					try
-					{
-						var gasm3h = data["gasmeter"]["now"]["m3h"];
-						var gasm3today = data["gasmeter"]["today"]["m3"];
-					}
-					catch(err)
-					{
-					}
+				}
+				
+				if (isNaN(watt)) watt = "-";
+				
+				var kwhusedtoday = "-";
+				try
+				{
+					var kwhusedtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
+					- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
 					
-					if (gasm3h == null) 
+					if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
+
+					if (data["electricitymeter"]["now"]["kw_using"] == null)
 					{
-						gasm3h = "-";
-						gasm3hbar = 0;
+						watt = "-";
+						wattbar = 0;
 					}
 					else
 					{
-						gasm3hbar = gasm3h;
+						wattbar = watt;
 					}
-					
-					if (gasm3today == null) gasm3today = "-";
-					
-
-					document.getElementById('gascurrent').innerHTML = gasm3h + " m3/h";
-					document.getElementById('gastoday').innerHTML = gasm3today + " m3";
-					gasbar.value = gasm3h;
-					gasbar.grow();
 				}
-
-				if (data["watermeter"])
+				catch(err)
 				{
-	                console.log("Received watermeter update");
-
-           		    var m3h = "-";
-           		    var m3today = "-";
-                		    
-           		    try
-           		    {
-           		    	m3h = data["watermeter"]["now"]["m3h"];
-           		    	m3today = data["watermeter"]["today"]["m3"];
-				    }
-				    catch (err)
-				    {
-				    }
-
-					if (m3h == null) m3h = "-";
-					if (m3today == null) m3today = "-";
-
-					if (m3h == "-")
-					{
-						lmin = "-";
-						lminbar = 0;
-					}
-					else
-					{
-						lmin = Math.round((m3h * 1000) /6)/10;
-						lminbar = lmin;
-					}
-
-                    document.getElementById('watercurrent').innerHTML = lmin + " l/min";
-                    document.getElementById('watertoday').innerHTML = m3today + " m3";
-                    waterbar.value = lminbar;
-                    waterbar.grow();
+					watt = "-";							
+					wattbar = 0;
 				}
+				
+				
+				
+				document.getElementById('electricitycurrent').innerHTML = watt + " watt";
+				document.getElementById('electricityusedtoday').innerHTML = kwhusedtoday + " kwh";
+				electricitybar.value = wattbar;
+				electricitybar.grow();
+			}
 
-				if (data["sunelectricity"])
+			if (data["gasmeter"])
+			{
+				console.log("Received gasmeter update");
+				var gasm3h = "-";
+				var gasm3today = "-";
+				try
 				{
-					console.log("Received sunelectricity update");
-					var kw = "-";
-					var kwhtoday = "-";
-					var kwbarvalue = 0;
-					
-					try
-					{					
-						kw = data["sunelectricity"]["now"]["out"]["watt"];
-						kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
-						if (kw == null) watt = "-"; else kwbarvalue = watt;
-						if (kwhtoday == null) kwhtoday = "-";
-					}
-					catch (err)
-					{
-					}
-
-					document.getElementById('sunelectricitycurrent').innerHTML = watt + " watt";
-					document.getElementById('sunelectricitytoday').innerHTML = kwhtoday + " kwh";
-					sunelectricitybar.value = kwbarvalue;
-					sunelectricitybar.grow();
+					var gasm3h = data["gasmeter"]["now"]["m3h"];
+					var gasm3today = data["gasmeter"]["today"]["m3"];
 				}
-
-				if (data["buienradarnl"])
+				catch(err)
 				{
-					updateWeather()
 				}
-				if (data["temperature"])
+				
+				if (gasm3h == null) 
 				{
-					console.log("Received temperature update");
-					
-					var tempnow = "-";
-					var tempset = "-";
-
-					var canvas = document.getElementById('insidetemperaturegauge');
-					
-					if (canvas != null)
-					{
-						ctx = canvas.getContext('2d');
-						ctx.clearRect(0, 0, canvas.width, canvas.height);
-					}
-					
-					try
-					{
-						tempnow = data["temperature"]["livingroom"]["now"];
-						tempset = data["temperature"]["livingroom"]["set"];
-						document.getElementById('livingroomtemperaturenow').innerHTML = tempnow+" &deg;C";
-						document.getElementById('insidetempgauge').innerHTML = '<div id="insidetemperaturegauge">0</div>';
-						document.getElementById('livingroomtemperatureset').innerHTML = tempset+" &deg;C";
-					}
-					catch(err)
-					{
-						document.getElementById('livingroomtemperaturenow').innerHTML = "- &deg;C";
-						document.getElementById('insidetempgauge').innerHTML = '<div id="insidetemperaturegauge">0</div>';
-						document.getElementById('livingroomtemperatureset').innerHTML = "- &deg;C";
-					}
-
-
-					$('#insidetemperaturegauge').tempGauge({
-                        width: document.getElementById('sunelectricity').clientHeight *0.4,
-                        borderWidth:2,
-                        showLabel:false,
-                        showScale:false,
-                        borderColor: "#EEEEEE",
-                        maxTemp: 25,
-                        minTemp: 15,
-					});
+					gasm3h = "-";
+					gasm3hbar = 0;
 				}
-             };
-			 
-             ws.onclose = function()
-             {
-                  // websocket is closed
-                  ws = null;
-                  setTimeout(function(){startcasaanwebsocket();}, 5000);
-             };
-           }
+				else
+				{
+					gasm3hbar = gasm3h;
+				}
+				
+				if (gasm3today == null) gasm3today = "-";
+				
+
+				document.getElementById('gascurrent').innerHTML = gasm3h + " m3/h";
+				document.getElementById('gastoday').innerHTML = gasm3today + " m3";
+				gasbar.value = gasm3h;
+				gasbar.grow();
+			}
+
+			if (data["watermeter"])
+			{
+				console.log("Received watermeter update");
+
+				var m3h = "-";
+				var m3today = "-";
+				
+				try
+				{
+					m3h = data["watermeter"]["now"]["m3h"];
+					m3today = data["watermeter"]["today"]["m3"];
+				}
+				catch (err)
+				{
+				}
+
+				if (m3h == null) m3h = "-";
+				if (m3today == null) m3today = "-";
+
+				if (m3h == "-")
+				{
+					lmin = "-";
+					lminbar = 0;
+				}
+				else
+				{
+					lmin = Math.round((m3h * 1000) /6)/10;
+					lminbar = lmin;
+				}
+
+				document.getElementById('watercurrent').innerHTML = lmin + " l/min";
+				document.getElementById('watertoday').innerHTML = m3today + " m3";
+				waterbar.value = lminbar;
+				waterbar.grow();
+			}
+
+			if (data["sunelectricity"])
+			{
+				console.log("Received sunelectricity update");
+				var kw = "-";
+				var kwhtoday = "-";
+				var kwbarvalue = 0;
+				
+				try
+				{					
+					kw = data["sunelectricity"]["now"]["out"]["watt"];
+					kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
+					if (kw == null) watt = "-"; else kwbarvalue = watt;
+					if (kwhtoday == null) kwhtoday = "-";
+				}
+				catch (err)
+				{
+				}
+
+				document.getElementById('sunelectricitycurrent').innerHTML = watt + " watt";
+				document.getElementById('sunelectricitytoday').innerHTML = kwhtoday + " kwh";
+				sunelectricitybar.value = kwbarvalue;
+				sunelectricitybar.grow();
+			}
+
+			if (data["buienradarnl"])
+			{
+				updateWeather()
+			}
+			if (data["temperature"])
+			{
+				console.log("Received temperature update");
+				
+				var tempnow = "-";
+				var tempset = "-";
+
+				var canvas = document.getElementById('insidetemperaturegauge');
+				
+				if (canvas != null)
+				{
+					ctx = canvas.getContext('2d');
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+				}
+				
+				try
+				{
+					tempnow = data["temperature"]["livingroom"]["now"];
+					tempset = data["temperature"]["livingroom"]["set"];
+					document.getElementById('livingroomtemperaturenow').innerHTML = tempnow+" &deg;C";
+					document.getElementById('insidetempgauge').innerHTML = '<div id="insidetemperaturegauge">0</div>';
+					document.getElementById('livingroomtemperatureset').innerHTML = tempset+" &deg;C";
+				}
+				catch(err)
+				{
+					document.getElementById('livingroomtemperaturenow').innerHTML = "- &deg;C";
+					document.getElementById('insidetempgauge').innerHTML = '<div id="insidetemperaturegauge">0</div>';
+					document.getElementById('livingroomtemperatureset').innerHTML = "- &deg;C";
+				}
+
+
+				$('#insidetemperaturegauge').tempGauge({
+width: document.getElementById('sunelectricity').clientHeight *0.4,
+borderWidth:2,
+showLabel:false,
+showScale:false,
+borderColor: "#EEEEEE",
+maxTemp: 25,
+minTemp: 15,
+				});
+			}
+		};
+		
+		ws.onclose = function()
+		{
+			// websocket is closed
+			ws = null;
+			setTimeout(function(){startcasaanwebsocket();}, 5000);
+		};
+	}
 
 }
 
@@ -510,13 +494,13 @@ var graphlabel = "";
 
 function objectnulltodash(obj)
 {
-   for(key in obj){
-        if(obj[key] instanceof Object){
-            objectnulltodash(obj[key]);
-        }else{
-            if (obj[key] == null) obj[key] = "-";
-        }
-    }	
+	for(key in obj){
+		if(obj[key] instanceof Object){
+			objectnulltodash(obj[key]);
+		}else{
+			if (obj[key] == null) obj[key] = "-";
+		}
+	}	
 }
 
 //
@@ -538,8 +522,9 @@ function fillOverviewPage(nodename)
 		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "kwh"
 		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
-		jsonunit = "kwh";
+		jsonunit = "kwh_used";
 		label2 = "Teruggeleverd";
+		jsonunit2 = "kwh_provided";
 	}
 	
 	if ((nodename == "gas") || (nodename == "water"))
@@ -571,7 +556,7 @@ function fillOverviewPage(nodename)
 		}
 		if (value1) value1 = value1 + " " + unit;
 		else value1 = "- " + unit;
-	
+		
 		if (label2 != "") value2 = "- " + unit;
 		else value2="";
 		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
@@ -604,36 +589,43 @@ function showPage(pageName) {
 		document.getElementsByClassName("backbutton")[0].style.display = "inline-block"; 
 	}
 	previousPageName.push(pageName)
-    console.log("Opening page:"+pageName);
-    clearTimeout(pageTimer);
-    var i;
-    var x = document.getElementsByClassName("submainarea");
-    for (i = 0; i < x.length; i++) {
-        x[i].style.display = "none"; 
-    }
+	console.log("Opening page:"+pageName);
+	clearTimeout(pageTimer);
+	var i;
+	var x = document.getElementsByClassName("submainarea");
+	for (i = 0; i < x.length; i++) {
+		x[i].style.display = "none"; 
+	}
 	if (pageName == "sunelectricitypage")
 	{
-		graphsource = "sunelectricity";
+		graphjsonsource = "sunelectricity";
+		graphjsonitem1 = "kwh_out";
+		graphjsonitem2 = "kwh_pv"
+		graphunit = "kwh";
 		graphtitle = "Zonnestroom";
 		graphylabel = "kwh";
-		graphcolors = ["#00FF00","#00FFFF"];
-		graphnames = ["Opgewekt", "Terruggeleverd"];
+		graphcolors = ["#00FF00", "#00FFFF"];
+		graphnames = ["Geleverd Omvormer", "Opgewekt Zonnepanelen"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("sunelectricity");
 	}
 	else if (pageName == "electricitypage")
 	{
-		graphsource = "electricitymeter";
+		graphjsonsource = "electricitymeter";
+		graphjsonitem1 = "kwh_used";
+		graphjsonitem2 = "kwh_provided"
 		graphylabel = "kwh";
 		graphtitle = "Netstroom";
 		graphcolors = ["#666666", "#00FF00"];
-		graphnames = ["Verbruikt", "Terruggeleverd"];
+		graphnames = ["Verbruikt", "Teruggeleverd"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("electricity");
 	}
 	else if (pageName == "gaspage")
 	{
-		graphsource = "gasmeter";
+		graphjsonsource = "gasmeter";
+		graphjsonitem1 = "m3";
+		graphjsonitem2 = "";
 		graphylabel = "m3";
 		graphtitle = "Gasgebruik";
 		graphcolors = ["#FFFF00"];
@@ -643,7 +635,9 @@ function showPage(pageName) {
 	}
 	else if (pageName == "waterpage")
 	{
-		graphsource = "watermeter";
+		graphjsonsource = "watermeter";
+		graphjsonitem1 = "m3";
+		graphjsonitem2 = "";
 		graphylabel = "m3";
 		graphtitle = "Watergebruik";
 		graphcolors = ["#0000FF"];
@@ -653,7 +647,9 @@ function showPage(pageName) {
 	}
 	else if (pageName == "temperaturepage")
 	{
-		graphsource = "temperature";
+		graphjsonsource = "temperature";
+		graphjsonitem1 = "temp";
+		graphjsonitem2 = "";
 		graphylabel = "&deg;C";
 		graphtitle = "Temperatuur";
 		graphcolors = ["#FF0000"];
@@ -661,206 +657,299 @@ function showPage(pageName) {
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("temperature");
 	}
-    else if (pageName == "graphdaypage")
+	else if (pageName == "graphdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'];
-		values[0] = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.8, 0.6, 0.2, 0.2, 0.1, 0.2, 0.2, 0.4];
-		values[1] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
+		values = [];
+		labels = [];
+		try
+		{
+			labels = casaandata[graphjsonsource].today.graph.labels;
+			values[0] = casaandata[graphjsonsource].today.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].today.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle, "Uur", graphylabel, graphnames, labels, values, graphcolors);
 	}
-    else if (pageName == "graphmonthpage")
+	else if (pageName == "graphmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = [1   ,    2,    3,    4,    5,    6,   7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,21,22,23,24,25,26,27,28,29,30,31];
-		values[0] = [10.0, 11.4,  8.2,  5.5,  7.7, 11.2, 9.9, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-		values[1] = [1.0, 1.4,  1.2,  2.5,  1.7, 1.2, 1.9, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		values = [];
+		labels = [];
+		try
+		{
+			labels = casaandata[graphjsonsource].month.graph.labels;
+			values[0] = casaandata[graphjsonsource].month.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].month.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle, "Dag", graphylabel, graphnames, labels, values, graphcolors);
 	}
-    else if (pageName == "graphyearpage")
+	else if (pageName == "graphyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-		values[0] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
+		values = [];
+		labels = [];
+		try
+		{
+			labels = casaandata[graphjsonsource].year.graph.labels;
+			values[0] = casaandata[graphjsonsource].year.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].year.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle, "Maand", graphylabel, graphnames, labels, values, graphcolors);
 	}
-    else if (pageName == "graphtotalpage")
+	else if (pageName == "graphtotalpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = [2010, 2011, 2012, 2013, 2014, 2015, 2016];
-		values[0] = [2023, 2130, 1932, 2041, 1987, 1889, 1920];
+		values = [];
+		labels = [];
+		try
+		{
+			labels = casaandata[graphjsonsource].total.graph.labels;
+			values[0] = casaandata[graphjsonsource].total.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].total.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle, "Jaar", graphylabel, graphnames, labels, values, graphcolors);
 	}
-    else if (pageName == "graphpreviousdaypage")
+	else if (pageName == "graphpreviousdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-		values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
+		try
+		{
+			labels = casaandata[graphjsonsource].yesterday.graph.labels;
+			values[0] = casaandata[graphjsonsource].yesterday.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].yesterday.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle + " gisteren", "Uur", graphylabel, graphnames, labels, values, graphcolors);
 	}
-    else if (pageName == "graphpreviousweekpage")
+	else if (pageName == "graphpreviousmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-		values = [10.0, 11.4,  8.2,  5,5,  7,7, 11,2, 9.9];
-		drawgraph("graph", graphtitle + " vorige week", "Dag", graphylabel, graphnames, labels, values, graphcolors);
-	}
-    else if (pageName == "graphpreviousmonthpage")
-	{
-		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-		values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
+		try
+		{
+			labels = casaandata[graphjsonsource].previousmonth.graph.labels;
+			values[0] = casaandata[graphjsonsource].previousmonth.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].previousmonth.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle  + " vorige maand", "Dag", graphylabel, graphnames, labels, values, graphcolors);
 	}
-    else if (pageName == "graphpreviousyearpage")
+	else if (pageName == "graphpreviousyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var values = [];
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-		values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
+		try
+		{
+			labels = casaandata[graphjsonsource].previousyear.graph.labels;
+			values[0] = casaandata[graphjsonsource].previousyear.graph[graphjsonitem1];
+			values[1] = casaandata[graphjsonsource].previousyear.graph[graphjsonitem2];
+		}
+		catch(err)
+		{
+		}
 		drawgraph("graph", graphtitle  + " vorig jaar", "Maand", graphylabel, graphnames, labels, values, graphcolors);
 	}
-		
-		
+	
+	
 	else if (document.getElementById(pageName)) document.getElementById(pageName).style.display = "inline-block"; 
 	else document.getElementById("mainpage").style.display = "inline-block";
 	autochangesizes();
 	
-    if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 30000);
+	if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 30000);
 }
 
 function drawgraph(graphname, graphtitle, xtitle, ytitle, names, labels, values, colors)
 {
-    var chart = Highcharts.chart('graph', {
-        chart: {
-            type: 'line'
-        },
-        title: {
-            text: graphtitle
-        },
-        legend: {
-            enabled: true
-        },
-        exporting: { enabled: false },
-        xAxis: {
-            title: {
-                text: xtitle
-            },
-            categories: labels
-        },
-        yAxis: {
-            title: {
-                text: ytitle
-	    }
-        },
-        credits: {
-            enabled: false
-        },
-        colors: colors,
-        plotOptions: {
-            line: {
-                dataLabels: {
-                    enabled: true
-                },
-                enableMouseTracking: false
-            }
-        },
-        series: [{
-            name: names[0],
-            data: values[0]
-        },
+	
+if (values[1] != undefined)
+{
+	var chart = Highcharts.chart('graph', 
+	{
+chart: 
 		{
-            name: names[1],
-            data: values[1]
-        }]
-    });
+type: 'line'
+		},
+title: 
+		{
+text: graphtitle
+		},
+legend: {
+enabled: true
+		},
+exporting: { enabled: false },
+xAxis: {
+title: {
+text: xtitle
+			},
+categories: labels
+		},
+yAxis: {
+title: {
+text: ytitle
+			}
+		},
+credits: {
+enabled: false
+		},
+colors: colors,
+plotOptions: {
+line: {
+dataLabels: {
+enabled: true
+				},
+enableMouseTracking: false
+			}
+		},
+series: [{
+name: names[0],
+data: values[0]
+		},
+		{
+name: names[1],
+data: values[1]
+		}]
+	});
+}
+else
+{
+		var chart = Highcharts.chart('graph', 
+	{
+chart: 
+		{
+type: 'line'
+		},
+title: 
+		{
+text: graphtitle
+		},
+legend: {
+enabled: true
+		},
+exporting: { enabled: false },
+xAxis: {
+title: {
+text: xtitle
+			},
+categories: labels
+		},
+yAxis: {
+title: {
+text: ytitle
+			}
+		},
+credits: {
+enabled: false
+		},
+colors: colors,
+plotOptions: {
+line: {
+dataLabels: {
+enabled: true
+				},
+enableMouseTracking: false
+			}
+		},
+series: [{
+name: names[0],
+data: values[0]
+}],
+	});
+
+}	
 	
 }
 
 function starttimepage()
 {
-       var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
-       document.getElementById("sun").innerHTML = "Op: "+
-       (times.sunrise ? times.sunrise.getHours()+":"+times.sunrise.getMinutes() : "") + "<BR>Onder:  " +
-       (times.sunset ? times.sunset.getHours()+":"+times.sunset.getMinutes() : "");
+	var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
+	document.getElementById("sun").innerHTML = "Op: "+
+	(times.sunrise ? times.sunrise.getHours()+":"+times.sunrise.getMinutes() : "") + "<BR>Onder:  " +
+	(times.sunset ? times.sunset.getHours()+":"+times.sunset.getMinutes() : "");
 
-       var moontimes = SunCalc.getMoonTimes(new Date(), 51.5, -0.1);
-       document.getElementById("moon").innerHTML = "Op: "+
-       (moontimes.rise ? moontimes.rise.getHours()+":"+moontimes.rise.getMinutes() : "") + "<BR>Onder:  " +
-       (moontimes.set ? moontimes.set.getHours()+":"+moontimes.set.getMinutes() : "") ;
+	var moontimes = SunCalc.getMoonTimes(new Date(), 51.5, -0.1);
+	document.getElementById("moon").innerHTML = "Op: "+
+	(moontimes.rise ? moontimes.rise.getHours()+":"+moontimes.rise.getMinutes() : "") + "<BR>Onder:  " +
+	(moontimes.set ? moontimes.set.getHours()+":"+moontimes.set.getMinutes() : "") ;
 }
 
 function updateTime() {
-    moment.locale('nl');
-    document.getElementById("time").innerHTML = moment().format('LTS');
-    document.getElementById("date").innerHTML = moment().format('L');
-    document.getElementById("timenl").innerHTML = moment().format('LT');
-    document.getElementById("datenl").innerHTML = moment().format('L');
+	moment.locale('nl');
+	document.getElementById("time").innerHTML = moment().format('LTS');
+	document.getElementById("date").innerHTML = moment().format('L');
+	document.getElementById("timenl").innerHTML = moment().format('LT');
+	document.getElementById("datenl").innerHTML = moment().format('L');
 
-    document.getElementById("timeen").innerHTML = moment().tz('Europe/London').format('LT');
-    document.getElementById("dateen").innerHTML = moment().tz('Europe/London').format('L');
+	document.getElementById("timeen").innerHTML = moment().tz('Europe/London').format('LT');
+	document.getElementById("dateen").innerHTML = moment().tz('Europe/London').format('L');
 
-    document.getElementById("timeny").innerHTML = moment().tz('America/New_York').format('LT');
-    document.getElementById("dateny").innerHTML = moment().tz('America/New_york').format('L');
+	document.getElementById("timeny").innerHTML = moment().tz('America/New_York').format('LT');
+	document.getElementById("dateny").innerHTML = moment().tz('America/New_york').format('L');
 
-    document.getElementById("timech").innerHTML = moment().tz('Asia/Shanghai').format('LT');
-    document.getElementById("datech").innerHTML = moment().tz('Asia/Shanghai').format('L');
+	document.getElementById("timech").innerHTML = moment().tz('Asia/Shanghai').format('LT');
+	document.getElementById("datech").innerHTML = moment().tz('Asia/Shanghai').format('L');
 }
 
 // Get data from buienradar.nl
 
 function updateWeather() {
-		console.log("Received buienradar update");
-		for (i in casaandata.buienradarnl.weergegevens.actueel_weer.weerstations)
+	console.log("Received buienradar update");
+	for (i in casaandata.buienradarnl.weergegevens.actueel_weer.weerstations)
+	{
+		var station = casaandata.buienradarnl.weergegevens.actueel_weer.weerstations[i].weerstation;
+		var stationnaam = station.stationnaam[0];
+		if (stationnaam == "Meetstation Eindhoven")
 		{
-			var station = casaandata.buienradarnl.weergegevens.actueel_weer.weerstations[i].weerstation;
-			var stationnaam = station.stationnaam[0];
-			if (stationnaam == "Meetstation Eindhoven")
+			elements = document.getElementsByClassName('weathertemptoday');
+			for(var y=0; y<elements.length; y++)
 			{
-				elements = document.getElementsByClassName('weathertemptoday');
-				for(var y=0; y<elements.length; y++)
-				{
-					elements[y].innerHTML = station.temperatuurGC[0] + " &deg;C";
-				}
-				
-				var zin = station.icoonactueel["@attributes"].zin;
-				elements = document.getElementsByClassName('weathertexttoday');
-				for(var y=0; y<elements.length; y++)
-				{
-					elements[y].innerHTML = zin;
-				}
-				document.getElementById("windnow").innerHTML = station.windsnelheidBF + " Bft<BR>" + station.windrichting;
+				elements[y].innerHTML = station.temperatuurGC[0] + " &deg;C";
 			}
+			
+			var zin = station.icoonactueel["@attributes"].zin;
+			elements = document.getElementsByClassName('weathertexttoday');
+			for(var y=0; y<elements.length; y++)
+			{
+				elements[y].innerHTML = zin;
+			}
+			document.getElementById("windnow").innerHTML = station.windsnelheidBF + " Bft<BR>" + station.windrichting;
 		}
+	}
 
 	document.getElementsByClassName('weathertext')[0].innerHTML = 
-    casaandata.buienradarnl.weergegevens.verwachting_vandaag.samenvatting[0];
+	casaandata.buienradarnl.weergegevens.verwachting_vandaag.samenvatting[0];
 
-    document.getElementById("temptomorrow").innerHTML =
-    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus1"].mintemp + " / " + 
+	document.getElementById("temptomorrow").innerHTML =
+	casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus1"].mintemp + " / " + 
 	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus1"].maxtemp + " &deg;C";
-    
-    document.getElementById("tempaftertomorrow").innerHTML =
-    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus2"].mintemp + " / " + 
+	
+	document.getElementById("tempaftertomorrow").innerHTML =
+	casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus2"].mintemp + " / " + 
 	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus2"].maxtemp + " &deg;C";
 
-    document.getElementById("tempafteraftertomorrow").innerHTML =
-    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus3"].mintemp + " / " + 
+	document.getElementById("tempafteraftertomorrow").innerHTML =
+	casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus3"].mintemp + " / " + 
 	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus3"].maxtemp + " &deg;C";
 
-    document.getElementById("tempafterafteraftertomorrow").innerHTML =
-    casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].mintemp + " / " + 
+	document.getElementById("tempafterafteraftertomorrow").innerHTML =
+	casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].mintemp + " / " + 
 	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].maxtemp + " &deg;C";
 	
-    document.getElementById("weathertextlong").innerHTML =
-    casaandata.buienradarnl.weergegevens.verwachting_vandaag.tekst[0];
+	document.getElementById("weathertextlong").innerHTML =
+	casaandata.buienradarnl.weergegevens.verwachting_vandaag.tekst[0];
 	
 	var d = new Date();
 	d.setDate(d.getDate()+1);
