@@ -1,8 +1,17 @@
+// The object casaandata is filled with data from the casaan server
+var casaandata = {};
+
+
+//
+//	Autochangesizes calculates the size of fonts and elements
+//  for best fit on screen. Also changes from portrait to
+//  landscape mode based on screen aspect ratio
+//
 function autochangesizes()
 {
 	var element;
 	var elements;
-    var i;
+	var i;
 	if ((window.innerHeight/window.innerWidth) > 1)
 	{
 		// Portrait Mode
@@ -11,6 +20,8 @@ function autochangesizes()
 		{
 			elements[i].innerHTML = "<BR>"
 		}
+		var clientheight = window.innerHeight / 4;
+		var clientwidth = window.innerWidth / 2;
 	}
 	else
 	{
@@ -32,16 +43,17 @@ function autochangesizes()
 		elements[i].style.fontSize = (clientHeight / 2) + "px";
 	}
 
-	var clientWidth = 1;
+//	var clientWidth = 1;
 	
-	elements = document.getElementsByClassName("fullscreen-floating-box");
-	for(i=0; i<elements.length; i++)
-	{
-		clientHeight = elements[i].clientHeight;
-		clientWidth = elements[i].clientWidth;
-		if (clientWidth > 0) break;
-	}
+//	elements = document.getElementsByClassName("fullscreen-floating-box");
+//	for(i=0; i<elements.length; i++)
+//	{
+//		clientHeight = elements[i].clientHeight;
+//		clientWidth = elements[i].clientWidth;
+//		if (clientWidth > 0) break;
+//	}
 
+	
 
 	elements = document.getElementsByClassName("floating-box");
 	for(i=0; i< elements.length; i++)
@@ -58,7 +70,7 @@ function autochangesizes()
 		else elements[i].style.fontSize = (clientHeight + (clientWidth * 0.5))  / 35 + "px"
 	}
 
-	elements = document.querySelectorAll('.boxtitle, .boxlabelsmall, .boxlabel2small, .boxweathertext');
+	elements = document.querySelectorAll('.boxtitle, .boxlabelsmall, .boxlabel2small, .weathertext');
 	for(i=0; i<elements.length; i++)
 	{
 		elements[i].style.fontSize =(clientHeight / 15) + "px";
@@ -82,12 +94,17 @@ function autochangesizes()
 		elements[i].style.fontSize = (clientHeight / 5) + "px";
 	}
 
+
 	elements = document.getElementsByClassName('boxweathericon');
 	for(i=0; i<elements.length; i++)
 	{
 		document.getElementsByClassName('boxweathericon')[i].style.fontSize =
 		(clientHeight / 3.5) + "px";
 	}
+
+
+
+
 
 					var canvas = document.getElementById('insidetemperaturegauge');
 
@@ -113,36 +130,27 @@ function autochangesizes()
                         minTemp: 15,
 					});
 
-					
-	var d = new Date();
-	d.setDate(d.getDate()+1);
-	var daynames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
-	elements = document.getElementsByClassName('nametoday+1');
-	for(i=0; i<elements.length; i++)
-	{
-		elements[i].innerHTML = daynames[d.getDay()];
-	}
-	d.setDate(d.getDate()+1);
-	elements = document.getElementsByClassName('nametoday+2');
-	for(i=0; i<elements.length; i++)
-	{
-		elements[i].innerHTML = daynames[d.getDay()];
-	}
-	d.setDate(d.getDate()+1);
-	elements = document.getElementsByClassName('nametoday+3');
-	for(i=0; i<elements.length; i++)
-	{
-		elements[i].innerHTML = daynames[d.getDay()];
-	}
-	d.setDate(d.getDate()+1);
-	elements = document.getElementsByClassName('nametoday+4');
-	for(i=0; i<elements.length; i++)
-	{
-		elements[i].innerHTML = daynames[d.getDay()];
-	}
 
-					
+	clientHeight =  document.getElementsByClassName("fullboxtext")[0].clientHeight;
+	clientWidth =  document.getElementsByClassName("fullboxtext")[0].clientWidth;
+	element = document.getElementById("weathertextlong");
+	if (clientHeight > 0)
+	{
+		document.getElementById("weathertextlong").style.fontSize = "50px";
+		for (var i = 50; ((element.offsetWidth > clientWidth) || (element.offsetHeight > clientHeight)) && (i > 1); i--)
+		{
+			document.getElementById("weathertextlong").style.fontSize = i + "px";
+		}
+	}
 }
+
+//
+// The function createBars creates the vertical gauge bars on all pages
+//
+var waterbar;
+var gasbar;
+var electricitybar;
+var sunelectricitybar;
 function createBars()
 {
     waterbar = new RGraph.VProgress(
@@ -245,15 +253,23 @@ function createBars()
 	}
 }
 
-var casaandata = {};
-
+//
+// Startcasaan() initializes the webpage and creates connection to the casaanserver
+//
 function startcasaan()
 {
+	setInterval(updateTime, 1000);
+	setInterval(updateWeather, 600000);
+	updateTime();
 	autochangesizes();
+	starttimepage();
+	createBars();
 
-
-    window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;   //compatibility for firefox and chrome
+	// Getting IP doesn't work for ms edge
     var myIP;
+	try
+	{
+    window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;   //compatibility for firefox and chrome
     var pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};
     pc.createDataChannel("");    //create a bogus data channel
     pc.createOffer(pc.setLocalDescription.bind(pc), noop);    // create offer and set local description
@@ -263,6 +279,12 @@ function startcasaan()
         console.log('my IP: ', myIP);
         pc.onicecandidate = noop;
     };
+	}
+	catch (err)
+	{
+	}
+	
+	
          var ws;
         // Let us open a web socket
          console.log ("Connecting to casaan server websocket...");
@@ -478,18 +500,13 @@ function startcasaan()
              };
            }
 
-	setInterval(updateTime, 1000);
-	setInterval(updateWeather, 600000);
-	updateTime();
-	starttimepage();
-	createBars();
 }
 
 var pageTimer;
 var previousPageName = ['mainpage'];
 var graphsource = "";
 var graphtitle = "";
-var graphylabel = "";
+var graphlabel = "";
 
 function objectnulltodash(obj)
 {
@@ -502,6 +519,9 @@ function objectnulltodash(obj)
     }	
 }
 
+//
+// Filloverviewpage fills all the items in the overviewpages
+//
 function fillOverviewPage(nodename)
 {
 	elements = document.getElementById("overviewpage").getElementsByClassName("floating-box");
@@ -510,18 +530,21 @@ function fillOverviewPage(nodename)
 	var unit = "";
 	var jsonitems = [];
 	var jsonunit = "";
+	var label1 = "";
+	var label2 = "";
 
 	if ((nodename == "sunelectricity") || (nodename == "electricity"))
 	{
-		titels = ["Vandaag", "Week", "Maand", "Jaar", "Gisteren", "Vorige Week", "Vorige Maand", "Vorig Jaar"];
+		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "kwh"
 		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
 		jsonunit = "kwh";
+		label2 = "Teruggeleverd";
 	}
 	
 	if ((nodename == "gas") || (nodename == "water"))
 	{
-		titels = ["Vandaag", "Week", "Maand", "Jaar", "Gisteren", "Vorige Week", "Vorige Maand", "Vorig Jaar"];
+		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "m3"
 		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
 		jsonunit = "m3";
@@ -537,25 +560,31 @@ function fillOverviewPage(nodename)
 
 	for (var key = 0; key < elements.length; key++)
 	{
-		var value = null;
+		var value1 = null;
 		try
 		{
-			value = casaandata[nodename][jsonitems[key]][jsonunit];
+			value1 = casaandata[nodename][jsonitems[key]][jsonunit];
 		}
 		catch (err)
 		{
 			
 		}
-		if (value) value = value + " " + unit;
-		else value = "- " + unit;
-		
+		if (value1) value1 = value1 + " " + unit;
+		else value1 = "- " + unit;
+	
+		if (label2 != "") value2 = "- " + unit;
+		else value2="";
 		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
-		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value;
-		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = "";
-		elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = "";
-		elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = "";
+		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
+		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
+		elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = label1;
+		elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = label2;
 	}
 }
+
+//
+// showPage hides the current page and shows the page selected
+//
 
 function showPage(pageName) {
 	if (pageName == '') pageName = 'mainpage';
@@ -585,8 +614,10 @@ function showPage(pageName) {
 	if (pageName == "sunelectricitypage")
 	{
 		graphsource = "sunelectricity";
-		graphtitle = "Opgewekte Zonnestroom";
+		graphtitle = "Zonnestroom";
 		graphylabel = "kwh";
+		graphcolors = ["#00FF00","#00FFFF"];
+		graphnames = ["Opgewekt", "Terruggeleverd"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("sunelectricity");
 	}
@@ -594,7 +625,9 @@ function showPage(pageName) {
 	{
 		graphsource = "electricitymeter";
 		graphylabel = "kwh";
-		graphtitle = "Netstroomgebruik";
+		graphtitle = "Netstroom";
+		graphcolors = ["#666666", "#00FF00"];
+		graphnames = ["Verbruikt", "Terruggeleverd"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("electricity");
 	}
@@ -603,6 +636,8 @@ function showPage(pageName) {
 		graphsource = "gasmeter";
 		graphylabel = "m3";
 		graphtitle = "Gasgebruik";
+		graphcolors = ["#FFFF00"];
+		graphnames = ["Verbruikt"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("gas");
 	}
@@ -611,6 +646,8 @@ function showPage(pageName) {
 		graphsource = "watermeter";
 		graphylabel = "m3";
 		graphtitle = "Watergebruik";
+		graphcolors = ["#0000FF"];
+		graphnames = ["Verbruikt"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("water");
 	}
@@ -619,64 +656,76 @@ function showPage(pageName) {
 		graphsource = "temperature";
 		graphylabel = "&deg;C";
 		graphtitle = "Temperatuur";
+		graphcolors = ["#FF0000"];
+		graphnames = ["Temperatuur"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("temperature");
 	}
     else if (pageName == "graphdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle, "Uur", graphylabel, labels, values, '#00FF00');
-	}
-    else if (pageName == "graphweekpage")
-	{
-		document.getElementById("graphpage").style.display = "inline-block"; 
-		var labels = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-		var values = [10.0, 11.4,  8.2,  5.5,  7.7, 11.2, 9.9];
-		drawgraph("graph", graphtitle, "Dag", graphylabel, labels, values, '#00FF00');
+		var values = [];
+		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', '23'];
+		values[0] = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.8, 0.6, 0.2, 0.2, 0.1, 0.2, 0.2, 0.4];
+		values[1] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
+		drawgraph("graph", graphtitle, "Uur", graphylabel, graphnames, labels, values, graphcolors);
 	}
     else if (pageName == "graphmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
-		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle, "Dag", graphylabel, labels, values, '#00FF00');
+		var values = [];
+		var labels = [1   ,    2,    3,    4,    5,    6,   7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,21,22,23,24,25,26,27,28,29,30,31];
+		values[0] = [10.0, 11.4,  8.2,  5.5,  7.7, 11.2, 9.9, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		values[1] = [1.0, 1.4,  1.2,  2.5,  1.7, 1.2, 1.9, 0, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+		drawgraph("graph", graphtitle, "Dag", graphylabel, graphnames, labels, values, graphcolors);
 	}
     else if (pageName == "graphyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		var values = [];
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
-		drawgraph("graph", graphtitle, "Maand", graphylabel, labels, values, '#00FF00');
+		values[0] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
+		drawgraph("graph", graphtitle, "Maand", graphylabel, graphnames, labels, values, graphcolors);
+	}
+    else if (pageName == "graphtotalpage")
+	{
+		document.getElementById("graphpage").style.display = "inline-block"; 
+		var values = [];
+		var labels = [2010, 2011, 2012, 2013, 2014, 2015, 2016];
+		values[0] = [2023, 2130, 1932, 2041, 1987, 1889, 1920];
+		drawgraph("graph", graphtitle, "Jaar", graphylabel, graphnames, labels, values, graphcolors);
 	}
     else if (pageName == "graphpreviousdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		var values = [];
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle + " gisteren", "Uur", graphylabel, labels, values, '#00FF00');
+		values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
+		drawgraph("graph", graphtitle + " gisteren", "Uur", graphylabel, graphnames, labels, values, graphcolors);
 	}
     else if (pageName == "graphpreviousweekpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		var values = [];
 		var labels = ['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'];
-		var values = [10.0, 11.4,  8.2,  5,5,  7,7, 11,2, 9.9];
-		drawgraph("graph", graphtitle + " vorige week", "Dag", graphylabel, labels, values, '#00FF00');
+		values = [10.0, 11.4,  8.2,  5,5,  7,7, 11,2, 9.9];
+		drawgraph("graph", graphtitle + " vorige week", "Dag", graphylabel, graphnames, labels, values, graphcolors);
 	}
     else if (pageName == "graphpreviousmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		var values = [];
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15'];
-		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
-		drawgraph("graph", graphtitle  + " vorige maand", "Dag", graphylabel, labels, values, '#00FF00');
+		values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6, 1.4, 2, 2.1, 2.1, 2, 1.4];
+		drawgraph("graph", graphtitle  + " vorige maand", "Dag", graphylabel, graphnames, labels, values, graphcolors);
 	}
     else if (pageName == "graphpreviousyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		var values = [];
 		var labels = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-		var values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
-		drawgraph("graph", graphtitle  + " vorig jaar", "Maand", graphylabel, labels, values, '#00FF00');
+		values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.4, 0.6,  1.4,    2, 2.1];
+		drawgraph("graph", graphtitle  + " vorig jaar", "Maand", graphylabel, graphnames, labels, values, graphcolors);
 	}
 		
 		
@@ -687,36 +736,9 @@ function showPage(pageName) {
     if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 30000);
 }
 
-function drawgraphplotly(graphname, graphtitle, xtitle, ytitle, labels, values)
+function drawgraph(graphname, graphtitle, xtitle, ytitle, names, labels, values, colors)
 {
-	var trace1 = 
-	{
-		x: labels, 
-		y: values, 
-		type: 'scatter',
-		fill: 'tozeroy',
-		name: graphname,
-		line: 
-		{
-			color: '#55AA55'
-		}
-	};
-
-	var layout = 
-	{
-		title: graphtitle,
-		xaxis: {title: xtitle},
-		yaxis: {title: ytitle},
-		margin: {t: 70, b: 70, l:70, r:20},
-	};
-
-	var data = [trace1];
-	Plotly.newPlot('graph', data, layout, {displayModeBar: false});
-}
-
-function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values, color)
-{
-    Highcharts.chart('graph', {
+    var chart = Highcharts.chart('graph', {
         chart: {
             type: 'line'
         },
@@ -724,7 +746,7 @@ function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values, color)
             text: graphtitle
         },
         legend: {
-            enabled: false
+            enabled: true
         },
         exporting: { enabled: false },
         xAxis: {
@@ -741,7 +763,7 @@ function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values, color)
         credits: {
             enabled: false
         },
-        colors: [ color ],
+        colors: colors,
         plotOptions: {
             line: {
                 dataLabels: {
@@ -751,23 +773,28 @@ function drawgraph(graphname, graphtitle, xtitle, ytitle, labels, values, color)
             }
         },
         series: [{
-            name: ytitle,
-            data: values
+            name: names[0],
+            data: values[0]
+        },
+		{
+            name: names[1],
+            data: values[1]
         }]
     });
+	
 }
 
 function starttimepage()
 {
        var times = SunCalc.getTimes(new Date(), 51.5, -0.1);
        document.getElementById("sun").innerHTML = "Op: "+
-       times.sunrise.getHours()+":"+times.sunrise.getMinutes() + "<BR>Onder:  " +
-       times.sunset.getHours()+":"+times.sunset.getMinutes();
+       (times.sunrise ? times.sunrise.getHours()+":"+times.sunrise.getMinutes() : "") + "<BR>Onder:  " +
+       (times.sunset ? times.sunset.getHours()+":"+times.sunset.getMinutes() : "");
 
        var moontimes = SunCalc.getMoonTimes(new Date(), 51.5, -0.1);
        document.getElementById("moon").innerHTML = "Op: "+
-       moontimes.rise.getHours()+":"+moontimes.rise.getMinutes() + "<BR>Onder:  " +
-       moontimes.set.getHours()+":"+moontimes.set.getMinutes();
+       (moontimes.rise ? moontimes.rise.getHours()+":"+moontimes.rise.getMinutes() : "") + "<BR>Onder:  " +
+       (moontimes.set ? moontimes.set.getHours()+":"+moontimes.set.getMinutes() : "") ;
 }
 
 function updateTime() {
@@ -813,11 +840,8 @@ function updateWeather() {
 			}
 		}
 
-	elements = document.getElementsByClassName('weatherlongtexttoday');
-	for(var y=0; y<elements.length; y++)
-	{
-		elements[y].innerHTML = casaandata.buienradarnl.weergegevens.verwachting_vandaag.samenvatting;
-	}
+	document.getElementsByClassName('weathertext')[0].innerHTML = 
+    casaandata.buienradarnl.weergegevens.verwachting_vandaag.samenvatting[0];
 
     document.getElementById("temptomorrow").innerHTML =
     casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus1"].mintemp + " / " + 
@@ -834,4 +858,34 @@ function updateWeather() {
     document.getElementById("tempafterafteraftertomorrow").innerHTML =
     casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].mintemp + " / " + 
 	+ casaandata.buienradarnl.weergegevens.verwachting_meerdaags["dag-plus4"].maxtemp + " &deg;C";
+	
+    document.getElementById("weathertextlong").innerHTML =
+    casaandata.buienradarnl.weergegevens.verwachting_vandaag.tekst[0];
+	
+	var d = new Date();
+	d.setDate(d.getDate()+1);
+	var daynames = ["Zondag", "Maandag", "Dinsdag", "Woensdag", "Donderdag", "Vrijdag", "Zaterdag"];
+	elements = document.getElementsByClassName('nametoday+1');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+	d.setDate(d.getDate()+1);
+	elements = document.getElementsByClassName('nametoday+2');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+	d.setDate(d.getDate()+1);
+	elements = document.getElementsByClassName('nametoday+3');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
+	d.setDate(d.getDate()+1);
+	elements = document.getElementsByClassName('nametoday+4');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].innerHTML = daynames[d.getDay()];
+	}
 }

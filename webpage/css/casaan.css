@@ -155,6 +155,20 @@ body {
     position: absolute;
   }
 
+.fullboxtext
+{
+    display: flex;
+    height:auto;
+    bottom:0;
+    top:0;
+    left:0;
+    right:0;    
+    margin: 2%;
+    text-align: left;
+    vertical-align: middle;
+    align-items: center; /* align vertical */
+    position: absolute;
+}
   
 .boxtexttabs
   {
