@@ -55,7 +55,7 @@ body {
 }
 
 .wide-floating-box {
-    width: 86.5vh;
+    	width: 86.5vh;
 }
 
 .fullscreen-floating-box {
@@ -63,7 +63,7 @@ body {
 	right: 5px;
 	top: 5px;
 	bottom: 5px;
-    height: auto;
+	height: auto;
 	width: auto;
 	position: absolute;
 }
@@ -368,7 +368,7 @@ div.therm.outer-therm.vertical {
 	}
 
 	.wide-floating-box {
-		width: 49vw;
+		width: 48.4vw;
 		height: 24vw;
 		margin: 0.1vw;
 	}
@@ -391,7 +391,7 @@ div.therm.outer-therm.vertical {
 		margin: 0.1vh;
 	}
 	.wide-floating-box {
-		width: 45vh;
+		width: 44.4vh;
 		height: 22vh;
 		margin: 0.1vh;
 	}
