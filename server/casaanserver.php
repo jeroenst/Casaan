@@ -55,9 +55,9 @@ $casaandata = json_decode ('
 }
 ', true);
 
-pcntl_signal(SIGTERM, "sig_handler");
-pcntl_signal(SIGHUP,  "sig_handler");
-pcntl_signal(SIGUSR1, "sig_handler");
+// pcntl_signal(SIGTERM, "sig_handler");
+// pcntl_signal(SIGHUP,  "sig_handler");
+// pcntl_signal(SIGUSR1, "sig_handler");
 
 error_reporting(E_ALL);
 
@@ -68,7 +68,7 @@ set_time_limit(0);
 * as it comes in. */
 ob_implicit_flush();
 
-$address = 'localhost';
+$address = '127.0.0.1';
 $port = 58880;
 $readsocks = array();
 $writesocks = array();
@@ -283,18 +283,23 @@ function socketreceivedata($sock)
 		{
 			static $buienradardata;
 			$buienradardata .= $recvdata;
-			if (strpos($recvdata, '</buienradarnl>') !== false)
-			{
-				$first = strpos($buienradardata, '<buienradarnl>');
-				$buienradardata = substr($buienradardata, $first);
-				echo ("Received data from buienradar:\n".$buienradardata."\n\n");
-				$simpleXml = simplexml_load_string($buienradardata);
-				simplexml_to_array($simpleXml, $array);
-				$casaandata["buienradarnl"]= $array["buienradarnl"];
-				sendtowebsockets(json_encode($array));
-				$buienradardata = "";
-				socketdisconnect ($sock);
-			}
+                        if (strpos($recvdata, '</buienradarnl>') !== false)
+                        {
+                                $first = strpos($buienradardata, '<buienradarnl>');
+                                $buienradardata = substr($buienradardata, $first);
+                                echo ("Received data from buienradar:\n".$buienradardata."\n\n");
+                                $simpleXml = simplexml_load_string($buienradardata);
+                                simplexml_to_array($simpleXml, $array);
+                                if (!isset($casaandata["buienradarnl"])) $casaandata["buienradarnl"] = array();
+                                if (serialize($casaandata["buienradarnl"]) != serialize($array["buienradarnl"]))
+                                {
+                                	echo ("Buienradar is updated.");
+                                        $casaandata["buienradarnl"] = $array["buienradarnl"];
+                                        sendtowebsockets(json_encode($array));
+                                }
+                                $buienradardata = "";
+                                socketdisconnect ($sock);
+                        }
 		}
 		else
 		{		
