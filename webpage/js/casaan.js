@@ -304,10 +304,10 @@ function startcasaanwebsocket()
 				
 				if (isNaN(watt)) watt = "-";
 				
-				var kwhusedtoday = "-";
+				var kwhtoday = "-";
 				try
 				{
-					var kwhusedtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
+					var kwhtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
 					- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
 					
 					if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
@@ -325,13 +325,15 @@ function startcasaanwebsocket()
 				catch(err)
 				{
 					watt = "-";							
+					kwhtoday = "-";
 					wattbar = 0;
 				}
 				
-				
+				if (isNaN(kwhtoday)) kwhtoday = "-";
+
 				
 				document.getElementById('electricitycurrent').innerHTML = watt + " watt";
-				document.getElementById('electricityusedtoday').innerHTML = kwhusedtoday + " kwh";
+				document.getElementById('electricityusedtoday').innerHTML = kwhtoday + " kwh";
 				electricitybar.value = wattbar;
 				electricitybar.grow();
 			}
@@ -399,6 +401,8 @@ function startcasaanwebsocket()
 					lminbar = lmin;
 				}
 
+				if (isNaN (lmin)) lmin = "-";
+				
 				document.getElementById('watercurrent').innerHTML = lmin + " l/min";
 				document.getElementById('watertoday').innerHTML = m3today + " m3";
 				waterbar.value = lminbar;
@@ -415,7 +419,7 @@ function startcasaanwebsocket()
 				try
 				{					
 					kw = data["sunelectricity"]["now"]["out"]["watt"];
-					kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
+					kwhtoday = (data["sunelectricity"]["today"]["kwh_out"]);
 					if (kw == null) watt = "-"; else kwbarvalue = watt;
 					if (kwhtoday == null) kwhtoday = "-";
 				}
@@ -769,7 +773,7 @@ function showPage(pageName) {
 	else document.getElementById("mainpage").style.display = "inline-block";
 	autochangesizes();
 	
-	if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 30000);
+	if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 60000);
 }
 
 function drawgraph(graphname, graphtitle, xtitle, ytitle, names, labels, values, colors)
