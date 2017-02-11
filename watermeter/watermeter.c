@@ -135,13 +135,22 @@ int get_cts_state(int fd)
 	int serial = 0;
 	if(ioctl(fd, TIOCMGET, &serial) < 0)
 	{
-		printf("ioctl() failed: %d: %s\n", errno, strerror(errno));
+		printf("getctsstate ioctl() failed: fd:%d, %d: %s\n", fd, errno, strerror(errno));
 		return -1;
 	}
 
 	return (serial & TIOCM_CTS) ? 1 : 0;
 }
 
+uint64_t get_posix_clock_time ()
+{
+    struct timespec ts;
+
+    if (clock_gettime (CLOCK_MONOTONIC, &ts) == 0)
+        return (uint64_t) (ts.tv_sec * 1000000 + ts.tv_nsec / 1000);
+    else
+        return 0;
+}
 
 int   main(int argc, char * argv[])
 {
@@ -170,7 +179,7 @@ int   main(int argc, char * argv[])
 
 	double waterreading_m3 = 0;
 	waterreading_m3 = read_waterreading (datafile.c_str());
-	double waterflow_m3h = -1;
+	double waterflow_m3h = 0;
 
 	
 	int pipefd[2];
@@ -192,14 +201,14 @@ int   main(int argc, char * argv[])
 
 		struct timeval timeout;
 		
+			/* Initialize the timeout data structure. */
+			timeout.tv_sec = 10;
+			timeout.tv_usec = 0;
 
 
 		/* select returns 0 if timeout, 1 if input available, -1 if error. */
 		while(1)
 		{
-			/* Initialize the timeout data structure. */
-			timeout.tv_sec = 10;
-			timeout.tv_usec = 0;
 
 			/* Initialize the file descriptor set. */
 			fd_set set;
@@ -220,25 +229,17 @@ int   main(int argc, char * argv[])
 				{
 					printf ("Tcp client connected!\n");
 					char json[80];
-					if (waterflow_m3h >= 0)
-					{
-						sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
-					}
-					else
-					{
-						sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":null},\"total\":{\"m3\":null}}}");
-					}
+					sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
 					write (client_fd,json,strlen(json));
 				}
-			}      
-			
-			if (FD_ISSET(client_fd, &set))
+			}		
+			else if (FD_ISSET(client_fd, &set))
 			{
 				// Received message from tcp client!
 				char msg[80];
 				bzero(msg, 80);
 				int n = read(client_fd, msg, 80);
-				if (n < 0)
+				if (n <= 0)
 				{
 					// Connection was closed
 					printf("TCP Client closed connection\n");
@@ -250,20 +251,12 @@ int   main(int argc, char * argv[])
 					if (strcmp(msg, "getwatermeter") == 0)
 					{
 						char json[80];
-						if (waterflow_m3h >= 0)
-						{
-							sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
-						}
-						else
-						{
-							sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":null},\"total\":{\"m3\":null}}}");
-						}
+						sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3lf},\"total\":{\"m3\":%.3lf}}}", waterflow_m3h, waterreading_m3);
 						write (client_fd,json,strlen(json));
 					}
 				}
-			}    
-			
-			if (FD_ISSET(pipefd[0], &set))
+			}		
+			else if (FD_ISSET(pipefd[0], &set))
 			{
 				// Received new watermeter values from Parent!
 				char msg[80];
@@ -279,15 +272,29 @@ int   main(int argc, char * argv[])
 				writetodatabase(waterreading_m3, waterflow_m3h);    
 
 				char json[80];
-				if (waterflow_m3h >= 0)
-				{
-					sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
-				}
-				else
-				{
-					sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":null},\"total\":{\"m3\":null}}}");
-				}
+				sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
 				if (client_fd >= 0) write (client_fd,json,strlen(json));
+
+				/* Re-Initialize the timeout data structure. */
+				timeout.tv_sec = 10;
+				timeout.tv_usec = 0;
+				
+			}
+			else
+			{
+				/* Re-Initialize the timeout data structure. */
+				timeout.tv_sec = 10;
+				timeout.tv_usec = 0;
+				
+				// Select timeout
+				if (waterflow_m3h > 0)
+				{
+					if (waterflow_m3h > 0.18) waterflow_m3h = 0.18;
+					else waterflow_m3h = waterflow_m3h / 2;
+	                                char json[80];
+        	                        sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
+                	                if (client_fd >= 0) write (client_fd,json,strlen(json));
+				}
 			}
 		}
 
@@ -305,13 +312,15 @@ int   main(int argc, char * argv[])
 
 		// open the serial stream
 		int fd;
-		while (fd = open(device.c_str(), omode, 0777) < 0)
+		fd = open(device.c_str(), omode, 0777);
+		while (fd <= 0)
 		{
+			fd = open(device.c_str(), omode, 0777);
 			printf("Error opening serial device %s: %s\n", device.c_str(), strerror(errno));
 			sleep(1);
 		}
 
-		printf("Device opened: %s\n", device.c_str());
+		printf("Device opened: %s, fd:%d\n", device.c_str(),fd);
 
 
 		// detect DCD changes forever
@@ -319,9 +328,7 @@ int   main(int argc, char * argv[])
 		int ctsstate= get_cts_state(fd);
 		int pctsstate = ctsstate;
 
-		struct timespec spec;
-		clock_gettime(CLOCK_REALTIME, &spec);
-		long tv_nsecold = spec.tv_nsec ;
+		uint64_t tv_nsecold =  get_posix_clock_time();
 		while(1)
 		{
 			printf("Waterreading_m3 = %.3f, Waterflow_m3h= %.3f, ctsstate=%d\n", waterreading_m3, waterflow_m3h,  ctsstate);
@@ -330,7 +337,7 @@ int   main(int argc, char * argv[])
 			// block until line changes state
 			if(ioctl(fd, TIOCMIWAIT, TIOCM_CTS) < 0)
 			{
-				printf("ioctl(TIOCMIWAIT) failed: %d: %s\n", errno, strerror(errno));
+				printf("waiting for interrupt ioctl(TIOCMIWAIT, TIOCM_CTS) failed: %d: %s\n", errno, strerror(errno));
 				sleep(1);
 			}
 
@@ -339,9 +346,11 @@ int   main(int argc, char * argv[])
 			if ((ctsstate != pctsstate))
 			{
 				// Calculate waterflow
-				clock_gettime(CLOCK_REALTIME, &spec);
-				long ms = round((spec.tv_nsec - tv_nsecold) / 1.0e6);
-				waterflow_m3h = 0.0005 * (1000 / ms) * 3600;
+				uint64_t tv_nsecnew =  get_posix_clock_time();
+				long ms = round ((tv_nsecnew - tv_nsecold) / 1000);
+				tv_nsecold = tv_nsecnew;
+				printf ("pulse = %ld ms\n", ms);
+				waterflow_m3h = (double)((0.0005 * 1000  * 3600) / ms);
 				
 				// Calculate waterreading
 				waterreading_m3+=0.0005;

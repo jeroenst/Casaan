@@ -262,7 +262,7 @@ function socketreceivedata($sock)
 		else if ($sock == $watermetersocket)
 		{
 			echo ("Received data from watermeter:\n".$recvdata."\n\n");
-			$casaandata["watermeter"]=array_merge_recursive($casaandata["watermeter"], json_decode($recvdata, true)["watermeter"]);
+			$casaandata["watermeter"]=json_decode($recvdata, true)["watermeter"];
 			sendtowebsockets("{ \"watermeter\":".json_encode($casaandata["watermeter"])."}");
 		}
 
