@@ -144,86 +144,23 @@ while(1)
     echo ("AC Freq = ".((ord($message[17]) << 8)| $message[18])/100 . "\n");
     echo ("AC Watt = ".((ord($message[19]) << 8)| $message[20])/10 . "\n");
     
-/*    // Read pv watts
-    $value=$modbus->sendQuery(1,4,"3002",1);
-    if ($value != 0) 
-    {
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["pv"]["watt"]=$value;
-
-    // Read pv volt
-    $value=$modbus->sendQuery(1,4,"3003",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["pv"]["volt"]=$value;
-
-    // Read pv amps
-    $value=$modbus->sendQuery(1,4,"3004",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["pv"]["amp"]=$value;
-
-    // Read output watts
-    $value=$modbus->sendQuery(1,4,"300C",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["out"]["watt"]=$value;
-
-    // Read output frequency
-    $value=$modbus->sendQuery(1,4,"300D",1);
-    if ($value != 0) $value = hexdec($value)[0]/100; else $value = null;
-    $data["sunelectricity"]["now"]["out"]["frequency"]=$value;
-
-    // Read output voltage
-    $value=$modbus->sendQuery(1,4,"300E",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["out"]["volt"]=$value;
-
-    // Read kwh provided today
-    $value=$modbus->sendQuery(1,4,"301B",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["today"]["kwh"]=$value;
-
-    // Read kwh provided total
-    $value=$modbus->sendQuery(1,4,"301D",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["total"]["kwh"]=$value;
+    $data["sunelectricity"]["now"]["pv"]["watt"]=((ord($message[11]) << 8)| $message[12])/10;
+    $data["sunelectricity"]["now"]["pv"]["volt"]=((ord($message[7]) << 8)| $message[8])/10;
+    $data["sunelectricity"]["now"]["grid"]["watt"]=((ord($message[19]) << 8)| $message[20])/10;
+    $data["sunelectricity"]["now"]["grid"]["frequency"]=((ord($message[17]) << 8)| $message[18])/100;
+    $data["sunelectricity"]["now"]["grid"]["volt"]=((ord($message[13]) << 8)| $message[14])/10;
+    $data["sunelectricity"]["now"]["grid"]["amp"]=((ord($message[15]) << 8)| $message[16])/10;
+    $data["sunelectricity"]["today"]["kwh"]=NULL;
+    $data["sunelectricity"]["total"]["kwh"]=NULL;
 
     echo (json_encode($data)."\n\n");
     
     sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n\n");
-*/
-/*# The basic stuff is read not all is used but just added for later use
-rr = client.read_input_registers(2,1) #Watts delivered by panels (DC side)
-value=rr.registers
-pv_watts=float(value[0])/10
-rr = client.read_input_registers(3,1) # Volts on DC side
-value=rr.registers
-pv_volts=float(value[0])/10
-rr = client.read_input_registers(4,1) # Amps on DC side??? Not sure.
-value=rr.registers
-pv_amps=float(value[0])/10
-rr = client.read_input_registers(12,1) #watts delivered by inverter to net
-value=rr.registers
-out_watts=float(value[0])/10
-rr = client.read_input_registers(13,1) # frequenzy of AC
-value=rr.registers
-ac_hz=float(value[0])/100
-rr = client.read_input_registers(14,1) # volts on AC side delivered by inverter
-value=rr.registers
-ac_volts=float(value[0])/10
-rr = client.read_input_registers(27,1) # Total energy production today
-value=rr.registers
-Wh_today=float(value[0])*100
-rr = client.read_input_registers(29,1) # Total energy production in inervter storage
-value=rr.registers
-Wh_total=float(value[0])*100
-*/
-
   }
   else echo ("Connection to growwatt inverter failed!\n");
   sleep(5);
 }
 
-}
-// If you want to change the configuration, the device must be closed
 $serial->deviceClose();
 exit(1);
 
