@@ -18,11 +18,12 @@ $data = json_decode ('
 					  "volt": null,
 					  "amp": null
 					},
-					"out":
+					"grid":
 					{
 					  "watt": null,
 					  "frequency": null,
-					  "volt": null
+					  "volt": null,
+					  "amp": null
 					}
 				},
 				"today":
@@ -184,22 +185,6 @@ value=rr.registers
 Wh_total=float(value[0])*100
 */
 
-  $mysqli = mysqli_connect('localhost', 'casaan', 'casaan', 'casaan');
-
-  if (!$mysqli->connect_errno) {
-    $sql = "INSERT INTO `sunelectricity` (pv_watt, pv_volt, pv_amp, out_watt, out_frequency, out_volt,kwh_today,kwh_total)
-        VALUES ( ".
-                 $data['sunelectricity']['now']['pv']['watt'].",".
-                 $data['sunelectricity']['now']['pv']['volt'].",".
-                 $data['sunelectricity']['now']['pv']['amp'].",".
-                 $data['sunelectricity']['now']['out']['watt'].",".
-                 $data['sunelectricity']['now']['out']['frequency'].",".
-                 $data['sunelectricity']['now']['out']['volt'].",".
-                 $data['sunelectricity']['today']['kwh'].",".
-                 $data['sunelectricity']['total']['kwh'].")";
-    if (!$result = $mysqli->query($sql)) echo ("Error writing values to database!\n");
-    $mysqli->close();
-  }
   }
   else echo ("Connection to growwatt inverter failed!\n");
   sleep(5);
