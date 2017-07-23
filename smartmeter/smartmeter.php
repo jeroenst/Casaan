@@ -36,10 +36,6 @@ $data = json_decode ('
 include "php_serial.class.php";  
 
 $settings = array(	"device" => "/dev/ttyUSB0", 
-"mysqlserver" => "localhost", 
-"mysqldatabase" => "casaan", 
-"mysqlusername" => "casaan",
-"mysqlpassword" => "casaan",
 "port" => "58881");
 if ($argc > 1) 
 {
@@ -60,7 +56,6 @@ array_push($tcpsocketClients, $tcpsocket);
 
 // Let's start the class
 $serial = new phpSerial;
-//$Mysql_con = mysql_connect("nas","domotica","b-2020");
 
 // First we must specify the device. This works on both linux and windows (if
 // your linux serial device is /dev/ttyS0 for COM1, etc)
@@ -187,20 +182,6 @@ while(1)
 
 										sendToAllTcpsocketClients($tcpsocketClients, json_encode($data)."\n\n");
 
-										if ($write_database_timer < time() )
-										{
-											$write_database_timer = time() + ($write_database_timeout * 60);
-											echo "Writing values to database...";
-											writeEnergyDatabase(
-											$data['gasmeter']['total']['m3_used'],
-											$data['electricitymeter']['total']['kwhused1'],
-											$data['electricitymeter']['total']['kwhused2'],
-											$data['electricitymeter']['total']['kwhprovided1'],
-											$data['electricitymeter']['total']['kwhprovided2'],
-											$data['electricitymeter']['now']['kw_using'],
-											$data['electricitymeter']['now']['kw_providing']);
-										}
-
 									}
 								} 
 							}
@@ -272,28 +253,6 @@ function removeEmptyLines(&$linksArray)
 		}
 	}
 }                     
-
-function writeEnergyDatabase($gas_used, $kwh_used1, $kwh_used2, $kwh_provided1, $kwh_provided2, $kw_using, $kw_providing)
-{
-	global $settings;
-
-	$mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
-
-	if (!$mysqli->connect_errno)
-	{        
-		$mysqli->query("INSERT INTO `electricitymeter` (kw_using, kw_providing, kwh_used1, kwh_used2, kwh_provided1, kwh_provided2)
-						VALUES ($kw_using, $kw_providing, $kwh_used1, $kwh_used2, $kwh_provided1, $kwh_provided2)");
-
-		$mysqli->query("INSERT INTO `gasmeter` (m3, m3h) VALUES ($gas_used, 0)");
-		$mysqli->close();	
-	}
-	else
-	{
-		echo ("Error while writing values to database: ".$mysqli->connect_error ."\n");
-	}
-	return 0;
-}
-
 
 
 function sendToAllTcpSocketClients($sockets, $msg)
