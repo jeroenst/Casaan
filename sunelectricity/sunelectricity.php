@@ -18,11 +18,12 @@ $data = json_decode ('
 					  "volt": null,
 					  "amp": null
 					},
-					"out":
+					"grid":
 					{
 					  "watt": null,
 					  "frequency": null,
-					  "volt": null
+					  "volt": null,
+					  "amp": null
 					}
 				},
 				"today":
@@ -215,6 +216,9 @@ rr = client.read_input_registers(29,1) # Total energy production in inervter sto
 value=rr.registers
 Wh_total=float(value[0])*100
 */
+
+  }
+  else echo ("Connection to growwatt inverter failed!\n");
   sleep(5);
 }
 
