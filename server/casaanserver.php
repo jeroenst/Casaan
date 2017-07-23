@@ -276,11 +276,11 @@ function socketreceivedata($sock)
 				$sql = 'INSERT INTO gasmeter (m3, m3h) 
 						VALUES ('.$casaandata["gasmeter"]["now"]["m3"].','
 							 .$casaandata["gasmeter"]["now"]["m3h"].');';
-			   if (!$mysql->query($sql)) echo ("Error writing values to database!\n");
+			   if (!$mysql->query($sql)) echo ("Error writing gasmeter values to database!\n");
 				$sql = 'INSERT INTO electricitymeter (kwh_using, kwh_providing) 
 						VALUES ('.$casaandata["electricitymeter"]["now"]["kwh_using"].','
 							 .$casaandata["gasmeter"]["now"]["kwh_providing"].');';
-			   if (!$mysql->query($sql)) echo ("Error writing values to database!\n");
+			   if (!$mysql->query($sql)) echo ("Error writing electricitymeter values to database!\n");
 			   $mysql->close();
 			}
 		}
@@ -290,6 +290,21 @@ function socketreceivedata($sock)
 			echo ("Received data from watermeter:\n".$recvdata."\n\n");
 			$casaandata["watermeter"]=json_decode($recvdata, true)["watermeter"];
 			sendtowebsockets("{ \"watermeter\":".json_encode($casaandata["watermeter"])."}");
+			$mysql=new mysqli($mysqlserver, $mysqlusername, $mysqlpassword, 'casaan');
+			if ($mysql->connect_error)
+			{
+			   echo ("ERROR: Mysql connection failed: ".$conn->connect_error);
+			}
+			else
+			{
+			   $sql = "INSERT INTO `watermeter` (m3, m3h)
+			    		VALUES ( ".
+			    			$casaandata['watermeter']['now']['m3h'].",".
+						$casaandata['watermeter']['total']['m3'].")";
+			   if (!$mysql->query($sql)) echo ("Error writing watermeter values to database!\n");
+			   $mysql->close();
+			}
+
 		}
 
 		else if ($sock == $sunelectricitysocket)
@@ -316,7 +331,7 @@ function socketreceivedata($sock)
 						$casaandata['sunelectricity']['now']['grid']['frequency'].",".
 						$casaandata['sunelectricity']['today']['kwh'].",".
 						$casaandata['sunelectricity']['total']['kwh'].")";
-			   if (!$mysql->query($sql)) echo ("Error writing values to database!\n");
+			   if (!$mysql->query($sql)) echo ("Error writing sunelectricity values to database!\n");
 			   $mysql->close();
 			}
 
