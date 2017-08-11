@@ -343,7 +343,7 @@ int   main(int argc, char * argv[])
 
 			pctsstate = ctsstate;
 			ctsstate = get_cts_state(fd);
-			if ((ctsstate != pctsstate))
+			if ((ctsstate != pctsstate) && (ctsstate == 1))
 			{
 				// Calculate waterflow
 				uint64_t tv_nsecnew =  get_posix_clock_time();
@@ -353,7 +353,7 @@ int   main(int argc, char * argv[])
 				waterflow_m3h = (double)((0.0005 * 1000  * 3600) / ms);
 				
 				// Calculate waterreading
-				waterreading_m3+=0.0005;
+				waterreading_m3+=0.001;
 				
 				// Write waterreading to file
 				write_waterreading(datafile.c_str(), waterreading_m3);

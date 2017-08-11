@@ -201,7 +201,7 @@ options: {
 textAccessible: true,
 tickmarks: false,
 shadow: false,
-colors: ['Gradient(#777:#BBB:#BBB)'],
+colors: ['Gradient(#555:#555:#555)'],
 gutterTop: 0,
 gutterBottom: 0,
 gutterLeft: 0,
@@ -296,7 +296,7 @@ function startcasaanwebsocket()
 				var watt =  "-";
 				try
 				{
-					watt = data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"];;
+					watt = (data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"])*1000;
 				}
 				catch(err)
 				{
@@ -309,8 +309,15 @@ function startcasaanwebsocket()
 				{
 					var kwhtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
 					- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
-					
 					if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
+				}
+				catch(err)
+				{
+					kwhtoday = "-";
+				}
+				
+				try
+				{	
 
 					if (data["electricitymeter"]["now"]["kw_using"] == null)
 					{
@@ -325,7 +332,6 @@ function startcasaanwebsocket()
 				catch(err)
 				{
 					watt = "-";							
-					kwhtoday = "-";
 					wattbar = 0;
 				}
 				
@@ -412,15 +418,15 @@ function startcasaanwebsocket()
 			if (data["sunelectricity"])
 			{
 				console.log("Received sunelectricity update");
-				var kw = "-";
+				var watt = "-";
 				var kwhtoday = "-";
 				var kwbarvalue = 0;
 				
 				try
 				{					
-					kw = data["sunelectricity"]["now"]["out"]["watt"];
+					watt = data["sunelectricity"]["now"]["out"]["watt"];
 					kwhtoday = (data["sunelectricity"]["today"]["kwh_out"]);
-					if (kw == null) watt = "-"; else kwbarvalue = watt;
+					if (watt == null) watt = "-"; else kwbarvalue = watt;
 					if (kwhtoday == null) kwhtoday = "-";
 				}
 				catch (err)
@@ -576,6 +582,7 @@ function fillOverviewPage(nodename)
 //
 
 function showPage(pageName) {
+        document.getElementById("graphbuttons").style.display = "none";
 	if (pageName == '') pageName = 'mainpage';
 	if (pageName == "previouspage")
 	{
@@ -663,6 +670,7 @@ function showPage(pageName) {
 	}
 	else if (pageName == "graphdaypage")
 	{
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		values = [];
 		labels = [];
@@ -680,6 +688,7 @@ function showPage(pageName) {
 	else if (pageName == "graphmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		values = [];
 		labels = [];
 		try
@@ -696,6 +705,7 @@ function showPage(pageName) {
 	else if (pageName == "graphyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		values = [];
 		labels = [];
 		try
@@ -711,6 +721,7 @@ function showPage(pageName) {
 	}
 	else if (pageName == "graphtotalpage")
 	{
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		values = [];
 		labels = [];
@@ -728,6 +739,7 @@ function showPage(pageName) {
 	else if (pageName == "graphpreviousdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		try
 		{
 			labels = casaandata[graphjsonsource].yesterday.graph.labels;
@@ -742,6 +754,7 @@ function showPage(pageName) {
 	else if (pageName == "graphpreviousmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		try
 		{
 			labels = casaandata[graphjsonsource].previousmonth.graph.labels;
@@ -756,6 +769,7 @@ function showPage(pageName) {
 	else if (pageName == "graphpreviousyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		try
 		{
 			labels = casaandata[graphjsonsource].previousyear.graph.labels;
