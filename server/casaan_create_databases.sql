@@ -22,6 +22,10 @@ GRANT ALL PRIVILEGES ON casaan.* TO 'casaan'@'localhost';
 
 -- --------------------------------------------------------
 
+CREATE DATABASE `casaan`;
+USE `casaan`;
+
+
 --
 -- Table structure for table `electricitymeter`
 --
@@ -58,8 +62,15 @@ CREATE TABLE `gasmeter` (
 CREATE TABLE `sunelectricity` (
   `id` int(10) UNSIGNED NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `kw_providing` decimal(6,3) NOT NULL,
-  `kwh_provided` decimal(12,3) NOT NULL
+  `kwh_today` decimal(12,3) NOT NULL,
+  `kwh_total` decimal(12,3) NOT NULL,
+  `pv_volt` decimal(12,3) NOT NULL,
+  `pv_amp` decimal(12,3) NOT NULL,
+  `pv_watt` decimal(12,3) NOT NULL,
+  `grid_volt` decimal(12,3) NOT NULL,
+  `grid_amp` decimal(12,3) NOT NULL,
+  `grid_watt` decimal(12,3) NOT NULL,
+  `grid_freq` decimal(12,3) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------

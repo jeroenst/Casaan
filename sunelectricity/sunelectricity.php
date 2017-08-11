@@ -1,4 +1,4 @@
-#!/usr/bin/php
+!/usr/bin/php
 <?php  
 // This php program reads data from a growatt inverter
 // 
@@ -18,11 +18,12 @@ $data = json_decode ('
 					  "volt": null,
 					  "amp": null
 					},
-					"out":
+					"grid":
 					{
 					  "watt": null,
 					  "frequency": null,
-					  "volt": null
+					  "volt": null,
+					  "amp": null
 					}
 				},
 				"today":
@@ -37,8 +38,8 @@ $data = json_decode ('
 }
 ');
 
-include("PhpSerialModbus/PhpSerialModbus.php");
-$modbus = new PhpSerialModbus;
+include("PhpSerial.php");
+$serial = new PhpSerial;
 
 
 // Open modbus
@@ -62,6 +63,16 @@ $tcpsocketClients = array();
 array_push($tcpsockets, $tcpsocket);
 
 date_default_timezone_set ("Europe/Amsterdam");
+// First we must specify the device. This works on both linux and windows (if
+// your linux serial device is /dev/ttyS0 for COM1, etc)
+$serial->deviceSet($serialdevice);
+
+// We can change the baud rate, parity, length, stop bits, flow control
+$serial->confBaudRate(9600);
+$serial->confParity("none");
+$serial->confCharacterLength(8);
+$serial->confStopBits(1);
+$serial->confFlowControl("none");
 
 
 // First we must specify the device. This works on both linux and windows (if
@@ -111,113 +122,54 @@ while(1)
 
 
           echo "Opening SerialModbus Port...\n";
-// Then we need to open it
-  if (!$modbus->deviceOpened())
-  {
-    $modbus->deviceInit($serialdevice,9600,'none',8,1,'none');
-    $modbus->deviceOpen();
-  }
 
-  if ($modbus->deviceOpened())
+  if ($serial->deviceOpen())
   {
-    // Read pv watts
-    $value=$modbus->sendQuery(1,4,"3002",1);
-    if ($value != 0) 
+    
+    echo ("Serial Port is open...\n");
+    $bExterTxBuffer = sprintf ("%c%c%c%c%c%c",  0x3F, 0x23, 1, 0x32, 0x41, 0);
+    $wStringSum = 0;
+    for($i=0;$i<strlen($bExterTxBuffer);$i++)
     {
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["pv"]["watt"]=$value;
+      $wStringSum += (ord($bExterTxBuffer[$i]) ^ $i);
+      
+      if($wStringSum==0||$wStringSum>0xFFFF)$wStringSum = 0xFFFF;
+    }
 
-    // Read pv volt
-    $value=$modbus->sendQuery(1,4,"3003",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["pv"]["volt"]=$value;
+    $bExterTxBuffer .= sprintf ("%c%c", $wStringSum >> 8, $wStringSum & 0xFF);
+    
+    echo bin2hex($bExterTxBuffer)."\n" ;
 
-    // Read pv amps
-    $value=$modbus->sendQuery(1,4,"3004",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["pv"]["amp"]=$value;
+    $serial->sendMessage($bExterTxBuffer,1);
 
-    // Read output watts
-    $value=$modbus->sendQuery(1,4,"300C",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["out"]["watt"]=$value;
-
-    // Read output frequency
-    $value=$modbus->sendQuery(1,4,"300D",1);
-    if ($value != 0) $value = hexdec($value)[0]/100; else $value = null;
-    $data["sunelectricity"]["now"]["out"]["frequency"]=$value;
-
-    // Read output voltage
-    $value=$modbus->sendQuery(1,4,"300E",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["now"]["out"]["volt"]=$value;
-
-    // Read kwh provided today
-    $value=$modbus->sendQuery(1,4,"301B",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["today"]["kwh"]=$value;
-
-    // Read kwh provided total
-    $value=$modbus->sendQuery(1,4,"301D",1);
-    if ($value != 0) $value = hexdec($value)[0]/10; else $value = null;
-    $data["sunelectricity"]["total"]["kwh"]=$value;
+    $message = $serial->readPort();
+    echo ("Received: ".bin2hex($message)."\n");
+    
+    echo ("PV Volt1 = ".((ord($message[7]) << 8)| $message[8])/10 . "\n");
+    echo ("PV Volt2 = ".((ord($message[9]) << 8)| $message[10])/10 . "\n");
+    echo ("PV Watt = ".((ord($message[11]) << 8)| $message[12])/10 . "\n");
+    echo ("AC Volt = ".((ord($message[13]) << 8)| $message[14])/10 . "\n");
+    echo ("AC Amp = ".((ord($message[15]) << 8)| $message[16]) / 10 . "\n");
+    echo ("AC Freq = ".((ord($message[17]) << 8)| $message[18])/100 . "\n");
+    echo ("AC Watt = ".((ord($message[19]) << 8)| $message[20])/10 . "\n");
+    
+    $data["sunelectricity"]["now"]["pv"]["watt"]=((ord($message[11]) << 8)| $message[12])/10;
+    $data["sunelectricity"]["now"]["pv"]["volt"]=((ord($message[7]) << 8)| $message[8])/10;
+    $data["sunelectricity"]["now"]["grid"]["watt"]=((ord($message[19]) << 8)| $message[20])/10;
+    $data["sunelectricity"]["now"]["grid"]["frequency"]=((ord($message[17]) << 8)| $message[18])/100;
+    $data["sunelectricity"]["now"]["grid"]["volt"]=((ord($message[13]) << 8)| $message[14])/10;
+    $data["sunelectricity"]["now"]["grid"]["amp"]=((ord($message[15]) << 8)| $message[16])/10;
+    $data["sunelectricity"]["today"]["kwh"]=NULL;
+    $data["sunelectricity"]["total"]["kwh"]=NULL;
 
     echo (json_encode($data)."\n\n");
     
     sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n\n");
-
-/*# The basic stuff is read not all is used but just added for later use
-rr = client.read_input_registers(2,1) #Watts delivered by panels (DC side)
-value=rr.registers
-pv_watts=float(value[0])/10
-rr = client.read_input_registers(3,1) # Volts on DC side
-value=rr.registers
-pv_volts=float(value[0])/10
-rr = client.read_input_registers(4,1) # Amps on DC side??? Not sure.
-value=rr.registers
-pv_amps=float(value[0])/10
-rr = client.read_input_registers(12,1) #watts delivered by inverter to net
-value=rr.registers
-out_watts=float(value[0])/10
-rr = client.read_input_registers(13,1) # frequenzy of AC
-value=rr.registers
-ac_hz=float(value[0])/100
-rr = client.read_input_registers(14,1) # volts on AC side delivered by inverter
-value=rr.registers
-ac_volts=float(value[0])/10
-rr = client.read_input_registers(27,1) # Total energy production today
-value=rr.registers
-Wh_today=float(value[0])*100
-rr = client.read_input_registers(29,1) # Total energy production in inervter storage
-value=rr.registers
-Wh_total=float(value[0])*100
-*/
-
-  $mysqli = mysqli_connect('localhost', 'casaan', 'casaan', 'casaan');
-
-  if (!$mysqli->connect_errno) {
-    $sql = "INSERT INTO `sunelectricity` (pv_watt, pv_volt, pv_amp, out_watt, out_frequency, out_volt,kwh_today,kwh_total)
-        VALUES ( ".
-                 $data['sunelectricity']['now']['pv']['watt'].",".
-                 $data['sunelectricity']['now']['pv']['volt'].",".
-                 $data['sunelectricity']['now']['pv']['amp'].",".
-                 $data['sunelectricity']['now']['out']['watt'].",".
-                 $data['sunelectricity']['now']['out']['frequency'].",".
-                 $data['sunelectricity']['now']['out']['volt'].",".
-                 $data['sunelectricity']['today']['kwh'].",".
-                 $data['sunelectricity']['total']['kwh'].")";
-    if (!$result = $mysqli->query($sql)) echo ("Error writing values to database!\n");
-    $mysqli->close();
-  }
   }
   else echo ("Connection to growwatt inverter failed!\n");
   sleep(5);
 }
 
-}
-mysql_close($Mysql_con);
-
-// If you want to change the configuration, the device must be closed
 $serial->deviceClose();
 exit(1);
 

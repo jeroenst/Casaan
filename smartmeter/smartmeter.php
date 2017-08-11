@@ -233,29 +233,6 @@ function removeEmptyLines(&$linksArray)
 	}
 }                     
 
-/*function writeEnergyDatabase($gas_used, $kwh_used1, $kwh_used2, $kwh_provided1, $kwh_provided2, $kw_using, $kw_providing)
-{
-	global $settings;
-
-	$mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
-
-	if (!$mysqli->connect_errno)
-	{        
-		$mysqli->query("INSERT INTO `electricitymeter` (kw_using, kw_providing, kwh_used1, kwh_used2, kwh_provided1, kwh_provided2)
-						VALUES ($kw_using, $kw_providing, $kwh_used1, $kwh_used2, $kwh_provided1, $kwh_provided2)");
-
-		$mysqli->query("INSERT INTO `gasmeter` (m3, m3h) VALUES ($gas_used, 0)");
-		$mysqli->close();	
-	}
-	else
-	{
-		echo ("Error while writing values to database: ".$mysqli->connect_error ."\n");
-	}
-	return 0;
-}*/
-
-
-
 function sendToAllTcpSocketClients($sockets, $ignoresocket, $msg)
 {
 	echo ("Sending smartmeterdata to all websocketclient...\n");

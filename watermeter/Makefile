@@ -1,6 +1,6 @@
 CC=g++
-CFLAGS=$(shell mysql_config --cflags)
-LIBS=$(shell mysql_config --libs) -lmysqlclient
+CFLAGS=
+LIBS=
 
 watermeter: watermeter.o
 	$(CC) -o watermeter watermeter.o $(CFLAGS) $(LIBS)

@@ -13,7 +13,6 @@
 #include <inttypes.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <mysql.h>
 #include <inttypes.h>
 #include <math.h>
 #include <time.h>  
@@ -25,56 +24,11 @@ using namespace std;
 // Device is a comport like /dev/ttyUSB1
 
 string device = "/dev/ttyUSB0";
-string mysqlserver = "localhost";
-string mysqlusername = "casaan";
-string mysqlpassword = "casaan"; /* set me first */
-string mysqldatabase = "casaan";
 string datafile = "watermeter.dat";
 int  port = 58882;
 
 #define BUFFER_SIZE 1024
 #define on_error(...) { fprintf(stderr, __VA_ARGS__); fflush(stderr); exit(1); }
-
-
-
-int writetodatabase(double waterreading_m3, double waterflow_m3h) 
-{
-	MYSQL *conn;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-
-	conn = mysql_init(NULL);
-
-	/* Connect to database */
-	if (!mysql_real_connect(conn, mysqlserver.c_str(), mysqlusername.c_str(), mysqlpassword.c_str(), mysqldatabase.c_str(), 0, NULL, 0)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-	}
-	else
-	{
-
-	/* send SQL query */
-
-	char sqlquerystring[180];
-	sprintf (sqlquerystring, "INSERT INTO watermeter (m3, m3h) VALUES (%.3lf,%.3lf);", waterreading_m3, waterflow_m3h);
-	if (mysql_query(conn, sqlquerystring)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-
-	res = mysql_use_result(conn);
-
-	/* output table name */
-	//   printf("MySQL Tables in mysql database:\n");
-	//   while ((row = mysql_fetch_row(res)) != NULL)
-	//      printf("%s \n", row[0]);
-
-	/* close connection */
-	mysql_free_result(res);
-	mysql_close(conn);
-	return 0;
-	}
-	return 1;
-}
 
 int create_tcpserver()
 {
@@ -166,15 +120,9 @@ int   main(int argc, char * argv[])
 			if (strcmp(name.c_str(), "device") == 0) device = setting;
 			if (strcmp(name.c_str(), "datafile") == 0) datafile = setting;
 			if (strcmp(name.c_str(), "port") == 0) port = atoi(setting.c_str());
-			if (strcmp(name.c_str(), "mysqlpassword") == 0) mysqlpassword = setting;
-			if (strcmp(name.c_str(), "mysqlserver") == 0) mysqlserver = setting;
-			if (strcmp(name.c_str(), "mysqldatabase") == 0) mysqldatabase = setting;
-			if (strcmp(name.c_str(), "mysqlusername") == 0) mysqlusername = setting;
-			if (strcmp(name.c_str(), "mysqlpassword") == 0) mysqlpassword = setting;
 		}
 	}
 
-	printf ("\nWatermeter started\ndevice=%s\nport=%d\ndatafile=%s\nmysqlserver=%s\nmysqldatabase=%s\nmysqlusername=%s\n\n", device.c_str(), port, datafile.c_str(), mysqlserver.c_str(), mysqldatabase.c_str(), mysqlusername.c_str());
 	
 
 	double waterreading_m3 = 0;
@@ -269,7 +217,6 @@ int   main(int argc, char * argv[])
 				
 				int ctsstate;
 				sscanf(msg, "%lf %lf %d", &waterreading_m3, &waterflow_m3h, &ctsstate);
-				writetodatabase(waterreading_m3, waterflow_m3h);    
 
 				char json[80];
 				sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
