@@ -36,7 +36,7 @@ $data = json_decode ('
 include "php_serial.class.php";  
 date_default_timezone_set ("Europe/Amsterdam");
 
-$settings = array(	"device" => "/dev/ttyUSB3", 
+$settings = array(	"device" => "/dev/ttyUSB1", 
 "port" => "58881");
 if ($argc > 1) 
 {
@@ -81,6 +81,7 @@ if ( $serial->deviceSet($settings["device"]))
 	echo "Opening Serial Port...\n";
 	// Then we need to open it
 	if (!$serial->deviceOpen()) exit (1);
+	else echo "Serial Port opened...\n"; 
 } else exit(2);
 
 
@@ -133,6 +134,7 @@ while(1)
 		$packetcomplete = false;
 		$read = $serial->readPort();
 		$receivedpacket = $receivedpacket . $read;   
+		if ($read) echo "Received from serial port: ".$read; 
 		if (strlen ($read) == 0 && strpos($receivedpacket, '!') && strpos($receivedpacket, 'KFM5'))
 		{
 			foreach(preg_split("/((\r?\n)|(\r\n?))/", $receivedpacket) as $line)

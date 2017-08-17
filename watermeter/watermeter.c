@@ -234,7 +234,7 @@ int   main(int argc, char * argv[])
 				timeout.tv_usec = 0;
 				
 				// Select timeout
-				if (waterflow_m3h > 0)
+				if (waterflow_m3h > 0.001)
 				{
 					if (waterflow_m3h > 0.18) waterflow_m3h = 0.18;
 					else waterflow_m3h = waterflow_m3h / 2;
@@ -242,6 +242,7 @@ int   main(int argc, char * argv[])
         	                        sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
                 	                if (client_fd >= 0) write (client_fd,json,strlen(json));
 				}
+				else waterflow_m3h = 0;
 			}
 		}
 

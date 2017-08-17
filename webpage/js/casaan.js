@@ -424,8 +424,8 @@ function startcasaanwebsocket()
 				
 				try
 				{					
-					watt = data["sunelectricity"]["now"]["out"]["watt"];
-					kwhtoday = (data["sunelectricity"]["today"]["kwh_out"]);
+					watt = data["sunelectricity"]["now"]["grid"]["watt"];
+					kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
 					if (watt == null) watt = "-"; else kwbarvalue = watt;
 					if (kwhtoday == null) kwhtoday = "-";
 				}
@@ -527,17 +527,18 @@ function fillOverviewPage(nodename)
 	var label1 = "";
 	var label2 = "";
 
-	if ((nodename == "sunelectricity") || (nodename == "electricity"))
+	if ((nodename == "sunelectricitymeter") || (nodename == "electricitymeter"))
 	{
 		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "kwh"
 		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
+		label1 = "Verbruikt";
 		jsonunit = "kwh_used";
 		label2 = "Teruggeleverd";
 		jsonunit2 = "kwh_provided";
 	}
 	
-	if ((nodename == "gas") || (nodename == "water"))
+	if ((nodename == "gasmeter") || (nodename == "watermeter"))
 	{
 		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "m3"
@@ -564,11 +565,25 @@ function fillOverviewPage(nodename)
 		{
 			
 		}
+		var value2 = null;
+		try
+		{
+			value2 = casaandata[nodename][jsonitems[key]][jsonunit2];
+		}
+		catch (err)
+		{
+			
+		}
 		if (value1) value1 = value1 + " " + unit;
 		else value1 = "- " + unit;
 		
-		if (label2 != "") value2 = "- " + unit;
+		if (label2 != "")
+		{
+			if (value2) value2 = value2 + " " + unit;
+			else value2 = "- " + unit;
+		}
 		else value2="";
+		
 		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
 		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
 		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
@@ -630,7 +645,7 @@ function showPage(pageName) {
 		graphcolors = ["#666666", "#00FF00"];
 		graphnames = ["Verbruikt", "Teruggeleverd"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("electricity");
+		fillOverviewPage("electricitymeter");
 	}
 	else if (pageName == "gaspage")
 	{
@@ -642,7 +657,7 @@ function showPage(pageName) {
 		graphcolors = ["#FFFF00"];
 		graphnames = ["Verbruikt"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("gas");
+		fillOverviewPage("gasmeter");
 	}
 	else if (pageName == "waterpage")
 	{
@@ -654,7 +669,7 @@ function showPage(pageName) {
 		graphcolors = ["#0000FF"];
 		graphnames = ["Verbruikt"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("water");
+		fillOverviewPage("watermeter");
 	}
 	else if (pageName == "temperaturepage")
 	{
