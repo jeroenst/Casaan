@@ -234,7 +234,7 @@ int   main(int argc, char * argv[])
 				timeout.tv_usec = 0;
 				
 				// Select timeout
-				if (waterflow_m3h > 0)
+				if (waterflow_m3h > 0.001)
 				{
 					if (waterflow_m3h > 0.18) waterflow_m3h = 0.18;
 					else waterflow_m3h = waterflow_m3h / 2;
@@ -242,6 +242,7 @@ int   main(int argc, char * argv[])
         	                        sprintf (json, "{\"watermeter\":{\"now\":{\"m3h\":%.3f},\"total\":{\"m3\":%.3f}}}", waterflow_m3h, waterreading_m3);
                 	                if (client_fd >= 0) write (client_fd,json,strlen(json));
 				}
+				else waterflow_m3h = 0;
 			}
 		}
 
@@ -290,7 +291,7 @@ int   main(int argc, char * argv[])
 
 			pctsstate = ctsstate;
 			ctsstate = get_cts_state(fd);
-			if ((ctsstate != pctsstate))
+			if ((ctsstate != pctsstate) && (ctsstate == 1))
 			{
 				// Calculate waterflow
 				uint64_t tv_nsecnew =  get_posix_clock_time();
@@ -300,7 +301,7 @@ int   main(int argc, char * argv[])
 				waterflow_m3h = (double)((0.0005 * 1000  * 3600) / ms);
 				
 				// Calculate waterreading
-				waterreading_m3+=0.0005;
+				waterreading_m3+=0.001;
 				
 				// Write waterreading to file
 				write_waterreading(datafile.c_str(), waterreading_m3);

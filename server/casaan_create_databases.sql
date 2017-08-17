@@ -10,6 +10,12 @@
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
+CREATE DATABASE casaan;
+USE casaan;
+
+CREATE USER 'casaan'@'localhost' IDENTIFIED BY 'casaan';
+GRANT ALL PRIVILEGES ON casaan.* TO 'casaan'@'localhost'; 
+
 --
 -- Database: `casaan`
 --
@@ -44,8 +50,7 @@ CREATE TABLE `electricitymeter` (
 CREATE TABLE `gasmeter` (
   `id` int(10) UNSIGNED NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `m3` decimal(12,3) UNSIGNED NOT NULL,
-  `m3h` decimal(6,3) NOT NULL
+  `m3` decimal(12,3) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------

@@ -201,7 +201,7 @@ options: {
 textAccessible: true,
 tickmarks: false,
 shadow: false,
-colors: ['Gradient(#777:#BBB:#BBB)'],
+colors: ['Gradient(#555:#555:#555)'],
 gutterTop: 0,
 gutterBottom: 0,
 gutterLeft: 0,
@@ -296,7 +296,7 @@ function startcasaanwebsocket()
 				var watt =  "-";
 				try
 				{
-					watt = data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"];;
+					watt = (data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"])*1000;
 				}
 				catch(err)
 				{
@@ -309,8 +309,15 @@ function startcasaanwebsocket()
 				{
 					var kwhtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
 					- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
-					
 					if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
+				}
+				catch(err)
+				{
+					kwhtoday = "-";
+				}
+				
+				try
+				{	
 
 					if (data["electricitymeter"]["now"]["kw_using"] == null)
 					{
@@ -325,7 +332,6 @@ function startcasaanwebsocket()
 				catch(err)
 				{
 					watt = "-";							
-					kwhtoday = "-";
 					wattbar = 0;
 				}
 				
@@ -412,15 +418,15 @@ function startcasaanwebsocket()
 			if (data["sunelectricity"])
 			{
 				console.log("Received sunelectricity update");
-				var kw = "-";
+				var watt = "-";
 				var kwhtoday = "-";
 				var kwbarvalue = 0;
 				
 				try
 				{					
-					kw = data["sunelectricity"]["now"]["out"]["watt"];
-					kwhtoday = (data["sunelectricity"]["today"]["kwh_out"]);
-					if (kw == null) watt = "-"; else kwbarvalue = watt;
+					watt = data["sunelectricity"]["now"]["grid"]["watt"];
+					kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
+					if (watt == null) watt = "-"; else kwbarvalue = watt;
 					if (kwhtoday == null) kwhtoday = "-";
 				}
 				catch (err)
@@ -521,17 +527,18 @@ function fillOverviewPage(nodename)
 	var label1 = "";
 	var label2 = "";
 
-	if ((nodename == "sunelectricity") || (nodename == "electricity"))
+	if ((nodename == "sunelectricitymeter") || (nodename == "electricitymeter"))
 	{
 		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "kwh"
 		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
+		label1 = "Verbruikt";
 		jsonunit = "kwh_used";
 		label2 = "Teruggeleverd";
 		jsonunit2 = "kwh_provided";
 	}
 	
-	if ((nodename == "gas") || (nodename == "water"))
+	if ((nodename == "gasmeter") || (nodename == "watermeter"))
 	{
 		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "m3"
@@ -558,11 +565,25 @@ function fillOverviewPage(nodename)
 		{
 			
 		}
+		var value2 = null;
+		try
+		{
+			value2 = casaandata[nodename][jsonitems[key]][jsonunit2];
+		}
+		catch (err)
+		{
+			
+		}
 		if (value1) value1 = value1 + " " + unit;
 		else value1 = "- " + unit;
 		
-		if (label2 != "") value2 = "- " + unit;
+		if (label2 != "")
+		{
+			if (value2) value2 = value2 + " " + unit;
+			else value2 = "- " + unit;
+		}
 		else value2="";
+		
 		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
 		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
 		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
@@ -576,6 +597,7 @@ function fillOverviewPage(nodename)
 //
 
 function showPage(pageName) {
+        document.getElementById("graphbuttons").style.display = "none";
 	if (pageName == '') pageName = 'mainpage';
 	if (pageName == "previouspage")
 	{
@@ -623,7 +645,7 @@ function showPage(pageName) {
 		graphcolors = ["#666666", "#00FF00"];
 		graphnames = ["Verbruikt", "Teruggeleverd"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("electricity");
+		fillOverviewPage("electricitymeter");
 	}
 	else if (pageName == "gaspage")
 	{
@@ -635,7 +657,7 @@ function showPage(pageName) {
 		graphcolors = ["#FFFF00"];
 		graphnames = ["Verbruikt"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("gas");
+		fillOverviewPage("gasmeter");
 	}
 	else if (pageName == "waterpage")
 	{
@@ -647,7 +669,7 @@ function showPage(pageName) {
 		graphcolors = ["#0000FF"];
 		graphnames = ["Verbruikt"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("water");
+		fillOverviewPage("watermeter");
 	}
 	else if (pageName == "temperaturepage")
 	{
@@ -663,6 +685,7 @@ function showPage(pageName) {
 	}
 	else if (pageName == "graphdaypage")
 	{
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		values = [];
 		labels = [];
@@ -680,6 +703,7 @@ function showPage(pageName) {
 	else if (pageName == "graphmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		values = [];
 		labels = [];
 		try
@@ -696,6 +720,7 @@ function showPage(pageName) {
 	else if (pageName == "graphyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		values = [];
 		labels = [];
 		try
@@ -711,6 +736,7 @@ function showPage(pageName) {
 	}
 	else if (pageName == "graphtotalpage")
 	{
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		document.getElementById("graphpage").style.display = "inline-block"; 
 		values = [];
 		labels = [];
@@ -728,6 +754,7 @@ function showPage(pageName) {
 	else if (pageName == "graphpreviousdaypage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		try
 		{
 			labels = casaandata[graphjsonsource].yesterday.graph.labels;
@@ -742,6 +769,7 @@ function showPage(pageName) {
 	else if (pageName == "graphpreviousmonthpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		try
 		{
 			labels = casaandata[graphjsonsource].previousmonth.graph.labels;
@@ -756,6 +784,7 @@ function showPage(pageName) {
 	else if (pageName == "graphpreviousyearpage")
 	{
 		document.getElementById("graphpage").style.display = "inline-block"; 
+		document.getElementById("graphbuttons").style.display = "inline-block";
 		try
 		{
 			labels = casaandata[graphjsonsource].previousyear.graph.labels;

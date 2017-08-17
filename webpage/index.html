@@ -196,9 +196,15 @@
 
 </div>
 <ul class="tab">
-	<div></div>
+	<div><li class="menuitem" id="graphbuttons" style="display:none">
+		<a href="javascript:void(0)" onclick="showPage('graphdaypage')">Dag</a>
+		<a href="javascript:void(0)" onclick="showPage('graphmonthpage')">Maand</a>
+		<a href="javascript:void(0)" onclick="showPage('graphyearpage')">Jaar</a>
+		<a href="javascript:void(0)" onclick="showPage('graphtotalpage')">Totaal</a>
+	</li>
+	</div>
 	<div><li class="label"><a href="javascript:void(0)" onclick="showPage('mainpage')">Casaan</a></li></div>
-    <div><li class="backbutton" style="display:none"><a href="javascript:void(0)" onclick="showPage('previouspage')">Terug</a></li></div>
+	<div><li class="backbutton" style="display:none"><a href="javascript:void(0)" onclick="showPage('previouspage')">Terug</a></li></div>
 </ul>
 </body>
 
@@ -209,7 +215,6 @@
 <script src="js/jquery.tempgauge.js"></script>
 <script src="rgraph/libraries/RGraph.common.core.js"></script>
 <script src="rgraph/libraries/RGraph.vprogress.js"></script>
-<!-- <script src="js/plotty.js"></script> -->
 <script src="suncalc/suncalc.js"></script>
 
 <script src="js/highcharts.js"></script>

@@ -64,11 +64,20 @@ if (!$serial->deviceOpen())
 
 echo "Opened Serial Port.\n";
 
+// Open modbus
+while (!$modbus->deviceOpened())
+{
+    $modbus->deviceInit($serialdevice,9600,'none',8,1,'none');
+    $modbus->deviceOpen();
+    if (!$modbus->deviceOpened()) sleep(5);
+}
+
+
 // Initialize tcpsocket
 while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:58883", $errno, $errstr)) 
 {
     echo "$errstr ($errno)\n";
-    sleep(1);
+    sleep(5);
 }
 
 $tcpsockets = array();

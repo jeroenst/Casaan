@@ -7,15 +7,6 @@ $casaandata = json_decode ('
 	"casaan" : {},
 	"buienradar" : {},
 	"sunelectricity" : {
-		"today": {
-			"kwh_out" : null,
-			"kwh_pv" : null,
-			"graph" : {
-				"labels" : [0, 1, 2, 3, 4, 5],
-				"kwh_out" : [1.9, 1.9, 2.1, 2.0, 2.3],
-				"kwh_pv" : [2, 2, 2.3, 2.1, 2.5]
-			}
-		}
 	},
 	"electricitymeter" : {
 		"today": {
@@ -68,13 +59,24 @@ set_time_limit(0);
 * as it comes in. */
 ob_implicit_flush();
 
+
+$settings = array(      
+"mysqlserver" => "localhost",
+"mysqlusername" => "casaan",
+"mysqlpassword" => "casaan",
+"mysqldatabase" => "casaan",   
+"port" => "58880");
+if ($argc > 1)
+{
+        $settingsfile = parse_ini_file($argv[1]);
+        $settings = array_merge($settings, $settingsfile);
+}
+
+
 $address = '127.0.0.1';
-$port = 58880;
-
-$mysqlserver = '127.0.0.1';
-$mysqlusername = 'root';
-$mysqlpassword = 's-303030!';
-
+$mysqlserver = $settings["mysqlserver"];
+$mysqlusername = $settings["mysqlusername"];
+$mysqlpassword = $settings["mysqlpassword"];
 
 $readsocks = array();
 $writesocks = array();
@@ -86,7 +88,7 @@ while (($websocket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) === false) {
 }
 socket_set_nonblock($websocket);
 
-while (socket_bind($websocket, $address, $port) === false) {
+while (socket_bind($websocket, $address, $settings["port"]) === false) {
 	echo "socket_bind() failed: reason: " . socket_strerror(socket_last_error($websocket)) . "\n";
 	sleep(1);
 }
@@ -137,7 +139,7 @@ while (1) {
 		if ($sunelectricitysocket == null)
 		{
 			echo ("Connecting to sunelectricity server...\n");
-			$sunelectricitysocket = socketconnect('127.0.0.1', 58883);
+			$sunelectricitysocket = socketconnect('server02', 58883);
 		}
 
 		if ($temperaturesocket == null)
@@ -262,78 +264,23 @@ function socketreceivedata($sock)
 		if ($sock == $smartmetersocket)
 		{
 			echo ("Received data from smartmeter:\n".$recvdata."\n\n");
-			$casaandata["electricitymeter"]=array_merge_recursive($casaandata["electricitymeter"], json_decode($recvdata, true)["electricitymeter"]);
-			$casaandata["gasmeter"]=array_merge($casaandata["gasmeter"], json_decode($recvdata, true)["gasmeter"]);
+			updateelectricitymeter(json_decode($recvdata, true)["electricitymeter"]);
+			updategasmeter(json_decode($recvdata, true)["gasmeter"]);
 			sendtowebsockets("{ \"electricitymeter\":".json_encode($casaandata["electricitymeter"])."}");
-			sendtowebsockets("{ \"gasmeter\":".json_encode($casaandata["gasmeter"])."}");
-			$mysql=new mysqli($mysqlserver, $mysqlusername, $mysqlpassword, 'casaan');
-			if ($mysql->connect_error)
-			{
-			   echo ("ERROR: Mysql connection failed: ".$conn->connect_error);
-			}
-			else
-			{
-				$sql = 'INSERT INTO gasmeter (m3, m3h) 
-						VALUES ('.$casaandata["gasmeter"]["now"]["m3"].','
-							 .$casaandata["gasmeter"]["now"]["m3h"].');';
-			   if (!$mysql->query($sql)) echo ("Error writing gasmeter values to database!\n");
-				$sql = 'INSERT INTO electricitymeter (kwh_using, kwh_providing) 
-						VALUES ('.$casaandata["electricitymeter"]["now"]["kwh_using"].','
-							 .$casaandata["gasmeter"]["now"]["kwh_providing"].');';
-			   if (!$mysql->query($sql)) echo ("Error writing electricitymeter values to database!\n");
-			   $mysql->close();
-			}
 		}
 		
 		else if ($sock == $watermetersocket)
 		{
 			echo ("Received data from watermeter:\n".$recvdata."\n\n");
-			$casaandata["watermeter"]=json_decode($recvdata, true)["watermeter"];
+			updatewatermeter(json_decode($recvdata, true)["watermeter"]);
 			sendtowebsockets("{ \"watermeter\":".json_encode($casaandata["watermeter"])."}");
-			$mysql=new mysqli($mysqlserver, $mysqlusername, $mysqlpassword, 'casaan');
-			if ($mysql->connect_error)
-			{
-			   echo ("ERROR: Mysql connection failed: ".$conn->connect_error);
-			}
-			else
-			{
-			   $sql = "INSERT INTO `watermeter` (m3, m3h)
-			    		VALUES ( ".
-			    			$casaandata['watermeter']['now']['m3h'].",".
-						$casaandata['watermeter']['total']['m3'].")";
-			   if (!$mysql->query($sql)) echo ("Error writing watermeter values to database!\n");
-			   $mysql->close();
-			}
-
 		}
 
 		else if ($sock == $sunelectricitysocket)
 		{
 			echo ("Received data from sunelectricity:\n".$recvdata."");
-			$casaandata["sunelectricity"]=array_merge_recursive($casaandata["sunelectricity"], json_decode($recvdata, true)["sunelectricity"]);
+			updatesunelectricity(json_decode($recvdata, true)["sunelectricity"]);
 			sendtowebsockets("{ \"sunelectricity\":".json_encode($casaandata["sunelectricity"])."}");
-
-			$mysql=new mysqli($mysqlserver, $mysqlusername, $mysqlpassword, 'casaan');
-			if ($mysql->connect_error)
-			{
-			   echo ("ERROR: Mysql connection failed: ".$conn->connect_error);
-			}
-			else
-			{
-			   $sql = "INSERT INTO `sunelectricity` (pv_watt, pv_volt, pv_amp, grid_watt, grid_volt, grid_amp, grid_frequency,kwh_today,kwh_total)
-			    		VALUES ( ".
-			    			$casaandata['sunelectricity']['now']['pv']['watt'].",".
-						$casaandata['sunelectricity']['now']['pv']['volt'].",".
-						$casaandata['sunelectricity']['now']['pv']['amp'].",".
-						$casaandata['sunelectricity']['now']['grid']['watt'].",".
-						$casaandata['sunelectricity']['now']['grid']['volt'].",".
-						$casaandata['sunelectricity']['now']['grid']['amp'].",".
-						$casaandata['sunelectricity']['now']['grid']['frequency'].",".
-						$casaandata['sunelectricity']['today']['kwh'].",".
-						$casaandata['sunelectricity']['total']['kwh'].")";
-			   if (!$mysql->query($sql)) echo ("Error writing sunelectricity values to database!\n");
-			   $mysql->close();
-			}
 
 		}
 		
@@ -352,17 +299,23 @@ function socketreceivedata($sock)
                                 $first = strpos($buienradardata, '<buienradarnl>');
                                 $buienradardata = substr($buienradardata, $first);
                                 echo ("Received data from buienradar...\n");
-                                $simpleXml = simplexml_load_string($buienradardata);
-                                simplexml_to_array($simpleXml, $array);
-                                if (!isset($casaandata["buienradarnl"])) $casaandata["buienradarnl"] = array();
-                                if (serialize($casaandata["buienradarnl"]) != serialize($array["buienradarnl"]))
+                                try
                                 {
-                                	echo ("Buienradar is updated.\n");
-                                        $casaandata["buienradarnl"] = $array["buienradarnl"];
-                                        sendtowebsockets(json_encode($array));
-                                }
-                                $buienradardata = "";
-                                socketdisconnect ($sock);
+                                	$simpleXml = simplexml_load_string($buienradardata);
+	                                simplexml_to_array($simpleXml, $array);
+        	                        if (!isset($casaandata["buienradarnl"])) $casaandata["buienradarnl"] = array();
+                	                if (serialize($casaandata["buienradarnl"]) != serialize($array["buienradarnl"]))
+                        	        {
+                                		echo ("Buienradar is updated.\n");
+                                		$casaandata["buienradarnl"] = $array["buienradarnl"];
+                                		sendtowebsockets(json_encode($array));
+					}
+					$buienradardata = "";
+				}
+				catch (Exception $e)
+				{
+				}
+	                        socketdisconnect ($sock);
                         }
 		}
 		else
@@ -389,12 +342,12 @@ function socketreceivedata($sock)
 				}
 				if (trim($receivedMessage) == "getelectricitydata")
 				{
-					echo ("Sending casaandata to websocketclient...\n");
+					echo ("Sending electricitydata to websocketclient...\n");
 					socket_write($sock, websocketEncode(json_encode($casaandata["electricity"])));
 				}
-				if (trim($receivedMessage) == "getcasaandata")
+				if (trim($receivedMessage) == "getgasdata")
 				{
-					echo ("Sending casaandata to websocketclient...\n");
+					echo ("Sending gasdata to websocketclient...\n");
 					socket_write($sock, websocketEncode(json_encode($casaandata["gas"])));
 				}
 				if (trim($receivedMessage) == "getwatertmeterdata")
@@ -728,6 +681,205 @@ function sig_handler($signo)
 	}
 	exit(0);
 }
+
+
+function updategasmeter($newdata)
+{
+        global $settings;
+        global $casaandata;
+        // only update when value has changed
+        if ($casaandata["gasmeter"]["total"]["m3"] != $newdata["total"]["m3"])
+        {   
+
+        $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
+
+        if (class_exists("mysqli"))
+        {
+	        if (!$mysqli->connect_errno)
+	        {
+                	$mysqli->query("INSERT INTO `gasmeter` (m3) VALUES (".$newdata["total"]["m3"].");");
+
+                        // Read values from database
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		$newdata["today"]["m3"] = round($newdata["total"]["m3"] - $row->m3, 3);
+			}
+			else
+			{
+                        	echo "error reading gas values from database ".$mysqli->error."\n";
+                        	$newdata["today"]["m3"] = 0; 
+                        }
+
+                                                	
+
+                        // Read values from database
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR) AND timestamp < NOW() ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		if ($row)
+                		{
+                			$newdata["now"]["m3h"] = round($newdata["total"]["m3"] - $row->m3,3);
+				}
+				else
+				{
+					$newdata["now"]["m3h"] = 0;
+				}
+			}
+			else
+			{
+                        	echo "no gas values from database ".$mysqli->error."\n"; 
+                		$newdata["now"]["m3h"] = 0;
+                        }
+
+                                                	
+                	$mysqli->close();
+		}
+		else
+		{
+                	echo ("Error while writing gas values to database: ".$mysqli->connect_error ."\n");
+		}
+
+	}
+	
+			sendtowebsockets("{ \"gasmeter\":".json_encode($newdata)."}");
+			$casaandata["gasmeter"] = $newdata;
+	}
+}
+
+function updateelectricitymeter($newdata)
+{
+        global $settings;
+        global $casaandata;
+
+        $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
+
+        if (class_exists("mysqli"))
+        {
+        	if (!$mysqli->connect_errno)
+        	{
+		        // Write values to database
+                	if (!$mysqli->query("INSERT INTO `electricitymeter` (kw_using, kw_providing, kwh_used1, kwh_used2, kwh_provided1, kwh_provided2) VALUES (".
+                					$newdata["now"]["kw_using"].",".
+                                                	$newdata["now"]["kw_providing"].",". 
+                                                	$newdata["total"]["kwh_used1"].",". 
+                                                	$newdata["total"]["kwh_used2"].",". 
+                                                	$newdata["total"]["kwh_provided1"].",". 
+                                                	$newdata["total"]["kwh_provided2"].");"))
+			{
+                        	echo "error writing electricity values to database ".$mysqli->error."\n"; 
+                        }
+                        
+
+                        // Read values from database
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		$newdata["today"]["kwh_used1"] = round($newdata["total"]["kwh_used1"] - $row->kwh_used1,3);
+                		$newdata["today"]["kwh_used2"]  = round($newdata["total"]["kwh_used2"] - $row->kwh_used2,3);
+                		$newdata["today"]["kwh_provided1"] = round($newdata["total"]["kwh_provided1"] - $row->kwh_provided1,3);
+                		$newdata["today"]["kwh_provided2"] = round($newdata["total"]["kwh_provided2"] - $row->kwh_provided2,3);
+                		$newdata["today"]["kwh_used"] = round($newdata["today"]["kwh_used1"] + $newdata["today"]["kwh_used2"],3);
+                		$newdata["today"]["kwh_provided"] = round($newdata["today"]["kwh_provided1"] + $newdata["today"]["kwh_provided2"],3);
+                		$newdata["today"]["kwh_total"] = round($newdata["today"]["kwh_used"] - $newdata["today"]["kwh_provided"],3);                		  
+			}
+			else
+			{
+                        	echo "error reading electricity values from database ".$mysqli->error."\n"; 
+                        }
+
+                                                	
+			$mysqli->close();
+		}
+		else
+		{
+                	echo ("Error while writing values to database: ".$mysqli->connect_error ."\n");
+		}
+	}
+	
+	
+	
+	
+	$casaandata["electricitymeter"] = $newdata;
+}
+
+
+function updatewatermeter($newdata)
+{
+        global $settings;
+        global $casaandata;
+
+        $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
+
+        if (class_exists("mysqli"))
+        {
+	        if (!$mysqli->connect_errno)
+	        {
+                	$mysqli->query("INSERT INTO `watermeter` (m3) VALUES (".$newdata["total"]["m3"].");");
+
+                        // Read values from database
+                	if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		$newdata["today"]["m3"] = $newdata["total"]["m3"] - $row->m3;
+			}
+			else
+			{
+                        	echo "error reading water values from database ".$mysqli->error."\n"; 
+                        }
+
+                                                	
+                	$mysqli->close();
+		}
+		else
+		{
+                	echo ("Error while writing water values to database: ".$mysqli->connect_error ."\n");
+		}
+
+	}
+	
+	$casaandata["watermeter"] = $newdata;
+}
+
+function updatesunelectricity($newdata)
+{
+        global $settings;
+        global $casaandata;
+
+        $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
+
+        if (class_exists("mysqli"))
+        {
+	        if (!$mysqli->connect_errno)
+	        {
+			$mysqli->query ("INSERT INTO `sunelectricity` (pv_watt, pv_volt, pv_amp, grid_watt, grid_volt, grid_amp, grid_frequency,kwh_today,kwh_total)
+			    		VALUES ( ".
+			    			$newdata['now']['pv']['watt'].",".
+						$newdata['now']['pv']['volt'].",".
+						$newdata['now']['pv']['amp'].",".
+						$newdata['now']['grid']['watt'].",".
+						$newdata['now']['grid']['volt'].",".
+						$newdata['now']['grid']['amp'].",".
+						$newdata['now']['grid']['frequency'].",".
+						$newdata['today']['kwh'].",".
+						$newdata['total']['kwh'].")");
+                                                	
+                	$mysqli->close();
+		}
+		else
+		{
+                	echo ("Error while writing water values to database: ".$mysqli->connect_error ."\n");
+		}
+
+	}
+	
+	$casaandata["sunelectricity"] = $newdata;
+}
+
 
 
 

@@ -31,11 +31,12 @@ $data = json_decode ('
 			}
 		
 }
-');
+', true);
 
 include "php_serial.class.php";  
+date_default_timezone_set ("Europe/Amsterdam");
 
-$settings = array(	"device" => "/dev/ttyUSB0", 
+$settings = array(	"device" => "/dev/ttyUSB1", 
 "port" => "58881");
 if ($argc > 1) 
 {
@@ -54,8 +55,38 @@ $tcpsocketClients = array();
 array_push($tcpsocketClients, $tcpsocket);
 
 
+echo "Setting Serial Port Device ".$settings["device"]."...\n"; 
+
+
 // Let's start the class
 $serial = new phpSerial;
+$serialready=0;
+$receivedpacket="";
+if ( $serial->deviceSet($settings["device"]))
+{
+	echo "Configuring Serial Port...\n";
+	// We can change the baud rate, parity, length, stop bits, flow control
+	echo "Baudrate... ";
+	$serial->confBaudRate(115200);
+	echo "Parity... ";
+	$serial->confParity("none");
+	echo "Bits... ";
+	$serial->confCharacterLength(8);
+	echo "Stopbits... ";
+	$serial->confStopBits(1);
+	echo "Flowcontrol... ";
+	$serial->confFlowControl("none");
+	echo "Done...\n";
+
+	echo "Opening Serial Port...\n";
+	// Then we need to open it
+	if (!$serial->deviceOpen()) exit (1);
+	else echo "Serial Port opened...\n"; 
+} else exit(2);
+
+
+
+//$Mysql_con = mysql_connect("nas","domotica","b-2020");
 
 // First we must specify the device. This works on both linux and windows (if
 // your linux serial device is /dev/ttyS0 for COM1, etc)
@@ -99,96 +130,47 @@ while(1)
 
 	try
 	{
-		echo "Setting Serial Port Device...\n"; 
-		if ( $serial->deviceSet($settings["device"]))
+		// read from serial port
+		$packetcomplete = false;
+		$read = $serial->readPort();
+		$receivedpacket = $receivedpacket . $read;   
+		if ($read) echo "Received from serial port: ".$read; 
+		if (strlen ($read) == 0 && strpos($receivedpacket, '!') && strpos($receivedpacket, 'KFM5'))
 		{
-			echo "Configuring Serial Port...\n";
-			// We can change the baud rate, parity, length, stop bits, flow control
-			echo "Baudrate... ";
-			$serial->confBaudRate(9600);
-			echo "Parity... ";
-			$serial->confParity("even");
-			echo "Bits... ";
-			$serial->confCharacterLength(7);
-			echo "Stopbits... ";
-			$serial->confStopBits(1);
-			echo "Flowcontrol... ";
-			$serial->confFlowControl("none");
-			echo "Done...\n";
-
-			$serialready=0;
-			$receivedpacket="";
-			$start_time = time();
-			$write_database_timeout = 10; // write database every 10 minutes
-			$write_database_timer = time();
-
-			$Electricity_Usage = 0;
-			$Electricity_Used_1 = 0;
-			$Electricity_Used_2 = 0;
-			$Electricity_Provided_1 = 0;
-			$Electricity_Provided_2 = 0;
-			$Gas_Used = 0;
-			$Mysql_electricity_table="electricitymeter";
-			$Mysql_gas_table="gasmeter";
-
-			echo ($serial->_dHandle."\n");
-
-
-			date_default_timezone_set ("Europe/Amsterdam");
-			echo "Opening Serial Port...\n";
-			// Then we need to open it
-			if ($serial->deviceOpen())
+			foreach(preg_split("/((\r?\n)|(\r\n?))/", $receivedpacket) as $line)
 			{
-				//Determine if a variable is set and is not NULL
-				echo "Waiting for data from Smart Meter...\n";
-				while(1)
+				if (strlen($line) > 0)
 				{
-					// read from serial port
-					$packetcomplete = false;
-					$read = $serial->readPort();
-					if (strlen ($read) == 0) $serialready = 1;
-					if ($serialready)
+					preg_match("'\((.*)\)'si", $line, $value);
+					preg_match("'(.*?)\('si", $line, $label);
+					if (isset($label[1]) && isset($value[1]))
 					{
-						$receivedpacket = $receivedpacket . $read;   
-						$dataprinted = 0;
-						if ($receivedpacket != "")
+						echo ("label=".$label[1]." value=".$value[1]."\n"); 
+						if($label[1] == "1-0:1.7.0") $data['electricitymeter']['now']['kw_using'] = extractfloat($value[1]);
+						if($label[1] == "1-0:2.7.0") $data['electricitymeter']['now']['kw_providing'] = extractfloat($value[1]);
+						if($label[1] == "1-0:1.8.1") $data['electricitymeter']['total']['kwh_used1'] = extractfloat($value[1]);
+						if($label[1] == "1-0:1.8.2") $data['electricitymeter']['total']['kwh_used2'] = extractfloat($value[1]);
+						if($label[1] == "1-0:2.8.1") $data['electricitymeter']['total']['kwh_provided1'] = extractfloat($value[1]);
+						if($label[1] == "1-0:2.8.2") $data['electricitymeter']['total']['kwh_provided2'] = extractfloat($value[1]);
+						if($label[1] == "0-1:24.2.1") 
 						{
-							if (strlen ($read) == 0)
-							{
-								foreach(preg_split("/((\r?\n)|(\r\n?))/", $receivedpacket) as $line)
-								{
-									preg_match("'\((.*?)\)'si", $line, $value);
-									preg_match("'(.*?)\('si", $line, $label);
-									if($label)
-									{
-										if($label[1] == "1-0:1.7.0") $data['electricitymeter']['now']['kwh_using'] = extractfloat($value[1]);
-										if($label[1] == "1-0:2.7.0") $data['electricitymeter']['now']['kwh_providing'] = extractfloat($value[1]);
-										if($label[1] == "1-0:1.8.1") $data['electricitymeter']['total']['kwh_used1'] = extractfloat($value[1]);
-										if($label[1] == "1-0:1.8.2") $data['electricitymeter']['total']['kwh_used2'] = extractfloat($value[1]);
-										if($label[1] == "1-0:2.8.1") $data['electricitymeter']['total']['kwh_provided1'] = extractfloat($value[1]);
-										if($label[1] == "1-0:2.8.2") $data['electricitymeter']['total']['kwh_provided2'] = extractfloat($value[1]);
-										if($label[1] == "") $data['gasmeter']['total']['m3'] = extractfloat($value[1]);
-									}
-									if ($line == "!")
-									{
-										echo "Received Data (".date('Y/m/d H:i:s').")". 
-										": gas_used=".$data['gasmeter']['total']['m3'].
-										", kwh_used1=".$data['electricitymeter']['total']['kwh_used1'].
-										", kwh_used2=".$data['electricitymeter']['total']['kwh_used2'].
-										", kwh_provided1=".$data['electricitymeter']['total']['kwh_provided1'].
-										", kwh_provided2=".$data['electricitymeter']['total']['kwh_provided2'].
-										", kw_using=".$data['electricitymeter']['now']['kw_using']."\n";
-										", kw_providing=".$data['electricitymeter']['now']['kw_providing']."\n";
-
-										sendToAllTcpsocketClients($tcpsocketClients, json_encode($data)."\n\n");
-
-									}
-								} 
-							}
+							preg_match("'\((.*)\*'si", $value[1], $valuegas);
+							$data['gasmeter']['total']['m3'] = extractfloat($valuegas[1]);
 						}
 					}
-				}// end while
+				}
 			}
+			echo "Received Data (".date('Y/m/d H:i:s').")". 
+				": gas_used=".$data['gasmeter']['total']['m3'].
+				", kwh_used1=".$data['electricitymeter']['total']['kwh_used1'].
+				", kwh_used2=".$data['electricitymeter']['total']['kwh_used2'].
+				", kwh_provided1=".$data['electricitymeter']['total']['kwh_provided1'].
+				", kwh_provided2=".$data['electricitymeter']['total']['kwh_provided2'].
+				", kw_using=".$data['electricitymeter']['now']['kw_using'].
+				", kw_providing=".$data['electricitymeter']['now']['kw_providing']."\n";
+
+			$receivedpacket = ""; 
+			sendToAllTcpsocketClients($tcpsocketClients,  $tcpsocket, json_encode($data)."\n\n");
 		}
 	}
 	catch (Exception $e)
@@ -197,7 +179,6 @@ while(1)
 	}
 	sleep(1);
 }
-mysql_close($Mysql_con);
 
 // If you want to change the configuration, the device must be closed
 $serial->deviceClose();
@@ -254,13 +235,12 @@ function removeEmptyLines(&$linksArray)
 	}
 }                     
 
-
-function sendToAllTcpSocketClients($sockets, $msg)
+function sendToAllTcpSocketClients($sockets, $ignoresocket, $msg)
 {
 	echo ("Sending smartmeterdata to all websocketclient...\n");
 	foreach ($sockets as $conn) 
 	{
-		fwrite($conn, $msg);
+		if ($conn != $ignoresocket) fwrite($conn, $msg);
 	}
 }
 
