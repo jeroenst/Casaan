@@ -10,9 +10,9 @@
 
 </head>
 
-<body>
+<body scroll="no" style="overflow: hidden">
 
-<div class="mainarea">
+<div class="mainarea" width="100%" height="100%">
 <div class="submainarea" id="mainpage">
 <div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('timepage')">
 <div class="boxtime" id="time"></div>
@@ -119,6 +119,10 @@
 </div>
 </div>
 
+<div class="submainarea" id="domoticapage" style="display:none">
+</div>
+
+
 <div class="submainarea" id="weatherpage" style="display:none"><div class="floating-box">
 <div class="boxweathericon"><span class="wi wi-day-sunny"></span></div>
 <div class="boxtitle">Nu</div>
@@ -219,6 +223,9 @@
 
 <script src="js/highcharts.js"></script>
 <script src="js/highcharts_exporting.js"></script>
+
+<script src="js/lodash.js"></script>
+
 <script src="js/casaan.js"></script>
 <script>
 

@@ -12,7 +12,12 @@ function autochangesizes()
 	var element;
 	var elements;
 	var i;
-	if ((window.innerHeight/window.innerWidth) > 1)
+
+	var clientHeight = window.innerHeight;//document.getElementsByClassName("mainarea")[0].clientHeight;
+	var clientWidth = window.innerWidth; //document.getElementsByClassName("mainarea")[0].clientWidth;
+	var floatingboxWidthHeight = 0;
+	
+	if (clientHeight > clientWidth)
 	{
 		// Portrait Mode
 		elements = document.getElementsByClassName("portraitbr");
@@ -20,27 +25,34 @@ function autochangesizes()
 		{
 			elements[i].innerHTML = "<BR>"
 		}
-		var clientheight = window.innerHeight / 4;
-		var clientwidth = window.innerWidth / 2;
+		floatingboxWidthHeight = clientHeight / 4.6;
+		if (floatingboxWidthHeight * 2.3 > clientWidth) floatingboxWidthHeight = clientWidth / 2.3;		
 	}
 	else
 	{
-		// Normal mode
-		// Portrait Mode
+		// Landscape Mode
 		elements = document.getElementsByClassName("portraitbr");
 		for (i = 0; i < elements.length; i++) 
 		{
 			elements[i].innerHTML = "";
 		}
+		floatingboxWidthHeight = clientWidth / 4.3;
+		if (floatingboxWidthHeight * 2.3 > clientHeight) floatingboxWidthHeight = clientHeight / 2.3;
 	}
 
+	var elements = document.querySelectorAll('.floating-box');
+	for(var i=0; i<elements.length; i++)
+	{
+		elements[i].style.height = floatingboxWidthHeight + "px";
+		elements[i].style.width = floatingboxWidthHeight + "px";
+	}
 
 	// Auto size footer bar items
 	var clientHeight = document.getElementsByClassName('tab')[0].clientHeight;
 	elements = document.querySelectorAll('.label, .backbutton, .menuitem');
 	for(var i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize = (clientHeight / 2) + "px";
+		elements[i].style.fontSize = (floatingboxWidthHeight  / 10) + "px";
 	}
 
 	//	var clientWidth = 1;
@@ -55,43 +67,36 @@ function autochangesizes()
 
 	
 
-	elements = document.getElementsByClassName("floating-box");
-	for(i=0; i< elements.length; i++)
-	{
-		clientHeight = elements[i].clientHeight;
-		clientWidth = elements[i].clientWidth;
-		if (clientWidth > 0) break;
-	}
 
 	var elements = document.querySelectorAll('.fullscreen-boxtext');
 	for(var i=0; i<elements.length; i++)
 	{
-		if (clientHeight > clientWidth) elements[i].style.fontSize = (clientHeight + clientWidth)  / 45 + "px"
+		if (clientHeight > clientWidth) elements[i].style.fontSize = floatingboxWidthHeight  / 45 + "px"
 		else elements[i].style.fontSize = (clientHeight + (clientWidth * 0.5))  / 35 + "px"
 	}
 
 	elements = document.querySelectorAll('.boxtitle, .boxlabelsmall, .boxlabel2small, .weathertext');
 	for(i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize =(clientHeight / 15) + "px";
+		elements[i].style.fontSize = (floatingboxWidthHeight / 17) + "px";
 	}
 
 	elements = document.querySelectorAll('.wideboxtext');
 	for(i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize =(clientHeight / 9) + "px";
+		elements[i].style.fontSize =(floatingboxWidthHeight / 9) + "px";
 	}
 
 	elements = document.querySelectorAll('.boxdate, .boxvalue, .boxvalue2,.boxweathertemp, .boxlowertext');
 	for(i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize =(clientHeight / 8) + "px";
+		elements[i].style.fontSize =(floatingboxWidthHeight / 10) + "px";
 	}
 
 	elements = document.querySelectorAll('.boxtime');
 	for(i=0; i<elements.length; i++)
 	{
-		elements[i].style.fontSize = (clientHeight / 5) + "px";
+		elements[i].style.fontSize = (floatingboxWidthHeight / 5) + "px";
 	}
 
 
@@ -99,9 +104,29 @@ function autochangesizes()
 	for(i=0; i<elements.length; i++)
 	{
 		document.getElementsByClassName('boxweathericon')[i].style.fontSize =
-		(clientHeight / 3.5) + "px";
+		(floatingboxWidthHeight / 3.5) + "px";
 	}
 
+	elements = document.getElementsByClassName('domoticabutton');
+	for(i=0; i<elements.length; i++)
+	{
+		document.getElementsByClassName('domoticabutton')[i].style.width = floatingboxWidthHeight /3 + "px";
+		document.getElementsByClassName('domoticabutton')[i].style.height = floatingboxWidthHeight /3 + "px";
+		document.getElementsByClassName('domoticabutton')[i].style.fontSize = floatingboxWidthHeight /10 + "px";
+	}
+
+	elements = document.getElementsByClassName('domoticabuttons');
+	for(i=0; i<elements.length; i++)
+	{
+		document.getElementsByClassName('domoticabuttons')[i].style.marginTop = floatingboxWidthHeight / 9 + "px";
+	}
+
+	elements = document.getElementsByClassName('domoticainfo');
+	for(i=0; i<elements.length; i++)
+	{
+		document.getElementsByClassName('domoticainfo')[i].style.marginTop = floatingboxWidthHeight / 15 + "px";
+		document.getElementsByClassName('domoticainfo')[i].style.fontSize = floatingboxWidthHeight /15 + "px";
+	}
 
 
 
@@ -195,7 +220,7 @@ gutterRight: 0
 	{
 id: 'electricitybar',
 min: 0,
-max: 2000,
+max: 9000,
 value: 0,
 options: {
 textAccessible: true,
@@ -214,7 +239,7 @@ gutterRight: 0
 	{
 id: 'sunelectricitybar',
 min: 0,
-max: 2000,
+max: 3000,
 value: 0,
 options: {
 textAccessible: true,
@@ -265,11 +290,29 @@ function startcasaan()
 	autochangesizes();
 	starttimepage();
 	createBars();
+	createDomoticaPage()
 }
 
+function createDomoticaPage()
+{
+
+	var domoticapagestring;
+	
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,0x26,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,0x26,1)">1%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,0x26,50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,0x26,99)">99%</button></div></div><div class="domoticainfo">test</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,0x25,0)">Uit</button><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,0x25,255)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
+	for (var i = 0; i < 6; i++)
+	{	
+		if (i == 2) domoticapagestring += '<BR>';
+	 	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,26,0,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,1)">1%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,25)">25%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,26,0,99)">99%</button></div></div><div class="domoticainfo">test</div></div>';
+	}
+
+	document.getElementById("domoticapage").innerHTML = domoticapagestring;
+}
+
+
+	var ws;
 function startcasaanwebsocket()
 {	
-	var ws;
 	// Let us open a web socket
 	console.log ("Connecting to casaan server websocket...");
 	ws = new WebSocket("wss://" + window.location.hostname + "/wscasaan");
@@ -286,10 +329,12 @@ function startcasaanwebsocket()
 		ws.onmessage = function (event)
 		{
 			var data = JSON.parse(event.data);
-			objectnulltodash(data);
+			// objectnulltodash(data);
 			
 			// 				console.log ("Received from casaan server: " + event.data);
-			casaandata = Object.assign(casaandata,data);
+			if (data != null)
+			{
+			_.merge(casaandata, data);
 			if (data["electricitymeter"])
 			{
 				console.log("Received electricitymeter update");
@@ -439,6 +484,49 @@ function startcasaanwebsocket()
 				sunelectricitybar.grow();
 			}
 
+
+			if (data["zwave"])
+			{
+				console.log("Received zwave update: "+JSON.stringify(data["zwave"]));
+
+				try
+				{					
+					elements = document.getElementsByClassName('domoticabutton');
+					for(i=0; i<elements.length; i++)
+					{
+						document.getElementsByClassName('domoticabutton')[i].style.backgroundColor = "";
+					}
+					try
+					{
+						var zwavevalue1 = parseInt(casaandata["zwave"]["node"]["2"]["instance"]["1"]["genre"]["1"]["classid"]["38"]["index"]["0"]["value"]);
+						var watt = parseFloat(casaandata["zwave"]["node"]["2"]["instance"]["1"]["genre"]["1"]["classid"]["49"]["index"]["4"]["value"]);
+						if (zwavevalue1 == 0) document.getElementsByClassName('domoticabutton')[0].style.backgroundColor = "yellow";
+						if (zwavevalue1 == 1) document.getElementsByClassName('domoticabutton')[1].style.backgroundColor = "yellow";
+						if (zwavevalue1 == 50) document.getElementsByClassName('domoticabutton')[2].style.backgroundColor = "yellow";
+						if (zwavevalue1 == 99) document.getElementsByClassName('domoticabutton')[3].style.backgroundColor = "yellow";
+						document.getElementsByClassName('domoticainfo')[0].innerHTML = zwavevalue1 + "% - " + watt + " watt";
+		                        }        
+					catch(err)
+                		        {
+                		        }
+
+                		        try
+                		        {
+						var zwavevalue2 = parseInt(casaandata["zwave"]["node"]["3"]["instance"]["1"]["genre"]["1"]["classid"]["37"]["index"]["0"]["value"]);
+						if (zwavevalue2 == 0) document.getElementsByClassName('domoticabutton')[4].style.backgroundColor = "yellow";
+						if (zwavevalue2 == 1) document.getElementsByClassName('domoticabutton')[5].style.backgroundColor = "yellow";
+					}
+					catch(err)
+					{
+					}
+					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
+					//document.getElementsByClassName('domoticainfo')[1].innerHTML = casaandata["zwave"]["node"]["3"]["1"]["8"] + " watt";
+				}
+				catch (err)
+				{
+				}
+			}
+
 			if (data["buienradarnl"])
 			{
 				updateWeather()
@@ -484,6 +572,7 @@ maxTemp: 25,
 minTemp: 15,
 				});
 			}
+		}
 		};
 		
 		ws.onclose = function()
@@ -502,6 +591,17 @@ var graphsource = "";
 var graphtitle = "";
 var graphlabel = "";
 
+function sendzwave(nodeid, instance, commandclassid, value)
+{
+	var jsonobject = new Object;
+	jsonobject['zwave'] = new Object; 
+	jsonobject['zwave']['nodeid'] = nodeid; 
+	jsonobject['zwave']['instance'] = instance;
+	jsonobject['zwave']['commandclassid'] = commandclassid;
+	jsonobject['zwave']['value'] = value;   
+	ws.send (JSON.stringify(jsonobject));
+}
+
 function objectnulltodash(obj)
 {
 	for(key in obj){
@@ -511,11 +611,24 @@ function objectnulltodash(obj)
 			if (obj[key] == null) obj[key] = "-";
 		}
 	}	
+
+
 }
 
 //
 // Filloverviewpage fills all the items in the overviewpages
 //
+function fillDomoticaPage()
+{
+	var titels = ["Spots Keuken", "Stalamp huiskamer", "Spots huiskamer", "Verlichting eettafel", "Tv", "Buitenlampen", "", ""];
+	var elements = document.getElementById("domoticapage").getElementsByClassName("floating-box");
+	for (var key = 0; key < elements.length; key++)
+	{
+		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
+	}
+
+}
+
 function fillOverviewPage(nodename)
 {
 	elements = document.getElementById("overviewpage").getElementsByClassName("floating-box");
@@ -527,11 +640,11 @@ function fillOverviewPage(nodename)
 	var label1 = "";
 	var label2 = "";
 
-	if ((nodename == "sunelectricitymeter") || (nodename == "electricitymeter"))
+	if ((nodename == "sunelectricity") || (nodename == "electricitymeter"))
 	{
-		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
+		titels = ["Vandaag", "Deze Maand", "Dit Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "kwh"
-		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
+		jsonitems = ["today",  "month", "year", "total", "yesterday", "lastmonth", "lastyear"];
 		label1 = "Verbruikt";
 		jsonunit = "kwh_used";
 		label2 = "Teruggeleverd";
@@ -540,9 +653,9 @@ function fillOverviewPage(nodename)
 	
 	if ((nodename == "gasmeter") || (nodename == "watermeter"))
 	{
-		titels = ["Vandaag", "Maand", "Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
+		titels = ["Vandaag", "Deze Maand", "Dit Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "m3"
-		jsonitems = ["today", "week", "month", "year", "yesterday", "lastweek", "lastmonth", "lastyear"];
+		jsonitems = ["today", "month", "year", "total",  "yesterday", "lastmonth", "lastyear", "" ];
 		jsonunit = "m3";
 	}
 
@@ -551,7 +664,7 @@ function fillOverviewPage(nodename)
 		titels = ["Huiskamer", "Slaapkamer", "Badkamer", "Zolder", "Buiten", "Koelkast", "Diepvriezer", "CV"];
 		unit = " &deg;C"
 		jsonitems = ["huiskamer", "slaapkamer", "badkamer", "zolder", "buiten", "koelkast", "diepvriezer", "cv"];
-		jsonunit = "";
+		jsonunit = "";	
 	}
 
 	for (var key = 0; key < elements.length; key++)
@@ -574,12 +687,17 @@ function fillOverviewPage(nodename)
 		{
 			
 		}
-		if (value1) value1 = value1 + " " + unit;
+		if ((nodename == "sunelectricitymeter") || (nodename == "electricitymeter"))
+		{
+			value1 = Math.round(value1*10)/10;
+			value2 = Math.round(value2*10)/10;
+		}
+		if (value1 != null) value1 = value1 + " " + unit;
 		else value1 = "- " + unit;
 		
 		if (label2 != "")
 		{
-			if (value2) value2 = value2 + " " + unit;
+			if (value2 != null) value2 = value2 + " " + unit;
 			else value2 = "- " + unit;
 		}
 		else value2="";
@@ -634,6 +752,19 @@ function showPage(pageName) {
 		graphnames = ["Geleverd Omvormer", "Opgewekt Zonnepanelen"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("sunelectricity");
+	}
+	else if (pageName == "domoticapage")
+	{
+	/*	graphjsonsource = "";
+		graphjsonitem1 = "";
+		graphjsonitem2 = ""
+		graphunit = "";
+		graphtitle = "";
+		graphylabel = "";
+		graphcolors = ["#00FF00", "#00FFFF"];
+		graphnames = ["Geleverd Omvormer", "Opgewekt Zonnepanelen"];*/
+		document.getElementById("domoticapage").style.display = "inline-block"; 
+		fillDomoticaPage();
 	}
 	else if (pageName == "electricitypage")
 	{

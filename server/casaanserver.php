@@ -2,49 +2,7 @@
 
 $buienradartimeout = 10; // In minutes
 
-$casaandata = json_decode ('
-{
-	"casaan" : {},
-	"buienradar" : {},
-	"sunelectricity" : {
-	},
-	"electricitymeter" : {
-		"today": {
-			"kwh_used" : null,
-			"kwh_used1" : null,
-			"kwh_used2" : null,
-			"kwh_provided" : null,
-			"kwh_provided1" : null,
-			"kwh_provided2" : null,
-			"graph" : {
-				"labels" : [0, 1, 2, 3, 4, 5],
-				"kwh_used" : [1, 0,   0, 0.3, 0.1],
-				"kwh_provided" : [2, 2, 2.3, 2.1, 2.5]
-			}
-		}
-	},
-	"watermeter" : {
-		"today": {
-			"m3" : null,
-			"graph" : {
-				"labels" : [0, 1, 2, 3, 4, 5],
-				"m3" : [2, 2, 2.3, 2.1, 2.5]
-			}
-		}
-	},
-	"gasmeter" : {
-				"today": {
-			"m3" : null,
-			"graph" : {
-				"labels" : [0, 1, 2, 3, 4, 5],
-				"m3" : [2, 2, 2.3, 2.1, 2.5]
-			}
-		}
-
-	},
-	"temperature" : {}
-}
-', true);
+$casaandata = array();
 
 // pcntl_signal(SIGTERM, "sig_handler");
 // pcntl_signal(SIGHUP,  "sig_handler");
@@ -105,6 +63,7 @@ $watermetersocket = null;
 $sunelectricitysocket = null;
 $temperaturesocket = null;
 $buienradarsocket = null;
+$zwavesocket = null;
 
 $buienradarupdatetimeout = 0;
 $reconnecttimeout = 0;
@@ -146,6 +105,12 @@ while (1) {
 		{
 			echo ("Connecting to temperature server...\n");
 			$temperaturesocket = socketconnect('127.0.0.1', 58884);
+		}
+
+		if ($zwavesocket == null)
+		{
+			echo ("Connecting to zwave server...\n");
+			$zwavesocket = socketconnect('127.0.0.1', 58885);
 		}
 	}
 
@@ -204,6 +169,7 @@ function socketconnected($sock)
 	global $sunelectricitysocket;
 	global $buienradarsocket;
 	global $temperaturesocket;
+	global $zwavesocket;
 	
 	if (($sock == $smartmetersocket))
 	{
@@ -231,6 +197,11 @@ function socketconnected($sock)
 		socket_write($buienradarsocket, "GET / HTTP/1.1\nHost: xml.buienradar.nl\n\n");
 	}
 
+	if (($sock == $zwavesocket))
+	{
+		echo ("Connected to zwave server...\n");
+	}
+
 	if(($key = array_search($sock, $writesocks)) !== false) {
 		unset($writesocks[$key]);
 	}
@@ -244,6 +215,7 @@ function socketreceivedata($sock)
 	global $sunelectricitysocket;
 	global $temperaturesocket;
 	global $buienradarsocket;
+	global $zwavesocket;
 	global $websocket;
 	global $readsocks;
 	global $casaandata;
@@ -266,21 +238,33 @@ function socketreceivedata($sock)
 			echo ("Received data from smartmeter:\n".$recvdata."\n\n");
 			updateelectricitymeter(json_decode($recvdata, true)["electricitymeter"]);
 			updategasmeter(json_decode($recvdata, true)["gasmeter"]);
-			sendtowebsockets("{ \"electricitymeter\":".json_encode($casaandata["electricitymeter"])."}");
 		}
 		
 		else if ($sock == $watermetersocket)
 		{
 			echo ("Received data from watermeter:\n".$recvdata."\n\n");
 			updatewatermeter(json_decode($recvdata, true)["watermeter"]);
-			sendtowebsockets("{ \"watermeter\":".json_encode($casaandata["watermeter"])."}");
+		}
+
+		else if ($sock == $zwavesocket)
+		{
+			echo ("Received data from zwave:\n".$recvdata."\n\n");
+			$recvpackets = explode(chr(2),$recvdata);
+
+			foreach($recvpackets as $recvpacket) {    
+				if ($recvpacket != '')
+				{  
+					$recvdatajson = json_decode(utf8_encode($recvpacket), true);
+					var_dump($recvdatajson);
+					updatezwave($recvdatajson["zwave"]);
+				}
+			}
 		}
 
 		else if ($sock == $sunelectricitysocket)
 		{
 			echo ("Received data from sunelectricity:\n".$recvdata."");
 			updatesunelectricity(json_decode($recvdata, true)["sunelectricity"]);
-			sendtowebsockets("{ \"sunelectricity\":".json_encode($casaandata["sunelectricity"])."}");
 
 		}
 		
@@ -288,7 +272,7 @@ function socketreceivedata($sock)
 		{
 			echo ("Received data from temperature:\n".$recvdata."\n\n");
 			$casaandata["temperature"]=array_merge_recursive($casaandata["temperature"], json_decode($recvdata, true)["temperature"]);
-			sendtowebsockets("{ \"temperature\":".json_encode($casaandata["temperature"])."}");
+			sendtowebsockets("{\"temperature\":".json_encode($casaandata["temperature"])."}");
 		}
 		else if ($sock == $buienradarsocket)
 		{
@@ -296,25 +280,32 @@ function socketreceivedata($sock)
 			$buienradardata .= $recvdata;
                         if (strpos($recvdata, '</buienradarnl>') !== false)
                         {
-                                $first = strpos($buienradardata, '<buienradarnl>');
-                                $buienradardata = substr($buienradardata, $first);
                                 echo ("Received data from buienradar...\n");
+                                $last = strrpos($buienradardata, '<buienradarnl>');
+                                $buienradardata = substr($buienradardata, $last);
                                 try
                                 {
+                                	// Remove bogus before and after xml
+                                	$buienradardata = strstr($buienradardata, '<buienradarnl>');
+                                	$buienradardata = preg_replace("/<\/buienradarnl>.*/", "", $buienradardata).'</buienradarnl>';
+                                	echo $buienradardata;
                                 	$simpleXml = simplexml_load_string($buienradardata);
-	                                simplexml_to_array($simpleXml, $array);
-        	                        if (!isset($casaandata["buienradarnl"])) $casaandata["buienradarnl"] = array();
-                	                if (serialize($casaandata["buienradarnl"]) != serialize($array["buienradarnl"]))
-                        	        {
-                                		echo ("Buienradar is updated.\n");
-                                		$casaandata["buienradarnl"] = $array["buienradarnl"];
-                                		sendtowebsockets(json_encode($array));
+	                                if ($simpleXml) 
+	                                {
+	                                	simplexml_to_array($simpleXml, $array);
+	                                	if (!isset($casaandata["buienradarnl"])) $casaandata["buienradarnl"] = array();
+	                                	if (serialize($casaandata["buienradarnl"]) != serialize($array["buienradarnl"]))
+	                                	{
+                                			echo ("Buienradar is updated.\n");
+                                			$casaandata["buienradarnl"] = $array["buienradarnl"];
+                                			sendtowebsockets(json_encode($array));
+						}
 					}
-					$buienradardata = "";
 				}
 				catch (Exception $e)
 				{
 				}
+				$buienradardata = "";
 	                        socketdisconnect ($sock);
                         }
 		}
@@ -328,48 +319,21 @@ function socketreceivedata($sock)
 				echo ("Sending websocket header to client...\n");
 				socket_write ($sock, $reply);
 				echo ("Sending data to websock client...\n");
-				socket_write($sock, websocketEncode(json_encode($casaandata)));
+				echo (json_encode($casaandata,JSON_FORCE_OBJECT));
+				socket_write($sock, websocketEncode(json_encode($casaandata,JSON_FORCE_OBJECT)));
 				array_push($activewebsockets, $sock);
 			}
 			else
 			{
 				$receivedMessage = websocketDecode($recvdata);
 				echo ("Received from websocket client:\n" . $receivedMessage . "\n\n");
-				if (trim($receivedMessage) == "getcasaandata")
+				$receivedjson = json_decode($receivedMessage, true);
+				if (isset($receivedjson["zwave"]))
 				{
-					echo ("Sending casaandata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata)));
-				}
-				if (trim($receivedMessage) == "getelectricitydata")
-				{
-					echo ("Sending electricitydata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata["electricity"])));
-				}
-				if (trim($receivedMessage) == "getgasdata")
-				{
-					echo ("Sending gasdata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata["gas"])));
-				}
-				if (trim($receivedMessage) == "getwatertmeterdata")
-				{
-					echo ("Sending watermeterdata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata["watermeter"])));
-				}
-				if (trim($receivedMessage) == "getsunelectricitydata")
-				{
-					echo ("Sending sunelectricitydata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata["sunelectricity"])));
-				}
-				if (trim($receivedMessage) == "gettemperaturedata")
-				{
-					echo ("Sending temperaturedata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata["temperature"])));
-				}
-				if (trim($receivedMessage) == "getbuienradardata")
-				{
-					echo ("Sending buienradardata to websocketclient...\n");
-					socket_write($sock, websocketEncode(json_encode($casaandata["buienradar"])));
-				}
+					socket_write($zwavesocket, $receivedMessage);
+					echo ("Sending data to zwave:" . $receivedMessage . "\n");
+				}  
+				
 			}
 		}
 	}
@@ -392,6 +356,7 @@ function socketdisconnected($sock, $errno)
 	global $activewebsockets;
 	global $watermetersocket;
 	global $buienradarsocket;
+	global $zwavesocket;
 	global $smartmetersocket;
 	global $sunelectricitysocket;
 	global $temperaturesocket;
@@ -420,6 +385,11 @@ function socketdisconnected($sock, $errno)
 	{
 		echo ("Disconnected from temperature ($reason)...\n");
 		$temperaturesocket = null;
+	}
+	else if (($sock == $zwavesocket))
+	{
+		echo ("Disconnected from zwave ($reason)...\n");
+		$zwavesocket = null;
 	}
 	else if (($sock == $buienradarsocket))
 	{
@@ -700,7 +670,7 @@ function updategasmeter($newdata)
                 	$mysqli->query("INSERT INTO `gasmeter` (m3) VALUES (".$newdata["total"]["m3"].");");
 
                         // Read values from database
-                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= CURDATE() ORDER BY timestamp ASC LIMIT 1")) 
                 	{
                 		$row = $result->fetch_object();
                 		//var_dump ($row);
@@ -715,7 +685,7 @@ function updategasmeter($newdata)
                                                 	
 
                         // Read values from database
-                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR) AND timestamp < NOW() ORDER BY timestamp ASC LIMIT 1")) 
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_SUB(NOW(), INTERVAL 1 HOUR) ORDER BY timestamp ASC LIMIT 1")) 
                 	{
                 		$row = $result->fetch_object();
                 		//var_dump ($row);
@@ -734,7 +704,87 @@ function updategasmeter($newdata)
                 		$newdata["now"]["m3h"] = 0;
                         }
 
-                                                	
+
+
+                        // Calculate values from yesterday
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= CURDATE() - INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row1 = $result->fetch_object();
+	                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= CURDATE() ORDER BY timestamp ASC LIMIT 1")) 
+        	        	{
+                			$row2 = $result->fetch_object();
+                			//var_dump ($row);
+                			$newdata["yesterday"]["m3"] = round($row2->m3 - $row1->m3,3);
+				}
+			}
+			else
+			{
+                        	echo "error reading gas values from database ".$mysqli->error."\n"; 
+                        }
+                         
+
+                        // Calculate values from this month
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-%m-01') ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		$newdata["month"]["m3"] = round($newdata["total"]["m3"] - $row->m3,3);
+			}
+			else
+			{
+                        	echo "error reading gas values from database ".$mysqli->error."\n"; 
+                        }
+
+                        // Calculate values from previous month
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-%m-01') - INTERVAL 1 MONTH ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row1 = $result->fetch_object();
+	                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-%m-01') ORDER BY timestamp ASC LIMIT 1")) 
+        	        	{
+                			$row2 = $result->fetch_object();
+                			//var_dump ($row);
+                			$newdata["lastmonth"]["m3"] = round($row2->m3 - $row1->m3,3);
+				}
+			}
+			else
+			{
+                        	echo "error reading gas values from database ".$mysqli->error."\n"; 
+
+			}
+			
+                        // Calculate values from this year
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		if (isset($row))
+                		{
+                			$newdata["year"]["m3"] = round($newdata["total"]["m3"] - $row->m3,3);
+				}
+			}
+			else
+			{
+                        	echo "error reading gas values from database ".$mysqli->error."\n"; 
+                        }
+
+                        // Calculate values from previous year
+                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') - INTERVAL 1 YEAR ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row1 = $result->fetch_object();
+	                	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') ORDER BY timestamp ASC LIMIT 1")) 
+        	        	{
+                			$row2 = $result->fetch_object();
+                			//var_dump ($row);
+                			$newdata["lastyear"]["m3"] = round($row2->m3 - $row1->m3,3);
+				}
+			}
+			else
+			{
+                        	echo "error reading gas values from database ".$mysqli->error."\n"; 
+
+			}
+
+
                 	$mysqli->close();
 		}
 		else
@@ -744,7 +794,7 @@ function updategasmeter($newdata)
 
 	}
 	
-			sendtowebsockets("{ \"gasmeter\":".json_encode($newdata)."}");
+			sendtowebsockets("{\"gasmeter\":".json_encode($newdata)."}");
 			$casaandata["gasmeter"] = $newdata;
 	}
 }
@@ -772,9 +822,11 @@ function updateelectricitymeter($newdata)
                         	echo "error writing electricity values to database ".$mysqli->error."\n"; 
                         }
                         
+                        $newdata["total"]["kwh_used"] = $newdata["total"]["kwh_used1"] + $newdata["total"]["kwh_used2"];
+			$newdata["total"]["kwh_provided"] = $newdata["total"]["kwh_provided1"] + $newdata["total"]["kwh_provided2"];
 
                         // Read values from database
-                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= CURDATE() ORDER BY timestamp ASC LIMIT 1")) 
                 	{
                 		$row = $result->fetch_object();
                 		//var_dump ($row);
@@ -791,6 +843,114 @@ function updateelectricitymeter($newdata)
                         	echo "error reading electricity values from database ".$mysqli->error."\n"; 
                         }
 
+                        // Calculate values from yesterday
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= CURDATE() - INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row1 = $result->fetch_object();
+	                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= CURDATE() ORDER BY timestamp ASC LIMIT 1")) 
+        	        	{
+                			$row2 = $result->fetch_object();
+                			//var_dump ($row);
+                			$newdata["yesterday"]["kwh_used1"] = round($row2->kwh_used1 - $row1->kwh_used1,3);
+	                		$newdata["yesterday"]["kwh_used2"]  = round($row2->kwh_used2 - $row1->kwh_used2,3);
+        	        		$newdata["yesterday"]["kwh_provided1"] = round($row2->kwh_provided1 - $row1->kwh_provided1,3);
+                			$newdata["yesterday"]["kwh_provided2"] = round($row2->kwh_provided2 - $row1->kwh_provided2,3);
+                			$newdata["yesterday"]["kwh_used"] = round($newdata["yesterday"]["kwh_used1"] + $newdata["yesterday"]["kwh_used2"],3);
+                			$newdata["yesterday"]["kwh_provided"] = round($newdata["yesterday"]["kwh_provided1"] + $newdata["yesterday"]["kwh_provided2"],3);
+	                		$newdata["yesterday"]["kwh_total"] = round($newdata["yesterday"]["kwh_used"] - $newdata["yesterday"]["kwh_provided"],3);                		  
+				}
+			}
+			else
+			{
+                        	echo "error reading electricity values from database ".$mysqli->error."\n"; 
+                        }
+
+
+                        // Calculate values from this month
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-%m-01') ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		$newdata["month"]["kwh_used1"] = round($newdata["total"]["kwh_used1"] - $row->kwh_used1,3);
+                		$newdata["month"]["kwh_used2"]  = round($newdata["total"]["kwh_used2"] - $row->kwh_used2,3);
+                		$newdata["month"]["kwh_provided1"] = round($newdata["total"]["kwh_provided1"] - $row->kwh_provided1,3);
+                		$newdata["month"]["kwh_provided2"] = round($newdata["total"]["kwh_provided2"] - $row->kwh_provided2,3);
+                		$newdata["month"]["kwh_used"] = round($newdata["month"]["kwh_used1"] + $newdata["month"]["kwh_used2"],3);
+                		$newdata["month"]["kwh_provided"] = round($newdata["month"]["kwh_provided1"] + $newdata["month"]["kwh_provided2"],3);
+                		$newdata["month"]["kwh_total"] = round($newdata["month"]["kwh_used"] - $newdata["month"]["kwh_provided"],3);                		  
+			}
+			else
+			{
+                        	echo "error reading electricity values from database ".$mysqli->error."\n"; 
+                        }
+
+                        // Calculate values from previous month
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-%m-01') - INTERVAL 1 MONTH ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row1 = $result->fetch_object();
+	                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-%m-01') ORDER BY timestamp ASC LIMIT 1")) 
+        	        	{
+                			$row2 = $result->fetch_object();
+                			//var_dump ($row);
+                			$newdata["lastmonth"]["kwh_used1"] = round($row2->kwh_used1 - $row1->kwh_used1,3);
+	                		$newdata["lastmonth"]["kwh_used2"]  = round($row2->kwh_used2 - $row1->kwh_used2,3);
+        	        		$newdata["lastmonth"]["kwh_provided1"] = round($row2->kwh_provided1 - $row1->kwh_provided1,3);
+                			$newdata["lastmonth"]["kwh_provided2"] = round($row2->kwh_provided2 - $row1->kwh_provided2,3);
+                			$newdata["lastmonth"]["kwh_used"] = round($newdata["lastmonth"]["kwh_used1"] + $newdata["lastmonth"]["kwh_used2"],3);
+                			$newdata["lastmonth"]["kwh_provided"] = round($newdata["lastmonth"]["kwh_provided1"] + $newdata["lastmonth"]["kwh_provided2"],3);
+	                		$newdata["lastmonth"]["kwh_total"] = round($newdata["lastmonth"]["kwh_used"] - $newdata["lastmonth"]["kwh_provided"],3);                		  
+				}
+			}
+			else
+			{
+                        	echo "error reading electricity values from database ".$mysqli->error."\n"; 
+
+			}
+			
+                        // Calculate values from this year
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row = $result->fetch_object();
+                		//var_dump ($row);
+                		if (isset($row))
+                		{
+                			$newdata["year"]["kwh_used1"] = round($newdata["total"]["kwh_used1"] - $row->kwh_used1,3);
+                			$newdata["year"]["kwh_used2"]  = round($newdata["total"]["kwh_used2"] - $row->kwh_used2,3);
+                			$newdata["year"]["kwh_provided1"] = round($newdata["total"]["kwh_provided1"] - $row->kwh_provided1,3);
+                			$newdata["year"]["kwh_provided2"] = round($newdata["total"]["kwh_provided2"] - $row->kwh_provided2,3);
+                			$newdata["year"]["kwh_used"] = round($newdata["year"]["kwh_used1"] + $newdata["year"]["kwh_used2"],3);
+                			$newdata["year"]["kwh_provided"] = round($newdata["year"]["kwh_provided1"] + $newdata["year"]["kwh_provided2"],3);
+                			$newdata["year"]["kwh_total"] = round($newdata["year"]["kwh_used"] - $newdata["year"]["kwh_provided"],3);                		  
+				}
+			}
+			else
+			{
+                        	echo "error reading electricity values from database ".$mysqli->error."\n"; 
+                        }
+
+                        // Calculate values from previous year
+                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') - INTERVAL 1 YEAR ORDER BY timestamp ASC LIMIT 1")) 
+                	{
+                		$row1 = $result->fetch_object();
+	                	if ($result = $mysqli->query("SELECT * FROM `electricitymeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') ORDER BY timestamp ASC LIMIT 1")) 
+        	        	{
+                			$row2 = $result->fetch_object();
+                			//var_dump ($row);
+                			$newdata["lastyear"]["kwh_used1"] = round($row2->kwh_used1 - $row1->kwh_used1,3);
+	                		$newdata["lastyear"]["kwh_used2"]  = round($row2->kwh_used2 - $row1->kwh_used2,3);
+        	        		$newdata["lastyear"]["kwh_provided1"] = round($row2->kwh_provided1 - $row1->kwh_provided1,3);
+                			$newdata["lastyear"]["kwh_provided2"] = round($row2->kwh_provided2 - $row1->kwh_provided2,3);
+                			$newdata["lastyear"]["kwh_used"] = round($newdata["lastyear"]["kwh_used1"] + $newdata["lastyear"]["kwh_used2"],3);
+                			$newdata["lastyear"]["kwh_provided"] = round($newdata["lastyear"]["kwh_provided1"] + $newdata["lastyear"]["kwh_provided2"],3);
+	                		$newdata["lastyear"]["kwh_total"] = round($newdata["lastyear"]["kwh_used"] - $newdata["lastyear"]["kwh_provided"],3);                		  
+				}
+			}
+			else
+			{
+                        	echo "error reading electricity values from database ".$mysqli->error."\n"; 
+
+			}
+
                                                 	
 			$mysqli->close();
 		}
@@ -800,10 +960,8 @@ function updateelectricitymeter($newdata)
 		}
 	}
 	
-	
-	
-	
 	$casaandata["electricitymeter"] = $newdata;
+	sendtowebsockets("{\"electricitymeter\":".json_encode($newdata)."}");
 }
 
 
@@ -821,11 +979,11 @@ function updatewatermeter($newdata)
                 	$mysqli->query("INSERT INTO `watermeter` (m3) VALUES (".$newdata["total"]["m3"].");");
 
                         // Read values from database
-                	if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE timestamp >= CURDATE() AND timestamp < CURDATE() + INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+                	if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE timestamp >= CURDATE() ORDER BY timestamp ASC LIMIT 1")) 
                 	{
                 		$row = $result->fetch_object();
                 		//var_dump ($row);
-                		$newdata["today"]["m3"] = $newdata["total"]["m3"] - $row->m3;
+                		$newdata["today"]["m3"] = number_format($newdata["total"]["m3"] - $row->m3,3);
 			}
 			else
 			{
@@ -843,6 +1001,7 @@ function updatewatermeter($newdata)
 	}
 	
 	$casaandata["watermeter"] = $newdata;
+	sendtowebsockets("{\"watermeter\":".json_encode($newdata)."}");
 }
 
 function updatesunelectricity($newdata)
@@ -856,18 +1015,37 @@ function updatesunelectricity($newdata)
         {
 	        if (!$mysqli->connect_errno)
 	        {
-			$mysqli->query ("INSERT INTO `sunelectricity` (pv_watt, pv_volt, pv_amp, grid_watt, grid_volt, grid_amp, grid_frequency,kwh_today,kwh_total)
-			    		VALUES ( ".
-			    			$newdata['now']['pv']['watt'].",".
-						$newdata['now']['pv']['volt'].",".
-						$newdata['now']['pv']['amp'].",".
-						$newdata['now']['grid']['watt'].",".
-						$newdata['now']['grid']['volt'].",".
-						$newdata['now']['grid']['amp'].",".
-						$newdata['now']['grid']['frequency'].",".
-						$newdata['today']['kwh'].",".
-						$newdata['total']['kwh'].")");
+	        	$sql = "INSERT INTO `sunelectricity` (pv_watt, pv_volt, grid_watt, grid_volt, grid_amp, grid_freq, kwh_today, kwh_total) VALUES ('".
+                                                $newdata['now']['pv']['watt']."','".
+                                                $newdata['now']['pv']['volt']."','".
+                                                $newdata['now']['grid']['watt']."','".
+                                                $newdata['now']['grid']['volt']."','".
+                                                $newdata['now']['grid']['amp']."','".
+                                                $newdata['now']['grid']['frequency']."','".
+                                                $newdata['today']['kwh']."','".
+                                                $newdata['total']['kwh']."');";
+                                                
+			echo $sql;
+			
+			$result = $mysqli->query ($sql);
+                        // write values from database
+                        if (!$result)
+                        {
+                                echo "error writing sunelectricty values to database ".$mysqli->error."\n";
+                        }
                                                 	
+
+			// Read values from database
+        	        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 DAY ORDER BY timestamp DESC LIMIT 1")) 
+        	        {
+	                	$row = $result->fetch_object();
+				$newdata['yesterday']['kwh'] = $row->kwh_today;
+			}
+			else
+			{
+                	       	echo "error reading sunelectricty values from database ".$mysqli->error."\n"; 
+	                }
+
                 	$mysqli->close();
 		}
 		else
@@ -875,9 +1053,27 @@ function updatesunelectricity($newdata)
                 	echo ("Error while writing water values to database: ".$mysqli->connect_error ."\n");
 		}
 
+
+
 	}
 	
 	$casaandata["sunelectricity"] = $newdata;
+        sendtowebsockets("{\"sunelectricity\":".json_encode($newdata)."}");
+}
+
+
+function updatezwave($newdata)
+{
+        global $settings;
+        global $casaandata;
+	if (isset($newdata)) 
+	{
+		if (!isset($casaandata["zwave"])) $casaandata["zwave"] = array();
+		$zwavereplacedata = array_replace_recursive($casaandata["zwave"], $newdata);
+		if (isset($zwavereplacedata))  $casaandata["zwave"] = $zwavereplacedata;
+		//var_dump ($zwavereplacedata);
+		sendtowebsockets("{\"zwave\":".json_encode($newdata,JSON_FORCE_OBJECT)."}");
+	}
 }
 
 
