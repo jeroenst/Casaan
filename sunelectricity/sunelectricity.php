@@ -5,8 +5,12 @@
 // Thanks to Lennart Kuhlmeier for providing PVOUT_GROWATT.PY on http://www.sisand.dk/?page_id=139 
 //
 
-$serialdevice = "/dev/ttyUSB0";
-$tcpport = "58883";
+
+$iniarray = parse_ini_file("../casaan.ini",true);
+
+if (($serialdevice = $iniarray["sunelectricity"]["serialdevice"]) == "") $serialdevice = "/dev/ttyUSB0";;  
+if (($tcpport = $iniarray["sunelectricity"]["tcpport"]) == "") $tcpport = "58883";
+
 
 $data = array();
 
@@ -43,7 +47,8 @@ while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:".$tcpport, $errno, $er
     echo "$errstr ($errno)\n";
     sleep(5);
 }
-
+echo "TCP Server listening on port ".$tcpport."\n";
+ 
 $tcpsockets = array();
 $tcpsocketClients = array();
 array_push($tcpsockets, $tcpsocket);
