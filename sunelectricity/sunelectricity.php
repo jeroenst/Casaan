@@ -5,38 +5,10 @@
 // Thanks to Lennart Kuhlmeier for providing PVOUT_GROWATT.PY on http://www.sisand.dk/?page_id=139 
 //
 
-$serialdevice = '/dev/ttyUSB0';
+$serialdevice = "/dev/ttyUSB0";
+$tcpport = "58883";
 
-$data = json_decode ('
-{
-			"sunelectricity": {
-				"now":
-				{
-					"pv":
-					{
-					  "watt": null,
-					  "1" : { "volt": null },
-					  "2" : { "volt": null } 
-					},
-					"grid":
-					{
-					  "watt": null,
-					  "frequency": null,
-					  "volt": null,
-					  "amp": null
-					}
-				},
-				"today":
-				{
-					"kwh": null
-				},
-				"total":
-				{
-					"kwh": null
-				}
-			}
-}
-',true);
+$data = array();
 
 exec ('stty -F '.$serialdevice.'  1:0:8bd:0:3:1c:7f:15:4:5:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0');
 
@@ -66,7 +38,7 @@ echo "Opened Serial Port.\n";
 
 
 // Initialize tcpsocket
-while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:58883", $errno, $errstr)) 
+while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:".$tcpport, $errno, $errstr)) 
 {
     echo "$errstr ($errno)\n";
     sleep(5);
