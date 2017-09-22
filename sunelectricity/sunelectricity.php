@@ -15,8 +15,8 @@ $data = json_decode ('
 					"pv":
 					{
 					  "watt": null,
-					  "volt": null,
-					  "amp": null
+					  "1" : { "volt": null },
+					  "2" : { "volt": null } 
 					},
 					"grid":
 					{
@@ -64,14 +64,6 @@ if (!$serial->deviceOpen())
 
 echo "Opened Serial Port.\n";
 
-// Open modbus
-while (!$modbus->deviceOpened())
-{
-    $modbus->deviceInit($serialdevice,9600,'none',8,1,'none');
-    $modbus->deviceOpen();
-    if (!$modbus->deviceOpened()) sleep(5);
-}
-
 
 // Initialize tcpsocket
 while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:58883", $errno, $errstr)) 
@@ -91,6 +83,7 @@ date_default_timezone_set ("Europe/Amsterdam");
 // your linux serial device is /dev/ttyS0 for COM1, etc)
 $timeout = 1;
 $sendtimer = 0;
+$dataready = 0;
 while(1)
 {
         $readmask = $tcpsockets;
@@ -137,6 +130,13 @@ while(1)
 
           if ($nroffd == 0)
           {
+              // After midnight reset kwh_today counter
+              if (date('H') < 1) 
+              {
+                $data["sunelectricity"]["today"]["kwh"]=0;
+              }
+                 
+              
               if ($sendtimer == 0)
               {
                 $TxBuffer = sprintf ("%c%c%c%c%c%c", 0x3F, 0x23, 1, 0x32, 0x41, 0);
@@ -150,7 +150,6 @@ while(1)
                 echo "Sending: '".bin2hex($TxBuffer)."'\n" ;
 
                 $serial->sendMessage($TxBuffer, 2);
-                //$serial->sendMessage("Hello World!", 2);
                 $sendtimer = 5;
               }
               
@@ -178,36 +177,37 @@ while(1)
               if (strlen($message) > 20 && (ord($message[0]) == 0x23) && (ord($message[1]) == 0x3f) && (ord($message[2]) == 0x01) && (ord($message[3]) == 0x32) && (ord($message[4]) == 0x41))
               { 
     
-                echo ("PV Volt1 = ".((ord($message[7]) << 8)| ord($message[8]))/10 . "\n");
-                echo ("PV Volt2 = ".((ord($message[9]) << 8)| ord($message[10]))/10 . "\n");
-                echo ("PV Watt  = ".((ord($message[11]) << 8)| ord($message[12]))/10 . "\n");
-                echo ("AC Volt  = ".((ord($message[13]) << 8)| ord($message[14]))/10 . "\n");
-                echo ("AC Amp   = " .((ord($message[15]) << 8)| ord($message[16]))/ 10 . "\n");
-                echo ("AC Freq  = ".((ord($message[17]) << 8)| ord($message[18]))/100 . "\n");
-                echo ("AC Watt  = ".((ord($message[19]) << 8)| ord($message[20]))/10 . "\n");
     
-                $data["sunelectricity"]["now"]["pv"]["watt"]=((ord($message[11]) << 8)| ord($message[12]))/10;
-                $data["sunelectricity"]["now"]["pv"]["volt"]=((ord($message[7]) << 8)| ord($message[8]))/10;
-                $data["sunelectricity"]["now"]["grid"]["watt"]=((ord($message[19]) << 8)| ord($message[20]))/10;
-                $data["sunelectricity"]["now"]["grid"]["frequency"]=((ord($message[17]) << 8)| ord($message[18]))/100;
-                $data["sunelectricity"]["now"]["grid"]["volt"]=((ord($message[13]) << 8)| ord($message[14]))/10;
-                $data["sunelectricity"]["now"]["grid"]["amp"]=((ord($message[15]) << 8)| ord($message[16]))/10;
-                $data["sunelectricity"]["today"]["kwh"]=NULL;
-                $data["sunelectricity"]["total"]["kwh"]=NULL;
+                $data["sunelectricity"]["now"]["pv"]["1"]["volt"]=number_format(((ord($message[7]) << 8) | ord($message[8]))/10,1,'.', '');
+                $data["sunelectricity"]["now"]["pv"]["2"]["volt"]=number_format(((ord($message[9]) << 8) | ord($message[10]))/10,1,'.', '');
+                $data["sunelectricity"]["now"]["pv"]["watt"]=number_format(((ord($message[11]) << 8) | ord($message[12]))/10,1,'.', '');
+                $data["sunelectricity"]["now"]["grid"]["watt"]=number_format(((ord($message[19]) << 8) | ord($message[20]))/10,1,'.', '');
+                $data["sunelectricity"]["now"]["grid"]["frequency"]=number_format(((ord($message[17]) << 8) | ord($message[18]))/100,2,'.', '');
+                $data["sunelectricity"]["now"]["grid"]["volt"]=number_format(((ord($message[13]) << 8) | ord($message[14]))/10,1,'.', '');
+                $data["sunelectricity"]["now"]["grid"]["amp"]=number_format(((ord($message[15]) << 8) | ord($message[16]))/10,1,'.', '');
+
+                echo ("PV Volt1 = ".$data["sunelectricity"]["now"]["pv"]["1"]["volt"]. "\n");
+                echo ("PV Volt2 = ".$data["sunelectricity"]["now"]["pv"]["2"]["volt"]. "\n");
+                echo ("PV Watt  = ".$data["sunelectricity"]["now"]["pv"]["watt"]. "\n");
+                echo ("AC Volt  = ".$data["sunelectricity"]["now"]["grid"]["volt"] . "\n");
+                echo ("AC Amp   = ".$data["sunelectricity"]["now"]["grid"]["amp"] . "\n");
+                echo ("AC Freq  = ".$data["sunelectricity"]["now"]["grid"]["frequency"] . "\n");
+                echo ("AC Watt  = ".$data["sunelectricity"]["now"]["grid"]["watt"]. "\n");
               }
 
 
               if (strlen($message) > 20 && (ord($message[0]) == 0x23) && (ord($message[1]) == 0x3f) && (ord($message[2]) == 0x01) && (ord($message[3]) == 0x32) && (ord($message[4]) == 0x42) )
               { 
     
-                echo ("Energy Today = ".(ord($message[13]) << 8 | ord($message[14]))/10 . "\n");
-                echo ("Energy Total = ".(ord($message[15]) << 16 | ord($message[16]) << 16 | ord($message[17] <<8 | ord($message[18])) / 10 . "\n");
 
-                $data["sunelectricity"]["today"]["kwh"]=(ord($message[13]) << 8 | ord($message[14]))/10;
-                $data["sunelectricity"]["total"]["kwh"]=(ord($message[15]) << 16 | ord($message[16]) << 16 | ord($message[17] < 8 | ord($message[18])) / 10;
+                $todaywh = (ord($message[13]) << 8 | ord($message[14])) * 100;
+                if ($todaywh > 0) $data["sunelectricity"]["today"]["kwh"]=number_format((ord($message[13]) << 8 | ord($message[14]))/10,1,'.', '');
+                $data["sunelectricity"]["total"]["kwh"]=number_format((ord($message[15]) << 24 | ord($message[16]) << 16 | ord($message[17]) << 8 | ord($message[18])) / 10,1,'.', '');
+
+                echo ("Energy Today = ".$data["sunelectricity"]["today"]["kwh"] . "\n");
+                echo ("Energy Total = ".$data["sunelectricity"]["total"]["kwh"] . "\n");
 
                 echo (json_encode($data)."\n\n");
-    
                 sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n\n");
               }
             }
@@ -219,7 +219,7 @@ exit(1);
 
 function sendToAllTcpSocketClients($sockets, $msg)
 {
-   echo ("Sending smartmeterdata to all websocketclient...\n");
+   echo ("Sending sunelectricitydata to all websocketclient...\n");
    foreach ($sockets as $conn) 
    {
      fwrite($conn, $msg);
