@@ -2,6 +2,7 @@ html, body {
     height: 100%;
 	width: 100%;
 	margin: 0px;
+overflow-x:hidden;
 }
 
 html {
@@ -15,12 +16,31 @@ body {
     font-size: 0;
     background-color: #EEEEEE;
 	overflow: hidden;
+position:relative;
 }
 
 
 .labelsmall {
     font-size:1vmin;
     margin-top: 30px;
+}
+
+.domoticainfo{
+  justify-content: center;
+  display: flex;
+}
+
+.domoticabuttons {
+  justify-content: center;
+  display: flex;
+    margin-top: 30px;
+    
+}
+
+.domoticabutton {
+    font-size:3vh;
+	height: 10vh;
+	width: 10vh;
 }
 
 .mainarea {

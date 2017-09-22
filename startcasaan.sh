@@ -19,4 +19,7 @@ nohup sudo php $SCRIPTPATH/temperature/temperature.php >temperature.log 2>&1 &
 sudo kill `ps aux | grep sunelectricity.php | awk '{print $2}'`
 nohup sudo php $SCRIPTPATH/sunelectricity/sunelectricity.php >sunelectricity.log 2>&1 &
 
+sudo kill `ps aux | grep casaanzwave | awk '{print $2}'`
+nohup sudo $SCRIPTPATH/zwave/casaanzwave  >zwave.log 2>&1 &
+
 nohup php $SCRIPTPATH/server/casaanserver.php >casaanserver.log 2>&1 &
