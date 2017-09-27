@@ -20,10 +20,6 @@ $data = json_decode ('
 			},
 			"gasmeter":
 			{
-				"now":
-				{
-					"m3h": null
-				},
 				"total":
 				{
 					"m3": null
@@ -36,8 +32,7 @@ $data = json_decode ('
 include "php_serial.class.php";  
 date_default_timezone_set ("Europe/Amsterdam");
 
-$settings = array(	"device" => "/dev/ttyUSB1", 
-"port" => "58881");
+$settings = array(	"device" => "/dev/ttyUSB1", "port" => "58881");
 if ($argc > 1) 
 {
 	$settingsfile = parse_ini_file($argv[1]);
@@ -146,22 +141,26 @@ while(1)
 					if (isset($label[1]) && isset($value[1]))
 					{
 						echo ("label=".$label[1]." value=".$value[1]."\n"); 
-						if($label[1] == "1-0:1.7.0") $data['electricitymeter']['now']['kw_using'] = extractfloat($value[1]);
-						if($label[1] == "1-0:2.7.0") $data['electricitymeter']['now']['kw_providing'] = extractfloat($value[1]);
-						if($label[1] == "1-0:1.8.1") $data['electricitymeter']['total']['kwh_used1'] = extractfloat($value[1]);
-						if($label[1] == "1-0:1.8.2") $data['electricitymeter']['total']['kwh_used2'] = extractfloat($value[1]);
-						if($label[1] == "1-0:2.8.1") $data['electricitymeter']['total']['kwh_provided1'] = extractfloat($value[1]);
-						if($label[1] == "1-0:2.8.2") $data['electricitymeter']['total']['kwh_provided2'] = extractfloat($value[1]);
+						if($label[1] == "1-0:1.7.0") $data['electricitymeter']['now']['kw_using'] = extractvalue($value[1]);
+						if($label[1] == "1-0:2.7.0") $data['electricitymeter']['now']['kw_providing'] = extractvalue($value[1]);
+						if($label[1] == "1-0:1.8.1") $data['electricitymeter']['total']['kwh_used1'] = extractvalue($value[1]);
+						if($label[1] == "1-0:1.8.2") $data['electricitymeter']['total']['kwh_used2'] = extractvalue($value[1]);
+						if($label[1] == "1-0:2.8.1") $data['electricitymeter']['total']['kwh_provided1'] = extractvalue($value[1]);
+						if($label[1] == "1-0:2.8.2") $data['electricitymeter']['total']['kwh_provided2'] = extractvalue($value[1]);
 						if($label[1] == "0-1:24.2.1") 
 						{
 							preg_match("'\((.*)\*'si", $value[1], $valuegas);
-							$data['gasmeter']['total']['m3'] = extractfloat($valuegas[1]);
+							$data['gasmeter']['total']['m3'] = extractvalue($valuegas[1]);
+							
+							preg_match("'(..)(..)(..)(..)(..)(..)S\)'", $value[1], $gasdatetime);
+							$data['gasmeter']['updatedatetime'] = '20' . $gasdatetime[1] . '-' . $gasdatetime[2] . '-' . $gasdatetime[3] . ' ' . $gasdatetime[4] . ':' . $gasdatetime[5] . ':' . $gasdatetime[6];    
 						}
 					}
 				}
 			}
 			echo "Received Data (".date('Y/m/d H:i:s').")". 
 				": gas_used=".$data['gasmeter']['total']['m3'].
+				": gas_datetime=".$data['gasmeter']['updatedatetime'].
 				", kwh_used1=".$data['electricitymeter']['total']['kwh_used1'].
 				", kwh_used2=".$data['electricitymeter']['total']['kwh_used2'].
 				", kwh_provided1=".$data['electricitymeter']['total']['kwh_provided1'].
@@ -184,10 +183,11 @@ while(1)
 $serial->deviceClose();
 exit(1);
 
-function extractfloat($string)
+function extractvalue($string)
 {
-	$tmp = preg_replace( '/[^\d\.]/', '',  $string );
-	return floatval($tmp);
+	$tmp = ltrim(preg_replace( '/[^\d\.]/', '',  $string ), '0');;
+	if ($tmp[0] == ".") $tmp = '0' + $tmp;
+	return $tmp; 
 }
 
 function match($lines, $needle) 
