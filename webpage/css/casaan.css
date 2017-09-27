@@ -79,10 +79,10 @@ position:relative;
 }
 
 .fullscreen-floating-box {
-	left: 5px;
-	right: 5px;
-	top: 5px;
-	bottom: 5px;
+	left: 10px;
+	right: 10px;
+	top: 10px;
+	bottom: 10px;
 	height: auto;
 	width: auto;
 	position: absolute;
@@ -94,9 +94,9 @@ position:relative;
     position: absolute;
     left:0;
     top:0;
-	margin:5%; 
-	width:17%; 
-	height:90%; 
+	margin:7%; 
+	width:15%; 
+	height:85%; 
 	border-radius:5px;
 }
 
@@ -346,7 +346,7 @@ ul.tab li a {
     display: inline-block;
     color: black;
     text-align: center;
-    padding: 1.5vmin 1.5vmin;
+    padding: 1vh 1.5vmin;
     text-decoration: none;
     transition: 0.3s;
 	height: 8vmin;
@@ -423,3 +423,4 @@ div.therm.outer-therm.vertical {
 		bottom:7vh;
 	}
 }
+root@server01:/opt/casaan/webpage# 
