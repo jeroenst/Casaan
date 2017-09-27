@@ -140,7 +140,7 @@ int create_tcpserver()
 
 
 
-void SetDimmerValue(int nodeid, uint8 value)
+void SetDimmerValue(int nodeid, int instanceid, uint8 value)
 {
     pthread_mutex_lock( &g_criticalSection );
     for( list<NodeInfo*>::iterator it = g_nodes.begin(); it != g_nodes.end(); ++it )
@@ -151,7 +151,7 @@ void SetDimmerValue(int nodeid, uint8 value)
 	it2 != nodeInfo->m_values.end(); ++it2 )
 	{
 	    ValueID v = *it2;
-	    if( v.GetCommandClassId() == 0x26 && v.GetIndex() == 0)
+	    if( v.GetCommandClassId() == 0x26 && v.GetIndex() == 0 && v.GetInstance() == instanceid)
 	    {
 		printf("\n Setting Node Dimmmer %d to %d ",
 		       nodeInfo->m_nodeId,
@@ -171,7 +171,7 @@ void SetDimmerValue(int nodeid, uint8 value)
     pthread_mutex_unlock( &g_criticalSection );
 }
 
-void SetSwitchValue(int nodeid, bool value)
+void SetSwitchValue(int nodeid, int instanceid, bool value)
 {
     pthread_mutex_lock( &g_criticalSection );
     for( list<NodeInfo*>::iterator it = g_nodes.begin(); it != g_nodes.end(); ++it )
@@ -182,7 +182,7 @@ void SetSwitchValue(int nodeid, bool value)
 	it2 != nodeInfo->m_values.end(); ++it2 )
 	{
 	    ValueID v = *it2;
-	    if( v.GetCommandClassId() == 0x25 && v.GetIndex() == 0)
+	    if( v.GetCommandClassId() == 0x25 && v.GetIndex() == 0 && v.GetInstance() == instanceid)
 	    {
 		printf("\n Setting Node Switch %d to %d ",
 		       nodeInfo->m_nodeId,
@@ -289,7 +289,7 @@ void OnNotification
 
 		case Notification::Type_ValueChanged:
 		{
-		  	printf ("Received Valuechanged Notification!\n\n\n");
+		 // 	printf ("Received Valuechanged Notification!\n\n\n");
 
 
                                 if (v.GetType() == ValueID::ValueType_Bool)
@@ -309,29 +309,29 @@ void OnNotification
                                 {
                                         uint8 value = 0;
                                         Manager::Get()->GetValueAsByte(v, &value);
-                                        printf("Value: %d \n", value);
+                              //          printf("Value: %d \n", value);
                                         sprintf(strvalue,"%d", value);
                                 }
                                 if (v.GetType() == ValueID::ValueType_Decimal)
                                 {
-                                	float decimal;
-                                        Manager::Get()->GetValueAsFloat(v, &decimal);
-                                        printf("Value: %f \n", decimal);
-                                        sprintf(strvalue,"%f", decimal);
+                                	string decimal;
+                                        Manager::Get()->GetValueAsString(v, &decimal);
+                                //        printf("Value: %f \n", decimal);
+                                        sprintf(strvalue,"%s", decimal.c_str());
                                 }
                                 if (v.GetType() == ValueID::ValueType_Int)
                                 {
                                         int32 value = 0;
                                         Manager::Get()->GetValueAsInt(v, &value);
-                                        printf("Value: %d \n", value);
+                                  //      printf("Value: %d \n", value);
                                         sprintf(strvalue,"%d", value);
                                 }
                                 if (v.GetType() == ValueID::ValueType_String)
                                 {
                                         std::__cxx11::string text;
                                         Manager::Get()->GetValueAsString(v, &text);
-                                        printf("Value: %s \n", text);
-                                        sprintf(strvalue,"%s", text);
+                                    //    printf("Value: %s \n", text);
+                                        sprintf(strvalue,"%s", text.c_str());
                                 }
 
 		  	updatejson = true;
@@ -452,24 +452,68 @@ void OnNotification
 	}
 
 
-	printf ("Received Notification Type=%d! NodeId=%d Instance=%d Genre=%d Class=%d Index=%d Type=%d Value=%s\n",_notification->GetType(),_notification->GetNodeId(),v.GetGenre(),v.GetCommandClassId(),v.GetInstance(),v.GetIndex(),v.GetType(),strvalue);
+	printf ("Received Notification Type=%d! NodeId=%d Instance=%d Genre=%d Class=%d Index=%d Type=%d Value=%s\n",_notification->GetType(),_notification->GetNodeId(),v.GetInstance(),v.GetGenre(),v.GetCommandClassId(),v.GetIndex(),v.GetType(),strvalue);
 
 
 	if ((_notification->GetNodeId() < 255) && (client_fd > 0) && (updatejson))
 	{
-		jsonglobalobject["zwave"]["node"][to_string(_notification->GetNodeId()).c_str()]["instance"][to_string(v.GetInstance()).c_str()]["genre"][to_string(v.GetGenre()).c_str()]["classid"][to_string(v.GetCommandClassId()).c_str()]["index"][to_string(v.GetIndex()).c_str()]["value"]  = strvalue;
-
 		Json::Value jsonobject;
-		jsonobject["zwave"]["node"][to_string(_notification->GetNodeId()).c_str()]["instance"][to_string(v.GetInstance()).c_str()]["genre"][to_string(v.GetGenre()).c_str()]["classid"][to_string(v.GetCommandClassId()).c_str()]["index"][to_string(v.GetIndex()).c_str()]["value"]  = strvalue;
+		const char *nodeid = to_string(_notification->GetNodeId()).c_str();
+		const char *instanceid = to_string(v.GetInstance()).c_str();
+		
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 37 && v.GetIndex() == 0)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["switchbinairy"]["value"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["switchbinairy"]["switchvalue"] = strvalue;
+		}
+
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 38 && v.GetIndex() == 0)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["switchmultilevel"]["value"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["switchmultilevel"]["value"] = strvalue;
+		}
 	
-		Json::StreamWriterBuilder wbuilder;
-		wbuilder["indentation"] = "";
-		std::string document = '\x02'+Json::writeString(wbuilder, jsonobject);
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 49 && v.GetIndex() == 4)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["sensormultilevel"]["power"]["watt"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["sensormultilevel"]["power"]["watt"] = strvalue;
+		}
+
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 50 && v.GetIndex() == 8)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["meter"]["electric"]["watt"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["meter"]["electric"]["watt"] = strvalue;
+		}
+
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 50 && v.GetIndex() == 16)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["meter"]["electric"]["volt"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["meter"]["electric"]["volt"] = strvalue;
+		}
+	
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 50 && v.GetIndex() == 0)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["meter"]["electric"]["kwh"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["electric"]["kwh"] = strvalue;
+		}
+	
+		if(v.GetGenre() == 1 && v.GetCommandClassId() == 50 && v.GetIndex() == 20)
+		{
+			jsonobject["zwave"][nodeid][instanceid]["meter"]["electric"]["ampere"] = strvalue;
+			jsonglobalobject["zwave"][nodeid][instanceid]["meter"]["electric"]["ampere"] = strvalue;
+		}
+	
+		if (jsonobject.isObject())
+		{
+			Json::StreamWriterBuilder wbuilder;
+			wbuilder["indentation"] = "";
+			std::string document = '\x02'+Json::writeString(wbuilder, jsonobject);
   
-		printf ("Sending %d bytes to tcp client: %s\n", strlen(document.c_str()), document.c_str());
-		int flag = 1; 
-		setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
-		write (client_fd,document.c_str(),strlen(document.c_str()));
+			printf ("Sending %d bytes to tcp client: %s\n", strlen(document.c_str()), document.c_str());
+			int flag = 1; 
+			setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (char *) &flag, sizeof(int));
+			write (client_fd,document.c_str(),strlen(document.c_str()));
+		}
 		
 	}
 
@@ -603,37 +647,50 @@ int main( int argc, char* argv[] )
                     //    ValueType_Button,                       /**< A write-only value that is the equivalent of pressing a button to send a command to a device */
                     //    ValueType_Raw,                          /**< A collection of bytes */
                     //    ValueType_Max = ValueType_Raw  
-                        	if (v.GetType() == 0)
-				{
-					bool value = false;
-					Manager::Get()->GetValueAsBool(v, &value);
-					printf("\t\t Value: %d \n", value ? 1:0);
-				}
-                        	if (v.GetType() == 1)
-				{
-					uint8 value = 0;
-					Manager::Get()->GetValueAsByte(v, &value);
-					printf("\t\t Value: %d \n", value);
-				}
-                        	if (v.GetType() == 2)
-				{
-					//string decimal;
-					//Manager::Get()->GetValueAsDecimal(v, decimal);
-					//printf("\t\t Value: %s \n", decimal);
-				}
-                        	if (v.GetType() == 3)
-				{
-					int32 value = 0;
-					Manager::Get()->GetValueAsInt(v, &value);
-					printf("\t\t Value: %d \n", value);
-				}
-                        	if (v.GetType() == 7)
-				{
-					std::__cxx11::string text;
-					Manager::Get()->GetValueAsString(v, &text);
-					printf("\t\t Value: %s \n", text);
-				}
-				
+				char strvalue[20];
+
+                                if (v.GetType() == ValueID::ValueType_Bool)
+                                {
+                                        bool value = false;
+                                        if (Manager::Get()->GetValueAsBool(v, &value))
+                                        {
+                                                printf("Value: %d \n", value ? 1:0);
+                                                sprintf(strvalue,"%d", value ? 1:0);
+                                        }
+                                        else
+                                        {
+                                                printf("Value as bool is invalid\n");
+                                        }
+                                }
+                                if (v.GetType() == ValueID::ValueType_Byte)
+                                {
+                                        uint8 value = 0;
+                                        Manager::Get()->GetValueAsByte(v, &value);
+                              //          printf("Value: %d \n", value);
+                                        sprintf(strvalue,"%d", value);
+                                }
+                                if (v.GetType() == ValueID::ValueType_Decimal)
+                                {
+                                        string decimal;
+                                        Manager::Get()->GetValueAsString(v, &decimal);
+                                //        printf("Value: %f \n", decimal);
+                                        sprintf(strvalue,"%s", decimal.c_str());
+                                }
+                                if (v.GetType() == ValueID::ValueType_Int)
+                                {
+                                        int32 value = 0;
+                                        Manager::Get()->GetValueAsInt(v, &value);
+                                  //      printf("Value: %d \n", value);
+                                        sprintf(strvalue,"%d", value);
+                                }
+                                if (v.GetType() == ValueID::ValueType_String)
+                                {
+                                        std::__cxx11::string text;
+                                        Manager::Get()->GetValueAsString(v, &text);
+                                    //    printf("Value: %s \n", text);
+                                        sprintf(strvalue,"%s", text);
+                                }
+
 				printf("\t\t ValueType: %d \n", v.GetType());
 				printf("\t\t ValueHelp: %s \n", Manager::Get()->GetValueHelp(v).c_str());
 				printf("\t\t ValueUnits: %s \n", Manager::Get()->GetValueUnits(v).c_str());
@@ -645,6 +702,7 @@ int main( int argc, char* argv[] )
 //					Manager::Get()->EnablePoll( v, 2 );		// enables polling with "intensity" of 2, though this is irrelevant with only one value polled
 					break;
 				}
+				
 			}
 		}
 		pthread_mutex_unlock( &g_criticalSection );
@@ -707,15 +765,36 @@ int main( int argc, char* argv[] )
                                         printf("Received %d bytes from TCP client: %s\n", n, msg);
                                         Json::Value root;   
                                         Json::Reader reader;
-                                        bool parsingSuccessful = reader.parse( msg, root );     //parse process
-                                        if ( !parsingSuccessful )
+                                        std::string jsoncommand = "";
+                                        for (int i = 0; i < strlen(msg); i++)
                                         {
-                                        	std::cout  << "Failed to parse " << reader.getFormattedErrorMessages();
-					}
-					else
-					{
-						if (root["zwave"]["commandclassid"].asUInt() == 0x26) SetDimmerValue (root["zwave"]["nodeid"].asUInt(), root["zwave"]["value"].asUInt());
-						if (root["zwave"]["commandclassid"].asUInt() == 0x25) SetSwitchValue (root["zwave"]["nodeid"].asUInt(), root["zwave"]["value"].asUInt());
+                                                if (msg[i] != 30)
+                                                {
+                                                        jsoncommand.push_back(msg[i]);
+                                                }
+                                                else
+                                                {
+                                                        bool parsingSuccessful = reader.parse( jsoncommand.c_str(), root );     //parse process
+                                                        if ( !parsingSuccessful )
+                                                        {
+                                                	        std::cout  << "Failed to parse " << reader.getFormattedErrorMessages();
+                					}
+	                				else
+		                			{
+			                			for (auto const& nodeid : root["zwave"].getMemberNames()) 
+			                			{
+				                			for (auto const& instanceid :  root["zwave"][nodeid].getMemberNames()) 
+				                			{
+					                			for (auto const& command : root["zwave"][nodeid][instanceid] .getMemberNames()) 
+					                			{
+						                			if (command == "setswitchmultilevel" ) SetDimmerValue (std::stoi(nodeid), std::stoi(instanceid), root["zwave"][nodeid][instanceid]["setswitchmultilevel"].asUInt() );
+							                		if (command == "setswitchbinairy" ) SetSwitchValue (std::stoi(nodeid), std::stoi(instanceid), root["zwave"][nodeid][instanceid]["setswitchbinairy"].asUInt() );
+                                                                                }
+        								}
+	        						}
+		        				}
+		        				jsoncommand = ""; 
+                                                }
 					}
                                 }
                         }
