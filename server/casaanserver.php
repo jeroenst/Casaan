@@ -255,7 +255,6 @@ function socketreceivedata($sock)
 				if ($recvpacket != '')
 				{  
 					$recvdatajson = json_decode(utf8_encode($recvpacket), true);
-					var_dump($recvdatajson);
 					updatezwave($recvdatajson["zwave"]);
 				}
 			}
@@ -320,20 +319,22 @@ function socketreceivedata($sock)
 				socket_write ($sock, $reply);
 				echo ("Sending data to websock client...\n");
 				echo (json_encode($casaandata,JSON_FORCE_OBJECT));
-				socket_write($sock, websocketEncode(json_encode($casaandata,JSON_FORCE_OBJECT)));
+				socket_write($sock, websocketEncode(json_encode($casaandata)));
 				array_push($activewebsockets, $sock);
 			}
 			else
 			{
-				$receivedMessage = websocketDecode($recvdata);
-				echo ("Received from websocket client:\n" . $receivedMessage . "\n\n");
-				$receivedjson = json_decode($receivedMessage, true);
-				if (isset($receivedjson["zwave"]))
+				$receivedMessages = websocketDecode($recvdata);
+				foreach ($receivedMessages as $receivedMessage)
 				{
-					socket_write($zwavesocket, $receivedMessage);
-					echo ("Sending data to zwave:" . $receivedMessage . "\n");
-				}  
-				
+					echo ("Received from websocket client:\n" . $receivedMessage . "\n\n");
+					$receivedjson = json_decode($receivedMessage, true);
+					if (isset($receivedjson["zwave"]))
+					{
+						socket_write($zwavesocket, $receivedMessage . chr(30));
+						echo ("Sending data to zwave:\n" . $receivedMessage . "\n\n");
+					}
+				} 
 			}
 		}
 	}
@@ -482,24 +483,37 @@ function sendtowebsockets($msg)
 }
 
 
-function websocketDecode($M){
-	$M = array_map("ord", str_split($M));
-	$L = $M[1] AND 127;
+function websocketDecode($Message){
 
-	if ($L == 126)
-	$iFM = 4;
-	else if ($L == 127)
-	$iFM = 10;
-	else
-	$iFM = 2;
+	$returnarray = array();
+	for ($messagenr = 0; strlen($Message) > 0; $messagenr++)
+	{
+		$M = array_map("ord", str_split($Message));
+		$L = $M[1] & 127;
+		if ($L == 126)
+		{
+			$iFM = 4;
+			$L = ($M[2] << 8) + $M[3];
+		}
+		else if ($L == 127)
+		{
+			$iFM = 10;
+			$L = ($M[2] << 56) + ($M[3] << 48) + ($M[4] << 40) + ($M[5] << 32) + ($M[6] << 24) + ($M[7] << 16) + ($M[8] << 8) + $M[9];
+		}
+		else
+		$iFM = 2;
 
-	$Masks = array_slice($M, $iFM, 4);
+		$Masks = array_slice($M, $iFM, 4);
 
-	$Out = "";
-	for ($i = $iFM + 4, $j = 0; $i < count($M); $i++, $j++ ) {
-		$Out .= chr($M[$i] ^ $Masks[$j % 4]);
+		$Out = "";
+		for ($i = $iFM + 4, $j = 0; $j < $L; $i++, $j++ ) {
+			$Out .= chr($M[$i] ^ $Masks[$j % 4]);
+		}
+		$returnarray[$messagenr] = $Out;
+		$messagelength =  $iFM + 4 + $L;
+		$Message = substr($Message, $messagelength);
 	}
-	return $Out;
+	return $returnarray;
 }
 
 function websocketEncode($message)
@@ -658,8 +672,10 @@ function updategasmeter($newdata)
         global $settings;
         global $casaandata;
         // only update when value has changed
-        if ($casaandata["gasmeter"]["total"]["m3"] != $newdata["total"]["m3"])
+        if (isset($newdata['updatedatetime']) && (((!isset($casaandata["gasmeter"])) || ($casaandata["gasmeter"]['updatedatetime'] != $newdata['updatedatetime']))))
         {   
+        
+        echo ("Received new values from gasmeter...\n");
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
@@ -667,7 +683,12 @@ function updategasmeter($newdata)
         {
 	        if (!$mysqli->connect_errno)
 	        {
-                	$mysqli->query("INSERT INTO `gasmeter` (m3) VALUES (".$newdata["total"]["m3"].");");
+	        	$sql = "INSERT INTO `gasmeter` (timestamp, m3) VALUES ('".$newdata["updatedatetime"]."','" .$newdata["total"]["m3"]."');";
+	        	echo $sql;
+                	if (!$mysqli->query($sql))
+                	{
+                        	echo "error writing gas values to database ".$mysqli->error."\n";
+                	}
 
                         // Read values from database
                 	if ($result = $mysqli->query("SELECT * FROM `gasmeter` WHERE timestamp >= CURDATE() ORDER BY timestamp ASC LIMIT 1")) 
@@ -1015,9 +1036,10 @@ function updatesunelectricity($newdata)
         {
 	        if (!$mysqli->connect_errno)
 	        {
-	        	$sql = "INSERT INTO `sunelectricity` (pv_watt, pv_volt, grid_watt, grid_volt, grid_amp, grid_freq, kwh_today, kwh_total) VALUES ('".
+	        	$sql = "INSERT INTO `sunelectricity` (pv_watt, pv_1_volt, pv_2_volt, grid_watt, grid_volt, grid_amp, grid_freq, kwh_today, kwh_total) VALUES ('".
                                                 $newdata['now']['pv']['watt']."','".
-                                                $newdata['now']['pv']['volt']."','".
+                                                $newdata['now']['pv']['1']['volt']."','".
+                                                $newdata['now']['pv']['2']['volt']."','".
                                                 $newdata['now']['grid']['watt']."','".
                                                 $newdata['now']['grid']['volt']."','".
                                                 $newdata['now']['grid']['amp']."','".
@@ -1071,8 +1093,7 @@ function updatezwave($newdata)
 		if (!isset($casaandata["zwave"])) $casaandata["zwave"] = array();
 		$zwavereplacedata = array_replace_recursive($casaandata["zwave"], $newdata);
 		if (isset($zwavereplacedata))  $casaandata["zwave"] = $zwavereplacedata;
-		//var_dump ($zwavereplacedata);
-		sendtowebsockets("{\"zwave\":".json_encode($newdata,JSON_FORCE_OBJECT)."}");
+		sendtowebsockets("{\"zwave\":".json_encode($newdata)."}");
 	}
 }
 
