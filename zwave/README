@@ -1,0 +1,12 @@
+For zwave to work the openzwave package is needed.
+
+This can be downloaded with git clone https://github.com/OpenZWave/open-zwave.git
+
+After downloading do a make and a make install in the open-zwave folder.
+
+
+Also the openzwave controlpanel is needed in order to configure the zwave network.
+
+This can be downloaded with git clone https://github.com/OpenZWave/open-zwave-control-panel.git
+
+Please read the README file in the open-zwave-control-panel folder for building the control panel. 

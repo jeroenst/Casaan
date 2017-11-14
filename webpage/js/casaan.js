@@ -47,6 +47,14 @@ function autochangesizes()
 		elements[i].style.width = floatingboxWidthHeight + "px";
 	}
 
+
+	var elements = document.querySelectorAll(".wide-floating-box");
+        for(var i=0; i<elements.length; i++)
+        {
+                elements[i].style.height = floatingboxWidthHeight + "px";
+                elements[i].style.width = (floatingboxWidthHeight*2.01) + "px";
+        }
+
 	// Auto size footer bar items
 	var clientHeight = document.getElementsByClassName('tab')[0].clientHeight;
 	elements = document.querySelectorAll('.label, .backbutton, .menuitem');
@@ -68,13 +76,14 @@ function autochangesizes()
 	
 
 
-	var elements = document.querySelectorAll('.fullscreen-boxtext');
+/*	var elements = document.querySelectorAll('.fullscreen-boxtext');
 	for(var i=0; i<elements.length; i++)
 	{
 		if (clientHeight > clientWidth) elements[i].style.fontSize = floatingboxWidthHeight  / 45 + "px"
-		else elements[i].style.fontSize = (clientHeight + (clientWidth * 0.5))  / 35 + "px"
+		else elements[i].style.fontSize = (clientHeight + (clientWidth * 0.5))  / 35 + "px";
+		elements[i].style.fontSize = floatingboxWidthHeight  / 45 + "px";
 	}
-
+*/
 	elements = document.querySelectorAll('.boxtitle, .boxlabelsmall, .boxlabel2small, .weathertext');
 	for(i=0; i<elements.length; i++)
 	{
@@ -146,7 +155,7 @@ function autochangesizes()
 	}
 
 	$('#insidetemperaturegauge').tempGauge({
-width: clientHeight *0.4,
+width: floatingboxWidthHeight *0.4,
 borderWidth:2,
 showLabel:false,
 showScale:false,
@@ -161,8 +170,8 @@ minTemp: 15,
 	element = document.getElementById("weathertextlong");
 	if (clientHeight > 0)
 	{
-		document.getElementById("weathertextlong").style.fontSize = "50px";
-		for (var i = 50; ((element.offsetWidth > clientWidth) || (element.offsetHeight > clientHeight)) && (i > 1); i--)
+		element.style.fontSize = "60px";
+		for (var i = 60; (element.offsetHeight > clientHeight) && (i > 1); i--)
 		{
 			document.getElementById("weathertextlong").style.fontSize = i + "px";
 		}
@@ -283,6 +292,8 @@ gutterRight: 0
 //
 function startcasaan()
 {
+	//document.documentElement.requestFullscreen();
+	//document.body.requestFullscreen();
 	startcasaanwebsocket();
 	setInterval(updateTime, 1000);
 	setInterval(updateWeather, 600000);
@@ -298,12 +309,15 @@ function createDomoticaPage()
 
 	var domoticapagestring;
 	
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,0x26,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,0x26,1)">1%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,0x26,50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,0x26,99)">99%</button></div></div><div class="domoticainfo">test</div></div>';
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,0x25,0)">Uit</button><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,0x25,255)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
-	for (var i = 0; i < 6; i++)
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,\'setswitchbinairy\',0)">Uit</button><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,\'setswitchbinairy\',1)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave3off" onclick="sendzwave(4,1,\'setswitchbinairy\',0)">Uit</button><button class="domoticabutton" id="buttonzwave3off" onclick="sendzwave(4,1,\'setswitchbinairy\',1)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave4off" onclick="sendzwave(5,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave4dim" onclick="sendzwave(5,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave4dim" onclick="sendzwave(5,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave4on" onclick="sendzwave(5,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div><br>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwavescene1" onclick="sendzwave(2,1,\'setswitchmultilevel\',10); sendzwave(3,1,\'setswitchbinairy\',1); sendzwave(4,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',10);">Avond</button><button class="domoticabutton" id="buttonzwavescene2" onclick="sendzwave(2,1,\'setswitchmultilevel\',1); sendzwave(3,1,\'setswitchbinairy\',0); sendzwave(4,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',1);">Film</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',99); sendzwave(3,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',99);">Fel</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,\'setswitchmultilevel\',0); sendzwave(3,1,\'setswitchbinairy\',0); sendzwave(4,1,\'setswitchbinairy\',0); sendzwave(5,1,\'setswitchmultilevel\',0);">Uit</button></div></div><div class="domoticainfo">-</div></div>';
+//	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwavescene1" onclick="sendzwave(2,1,\'setswitchmultilevel\',10); sendzwave(3,1,\'setswitchbinairy\',1); sendzwave(4,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',10);">Avond</button><button class="domoticabutton" id="buttonzwavescene2" onclick="sendzwave(2,1,\'setswitchmultilevel\',0); sendzwave(3,1,\'setswitchbinairy\',0); sendzwave(4,1,\'setswitchbinairy\',0); sendzwave(5,1,\'setswitchmultilevel\',0);">Alles Uit</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(5,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(5,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div>';
+	for (var i = 0; i < 3; i++)
 	{	
-		if (i == 2) domoticapagestring += '<BR>';
-	 	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,26,0,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,1)">1%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,25)">25%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,26,0,99)">99%</button></div></div><div class="domoticainfo">test</div></div>';
+	 	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,26,0,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,1)">1%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,25)">25%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,26,0,99)">99%</button></div></div><div class="domoticainfo">-</div></div>';
 	}
 
 	document.getElementById("domoticapage").innerHTML = domoticapagestring;
@@ -341,7 +355,7 @@ function startcasaanwebsocket()
 				var watt =  "-";
 				try
 				{
-					watt = (data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"])*1000;
+					watt = Math.round((data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"])*1000);
 				}
 				catch(err)
 				{
@@ -469,7 +483,7 @@ function startcasaanwebsocket()
 				
 				try
 				{					
-					watt = data["sunelectricity"]["now"]["grid"]["watt"];
+					watt = Math.round(data["sunelectricity"]["now"]["grid"]["watt"]);
 					kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
 					if (watt == null) watt = "-"; else kwbarvalue = watt;
 					if (kwhtoday == null) kwhtoday = "-";
@@ -492,19 +506,18 @@ function startcasaanwebsocket()
 				try
 				{					
 					elements = document.getElementsByClassName('domoticabutton');
-					for(i=0; i<elements.length; i++)
-					{
-						document.getElementsByClassName('domoticabutton')[i].style.backgroundColor = "";
-					}
+					buttononcolor = "#66ff66"; 
+					buttonsceneoncolor = "#00ccff"; 
+					buttonoffcolor = "";  
 					try
 					{
-						var zwavevalue1 = parseInt(casaandata["zwave"]["node"]["2"]["instance"]["1"]["genre"]["1"]["classid"]["38"]["index"]["0"]["value"]);
-						var watt = parseFloat(casaandata["zwave"]["node"]["2"]["instance"]["1"]["genre"]["1"]["classid"]["49"]["index"]["4"]["value"]);
-						if (zwavevalue1 == 0) document.getElementsByClassName('domoticabutton')[0].style.backgroundColor = "yellow";
-						if (zwavevalue1 == 1) document.getElementsByClassName('domoticabutton')[1].style.backgroundColor = "yellow";
-						if (zwavevalue1 == 50) document.getElementsByClassName('domoticabutton')[2].style.backgroundColor = "yellow";
-						if (zwavevalue1 == 99) document.getElementsByClassName('domoticabutton')[3].style.backgroundColor = "yellow";
-						document.getElementsByClassName('domoticainfo')[0].innerHTML = zwavevalue1 + "% - " + watt + " watt";
+						var value = casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"];
+						var watt = casaandata["zwave"]["2"]["1"]["sensormultilevel"]["power"]["watt"];
+						document.getElementsByClassName('domoticabutton')[0].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[1].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[2].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[3].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[0].innerHTML = value + "% - " + watt + " watt";
 		                        }        
 					catch(err)
                 		        {
@@ -512,15 +525,74 @@ function startcasaanwebsocket()
 
                 		        try
                 		        {
-						var zwavevalue2 = parseInt(casaandata["zwave"]["node"]["3"]["instance"]["1"]["genre"]["1"]["classid"]["37"]["index"]["0"]["value"]);
-						if (zwavevalue2 == 0) document.getElementsByClassName('domoticabutton')[4].style.backgroundColor = "yellow";
-						if (zwavevalue2 == 1) document.getElementsByClassName('domoticabutton')[5].style.backgroundColor = "yellow";
+						var value = casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"];
+						var watt = casaandata["zwave"]["3"]["1"]["meter"]["electric"]["watt"];
+						document.getElementsByClassName('domoticabutton')[4].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[5].style.backgroundColor = value == 1 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[1].innerHTML = value == 1 ? "Aan - " + watt + " watt" : "Uit - " + watt + " watt";
 					}
 					catch(err)
 					{
 					}
 					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
-					//document.getElementsByClassName('domoticainfo')[1].innerHTML = casaandata["zwave"]["node"]["3"]["1"]["8"] + " watt";
+
+                		        try
+                		        {
+						var value = casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"];
+						var watt = casaandata["zwave"]["4"]["1"]["meter"]["electric"]["watt"];
+						document.getElementsByClassName('domoticabutton')[6].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[7].style.backgroundColor = value == 1 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[2].innerHTML = value == 1 ? "Aan - " + watt + " watt" : "Uit - " + watt + " watt";
+					}
+					catch(err)
+					{
+					}
+					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
+
+					try
+					{
+						var value = casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"];
+						var watt = casaandata["zwave"]["5"]["1"]["sensormultilevel"]["power"]["watt"];
+						document.getElementsByClassName('domoticabutton')[8].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[9].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[10].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[11].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[3].innerHTML = value + "% - " + watt + " watt";
+		                        }        
+					catch(err)
+                		        {
+                		        }
+
+                		        try
+                		        {
+						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 10) && 
+						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 1) &&
+						            (casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"] == 1) &&
+						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 10)
+						document.getElementsByClassName('domoticabutton')[12].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+
+						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 1) && 
+						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 0) &&
+						            (casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"] == 1) &&
+						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 1)
+						document.getElementsByClassName('domoticabutton')[13].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+
+						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 99) && 
+						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 1) &&
+						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 99)
+						document.getElementsByClassName('domoticabutton')[14].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+
+						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 0) && 
+						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 0) &&
+						            (casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"] == 0) &&
+						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 0)
+						document.getElementsByClassName('domoticabutton')[15].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+					}
+					catch(err)
+					{
+					}
+					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
+
 				}
 				catch (err)
 				{
@@ -591,14 +663,13 @@ var graphsource = "";
 var graphtitle = "";
 var graphlabel = "";
 
-function sendzwave(nodeid, instance, commandclassid, value)
+function sendzwave(nodeid, instanceid, command, value)
 {
 	var jsonobject = new Object;
 	jsonobject['zwave'] = new Object; 
-	jsonobject['zwave']['nodeid'] = nodeid; 
-	jsonobject['zwave']['instance'] = instance;
-	jsonobject['zwave']['commandclassid'] = commandclassid;
-	jsonobject['zwave']['value'] = value;   
+	jsonobject['zwave'][nodeid] = new Object;
+	jsonobject['zwave'][nodeid][instanceid] = new Object;
+	jsonobject['zwave'][nodeid][instanceid][command] = value; 
 	ws.send (JSON.stringify(jsonobject));
 }
 
@@ -620,7 +691,7 @@ function objectnulltodash(obj)
 //
 function fillDomoticaPage()
 {
-	var titels = ["Spots Keuken", "Stalamp huiskamer", "Spots huiskamer", "Verlichting eettafel", "Tv", "Buitenlampen", "", ""];
+	var titels = ["Spots Keuken", "Stalamp huiskamer", "Tv & Radio", "Spots Huiskamer", "Scenes", "", "", ""];
 	var elements = document.getElementById("domoticapage").getElementsByClassName("floating-box");
 	for (var key = 0; key < elements.length; key++)
 	{

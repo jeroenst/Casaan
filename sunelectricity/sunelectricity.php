@@ -6,24 +6,26 @@
 //
 
 
-$iniarray = parse_ini_file("../casaan.ini",true);
-
-if (($serialdevice = $iniarray["sunelectricity"]["serialdevice"]) == "") $serialdevice = "/dev/ttyUSB0";;  
-if (($tcpport = $iniarray["sunelectricity"]["tcpport"]) == "") $tcpport = "58883";
+$settings = array("serialdevice" => "/dev/ttyUSB0", "tcpport" => "58883");
+if ($argc > 1)
+{
+        $settingsfile = parse_ini_file($argv[1],true);
+        $settings = array_merge($settings, $settingsfile["sunelectricity"]);
+}
 
 
 $data = array();
 
-exec ('stty -F '.$serialdevice.'  1:0:8bd:0:3:1c:7f:15:4:5:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0');
+exec ('stty -F '.$settings["serialdevice"].'  1:0:8bd:0:3:1c:7f:15:4:5:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0');
 
 include("PhpSerial.php");
 $serial = new PhpSerial;
 
-echo "Opening Serial Port '".$serialdevice."'...\n";
+echo "Opening Serial Port '".$settings["serialdevice"] ."'...\n";
 
 // First we must specify the device. This works on both linux and windows (if
 // your linux serial device is /dev/ttyS0 for COM1, etc)
-$serial->deviceSet($serialdevice);
+$serial->deviceSet($settings["serialdevice"]);
 
 // We can change the baud rate, parity, length, stop bits, flow control
 $serial->confBaudRate(9600);
@@ -42,12 +44,12 @@ echo "Opened Serial Port.\n";
 
 
 // Initialize tcpsocket
-while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:".$tcpport, $errno, $errstr)) 
+while (!$tcpsocket = stream_socket_server("tcp://0.0.0.0:".$settings["tcpport"], $errno, $errstr)) 
 {
     echo "$errstr ($errno)\n";
     sleep(5);
 }
-echo "TCP Server listening on port ".$tcpport."\n";
+echo "TCP Server listening on port ".$settings["tcpport"]."\n";
  
 $tcpsockets = array();
 $tcpsocketClients = array();
