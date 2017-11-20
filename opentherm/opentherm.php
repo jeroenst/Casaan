@@ -5,27 +5,13 @@
 //
 echo ("Casaan Opentherm Gateway Software...\n"); 
 
-$iniarray = parse_ini_file("../casaan.ini",true);
+$iniarray = parse_ini_file("/etc/casaan.ini",true);
 
 if (($serialdevice = $iniarray["opentherm"]["serialdevice"]) == "") $serialdevice = "/dev/ttyUSB0";;  
 if (($tcpport = $iniarray["opentherm"]["tcpport"]) == "") $tcpport = "58886";
 
 
-$data["opentherm"]  = array();
-$data["opentherm"]["room"]["temperature"]=0;
-$data["opentherm"]["room"]["setpoint"]=0;
-$data["opentherm"]["tapwater"]["temperature"]=0;
-$data["opentherm"]["tapwater"]["setpoint"]=0;
-$data["opentherm"]["tapwater"]["status"]=0;  
-$data["opentherm"]["boiler"]["temperature"]=0;
-$data["opentherm"]["outside"]["temperature"]=0;
-$data["opentherm"]["heating"]["water"]["pressure"]=0;
-$data["opentherm"]["heating"]["water"]["temperaturereturn"]=0;
-$data["opentherm"]["heating"]["water"]["setpointmax"]=0;
-$data["opentherm"]["heating"]["status"]=0; 
-$data["opentherm"]["burner"]["modulation"]["level"]=0;
-$data["opentherm"]["burner"]["modulation"]["levelmax"]=0;
-$data["opentherm"]["burner"]["status"]=0;
+$openthermdata["opentherm"]  = array();
 
 exec ('stty -F '.$serialdevice.'  1:0:8bd:0:3:1c:7f:15:4:5:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0');
 
@@ -80,25 +66,120 @@ while(1)
    else
    {
     echo "Opened Serial Port.\n";
-   }
+    $serial->sendMessage("\r\nAA=28\r\n"); 
+    }
  }
 
         $readmask = $tcpsockets;
+        array_push($readmask, $serial->_dHandle);
         $writemask = NULL;
         $errormask = NULL;
         $nroffd = stream_select($readmask, $writemask, $errormask, $timeout);
-        $timeout = 1;
+        $timeout = 0;
         foreach ($readmask as $i) 
         {
-            if ($i === $tcpsocket) 
+            if ($i == $serial->_dHandle)
+           {
+ 
+              $message .= $serial->readPort();
+              
+              if (strlen($message) > 0) 
+              {
+               while (strpos($message, "\r\n") !== FALSE)
+               { 
+                // Filter first message from serial data
+                $messages = explode("\r\n", $message);
+                $firstmessage = $messages[0];
+                // Remove first message from serial data
+                $message = substr($message, strlen($firstmessage) + 2);
+                echo ("Message='".$firstmessage."'\n");
+                
+                $data = array();
+                
+                                
+                // Check for messsage from boiler
+                if ($firstmessage[0] == "B")
+                {
+                $floatvalue = round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
+                $uintvalue = hexdec($firstmessage[5].$firstmessage[6]) << 8 | hexdec($firstmessage[7].$firstmessage[8]);
+                $intvalue = (hexdec($firstmessage[5].$firstmessage[6]) & 0x127) << 8 | hexdec($firstmessage[7].$firstmessage[8]) * (hexdec($firstmessage[5].$firstmessage[6])&0x128 ? -1 : 1);
+                 switch (hexdec($firstmessage[3].$firstmessage[4]))
+                 {
+                   case 14: $data["opentherm"]["burner"]["modulation"]["maxlevel"] = $floatvalue;
+                   break;
+                   case 17: $data["opentherm"]["burner"]["modulation"]["level"] = $floatvalue;
+                   break;
+                   case 116: $data["opentherm"]["burner"]["starts"] = $uintvalue;
+                   break;
+                   case 120: $data["opentherm"]["burner"]["hours"] = $uintvalue;
+                   break;
+                   case 19: $data["opentherm"]["dhw"]["flowrate"]=$floatvalue;
+                   break;
+                   case 26: $data["opentherm"]["dhw"]["temperature"]=$floatvalue;
+                   break;
+                   case 118: $data["opentherm"]["dhw"]["pump"]["starts"]=$uintvalue;
+                   break;
+                   case 122: $data["opentherm"]["dhw"]["pump"]["hours"]=$uintvalue;
+                   break;
+                   case 119: $data["opentherm"]["dhw"]["burner"]["starts"]=$uintvalue;
+                   break;
+                   case 123: $data["opentherm"]["dhw"]["burner"]["hours"]=$uintvalue;
+                   break;
+                   
+                   case 25: $data["opentherm"]["boiler"]["temperature"]=$floatvalue;
+                   break;
+                   case 18: $data["opentherm"]["heating"]["water"]["pressure"]=$floatvalue;
+                   break; 
+                   case 117: $data["opentherm"]["heating"]["pump"]["starts"]=$uintvalue;
+                   break; 
+                   case 121: $data["opentherm"]["heating"]["pump"]["hours"]=$uintvalue;
+                   break; 
+                   case 19: $data["opentherm"]["dhw"]["flowrate"]=$floatvalue;
+                   break; 
+                   case 56: $data["opentherm"]["dhw"]["setpoint"]=$floatvalue;
+                   break; 
+                   case 57: $data["opentherm"]["heating"]["water"]["maxsetpoint"]=$floatvalue;
+                   break; 
+                   case 28: $data["opentherm"]["heating"]["water"]["returntemperature"]=$floatvalue;
+                   break;
+                   case 27: $data["opentherm"]["outside"]["temperature"] = $floatvalue;
+                   break;
+                   case 33: $data["opentherm"]["exhausttemperature"] = $intvalue;
+                   break;
+                 }
+                }
+  
+                // Check for message from Thermostat              
+                if ($firstmessage[0] == "T")
+                {
+                 $floatvalue = round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
+                 switch (hexdec($firstmessage[3].$firstmessage[4]))
+                 {
+                   case 1: $data["opentherm"]["thermostat"]["heating"]["water"]["temperature"]["setpoint"] = $floatvalue;
+                   break;
+                   case 16: $data["opentherm"]["thermostat"]["setpoint"] = $floatvalue;
+                   break;
+                   case 24: $data["opentherm"]["thermostat"]["temperature"] = $floatvalue;
+                   break;
+                 }
+                }
+                 
+                // Only update clients when data has changed
+                $data2 = array_replace_recursive ($openthermdata, $data);
+                if (serialize($data2) != serialize($openthermdata)) sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n");
+                $openthermdata = array_replace_recursive ($openthermdata, $data);
+               }
+              }
+            }
+            else if ($i === $tcpsocket) 
             {
                 $conn = stream_socket_accept($tcpsocket);
-                echo ("\nNew tcpsocket client connected!\n\n");
+                echo ("### New tcpsocket client connected! ###\n");
                 array_push($tcpsockets, $conn);
                 array_push($tcpsocketClients, $conn);
-                echo ("Sending data to tcp client\n");
-                echo (json_encode($data)."\n\n");
-                fwrite($conn, json_encode($data). "\n\n");
+                echo ("Sending to client: ");
+                echo (json_encode($openthermdata)."\n");
+                fwrite($conn, json_encode($openthermdata). "\n");
             }
             else
             {
@@ -120,8 +201,8 @@ while(1)
                       if (trim($sock_data) == "getopenthermdata") 
                       {
                         echo ("Sending openthermdata to tcpsocketclient...\n");
-                        echo (json_encode($data)."\n\n");
-                        fwrite($conn, json_encode($data)."\n\n");
+                        echo (json_encode($openthermdata)."\n");
+                        fwrite($conn, json_encode($openthermdata)."\n");
                       }
               }
             }
@@ -137,42 +218,19 @@ while(1)
                {
                   if ($weer->stationcode == "6370")
                   {
-                    $data["opentherm"]["outside"]["temperature"] = (string)$weer->temperatuurGC;
-                    echo ("Buienradar outsidetemp=".$data["opentherm"]["outside"]["temperature"]."\n");
-                    $msg["opentherm"]["outside"]["temperature"] = $data["opentherm"]["outside"]["temperature"];
-                    sendToAllTcpSocketClients($tcpsocketClients, json_encode($msg)."\n\n");
+                    //$data["opentherm"]["outside"]["temperature"] = (string)$weer->temperatuurGC;
+                    echo ("Buienradar outsidetemp=".(string)$weer->temperatuurGC."\n");
+                    //$msg = array();
+                    //$msg["opentherm"]["outside"]["temperature"] = $data["opentherm"]["outside"]["temperature"];
+                    //sendToAllTcpSocketClients($tcpsocketClients, json_encode($msg)."\n\n");
+                    $serial->sendMessage("OT=".(string)$weer->temperatuurGC."\r\n"); 
                     break;
                   } 
                }
                $buienradartime = time() + 600; // Next update in 10 minutes
               }
- 
-              $message .= $serial->readPort();
-              
-              if (strlen($message) > 0) 
-              {
-               echo ("Received: '".bin2hex($message)."'\n");
-    
-                $data["opentherm"]["room"]["temperature"]=0;
-                $data["opentherm"]["room"]["setpoint"]=0;
-                $data["opentherm"]["tapwater"]["temperature"]=0;
-                $data["opentherm"]["tapwater"]["setpoint"]=0;
-                $data["opentherm"]["tapwater"]["status"]=0;  
-                $data["opentherm"]["boiler"]["temperature"]=0;
-                $data["opentherm"]["outside"]["temperature"]=0;
-                $data["opentherm"]["heating"]["water"]["pressure"]=0;
-                $data["opentherm"]["heating"]["water"]["temperaturereturn"]=0;
-                $data["opentherm"]["heating"]["water"]["setpointmax"]=0;
-                $data["opentherm"]["heating"]["status"]=0; 
-                $data["opentherm"]["burner"]["modulation"]["level"]=0;
-                $data["opentherm"]["burner"]["modulation"]["levelmax"]=0;
-                $data["opentherm"]["burner"]["status"]=0;
-                 
-                echo (json_encode($data)."\n\n");
-                sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n\n");
-                $message = ""; 
-               }
-            }
+           }
+           
 }
 
 $serial->deviceClose();
@@ -181,8 +239,8 @@ exit(1);
 
 function sendToAllTcpSocketClients($sockets, $msg)
 {
-   echo ("Sending openthermdata to all websocketclient...\n");
-   echo ($msg."\n\n");
+   echo ("Sending to all clients: ");
+   echo ($msg);
    foreach ($sockets as $conn) 
    {
      fwrite($conn, $msg);
@@ -190,4 +248,20 @@ function sendToAllTcpSocketClients($sockets, $msg)
 }
 
 
+function twobytestosignedfloat($decimal, $fractional)
+{
+  return (($decimal & 127)  +
+    (($fractional&128) ? 1/2 : 0) +
+      (($fractional&64) ? 1/4 : 0) +
+        (($fractional&32) ? 1/8 : 0) +
+          (($fractional&16) ? 1/16 : 0) +
+            (($fractional&8) ? 1/32 : 0) +
+              (($fractional&4) ? 1/64 : 0) +
+                (($fractional&2) ? 1/128 : 0) +
+                  (($fractional&1) ? 1/265 : 0)) * (($decimal & 128) ? -1 : 1);
+                  }
+                  
+                  
+
 ?>  
+
