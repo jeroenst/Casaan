@@ -96,6 +96,7 @@ while(1)
                 
                 $data = array();
                 
+                
                                 
                 // Check for messsage from boiler
                 if ($firstmessage[0] == "B")
@@ -128,19 +129,19 @@ while(1)
                    
                    case 25: $data["opentherm"]["boiler"]["temperature"]=$floatvalue;
                    break;
-                   case 18: $data["opentherm"]["heating"]["water"]["pressure"]=$floatvalue;
+                   case 18: $data["opentherm"]["ch"]["water"]["pressure"]=$floatvalue;
                    break; 
-                   case 117: $data["opentherm"]["heating"]["pump"]["starts"]=$uintvalue;
+                   case 117: $data["opentherm"]["ch"]["pump"]["starts"]=$uintvalue;
                    break; 
-                   case 121: $data["opentherm"]["heating"]["pump"]["hours"]=$uintvalue;
+                   case 121: $data["opentherm"]["ch"]["pump"]["hours"]=$uintvalue;
                    break; 
                    case 19: $data["opentherm"]["dhw"]["flowrate"]=$floatvalue;
                    break; 
                    case 56: $data["opentherm"]["dhw"]["setpoint"]=$floatvalue;
                    break; 
-                   case 57: $data["opentherm"]["heating"]["water"]["maxsetpoint"]=$floatvalue;
+                   case 57: $data["opentherm"]["ch"]["water"]["maxsetpoint"]=$floatvalue;
                    break; 
-                   case 28: $data["opentherm"]["heating"]["water"]["returntemperature"]=$floatvalue;
+                   case 28: $data["opentherm"]["ch"]["water"]["returntemperature"]=$floatvalue;
                    break;
                    case 27: $data["opentherm"]["outside"]["temperature"] = $floatvalue;
                    break;
@@ -152,18 +153,25 @@ while(1)
                 // Check for message from Thermostat              
                 if ($firstmessage[0] == "T")
                 {
-                 $floatvalue = round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
-                 switch (hexdec($firstmessage[3].$firstmessage[4]))
+                 if (0 === strpos($firstmessage, 'TT: ')) 
                  {
-                   case 1: $data["opentherm"]["thermostat"]["heating"]["water"]["temperature"]["setpoint"] = $floatvalue;
+                   $data["opentherm"]["thermostat"]["setpoint"] = substr($firstmessage, 4);
+                 }
+                 else
+                 {
+                  $floatvalue = round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
+                  switch (hexdec($firstmessage[3].$firstmessage[4]))
+                  {
+                   case 1: $data["opentherm"]["thermostat"]["ch"]["water"]["setpoint"] = $floatvalue;
                    break;
                    case 16: $data["opentherm"]["thermostat"]["setpoint"] = $floatvalue;
                    break;
                    case 24: $data["opentherm"]["thermostat"]["temperature"] = $floatvalue;
                    break;
+                  }
                  }
                 }
-                 
+
                 // Only update clients when data has changed
                 $data2 = array_replace_recursive ($openthermdata, $data);
                 if (serialize($data2) != serialize($openthermdata)) sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n");
@@ -203,6 +211,18 @@ while(1)
                         echo ("Sending openthermdata to tcpsocketclient...\n");
                         echo (json_encode($openthermdata)."\n");
                         fwrite($conn, json_encode($openthermdata)."\n");
+                      }
+                      if (trim($sock_data) == '{"opentherm":{"command":"tempup"}}') 
+                      {
+                        echo ("Tempup received...\n");
+                        $serial->sendMessage("\r\nTT=".($openthermdata["opentherm"]["thermostat"]["setpoint"] + 0.5)."\r\n");
+                        
+                      }
+                      if (trim($sock_data) == '{"opentherm":{"command":"tempdown"}}') 
+                      {
+                        echo ("Tempdown received...\n");
+                        $serial->sendMessage("\r\nTT=".($openthermdata["opentherm"]["thermostat"]["setpoint"] - 0.5)."\r\n");
+                        
                       }
               }
             }
