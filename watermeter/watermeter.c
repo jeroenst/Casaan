@@ -112,18 +112,28 @@ int   main(int argc, char * argv[])
 	{
 		printf ("\nReading configfile: %s\n", argv[1]);
 		FILE *conf_fp = fopen (argv[1], "r");
+		bool inisectionfound = false;
 		while(!feof(conf_fp)) 
 		{
-			string name(100, 0);;
-			string setting(100, 0);;
-			fscanf(conf_fp, "\n%39[^=]=%s", &name[0], &setting[0]);
-			if (strcmp(name.c_str(), "device") == 0) device = setting;
-			if (strcmp(name.c_str(), "datafile") == 0) datafile = setting;
-			if (strcmp(name.c_str(), "port") == 0) port = atoi(setting.c_str());
+			char iniline[100];  
+			fscanf (conf_fp,"%s",iniline);
+			if (iniline[0] == '[') inisectionfound = false;
+			if (inisectionfound)
+			{
+				char name[100];
+				char setting[100];
+				sscanf(iniline, "%[^=]=%s", name, setting);
+				if (strcasecmp(name, "serialdevice") == 0) device = string(setting);
+				if (strcasecmp(name, "datafile") == 0) datafile = string(setting);
+				if (strcasecmp(name, "tcpport") == 0) port = atoi(setting);
+			}
+			if (strcasecmp(iniline, "[watermeter]") == 0) inisectionfound = true;
 		}
 	}
 
-	
+	printf ("device = %s\n", device.c_str());
+	printf ("datafile = %s\n", datafile.c_str());
+	printf ("port = %d\n", port); 
 
 	double waterreading_m3 = 0;
 	waterreading_m3 = read_waterreading (datafile.c_str());
@@ -142,7 +152,7 @@ int   main(int argc, char * argv[])
 		close(pipefd[1]); // close the write-end of the pipe, I'm not going to use it
 		
 		// Initialize TCP server
-		int server_fd, client_fd, err;
+		int server_fd = -1, client_fd = -1, err = -1;
 		struct sockaddr_in server, client;
 		server_fd = create_tcpserver();
 	
@@ -192,6 +202,7 @@ int   main(int argc, char * argv[])
 					// Connection was closed
 					printf("TCP Client closed connection\n");
 					close(client_fd);
+					client_fd = -1;
 				}
 				else
 				{
