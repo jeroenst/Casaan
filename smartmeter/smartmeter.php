@@ -32,15 +32,15 @@ $data = json_decode ('
 include "php_serial.class.php";  
 date_default_timezone_set ("Europe/Amsterdam");
 
-$settings = array(	"device" => "/dev/ttyUSB1", "port" => "58881");
+$settings = array("serialdevice" => "/dev/ttyUSB1", "tcpport" => "58881");
 if ($argc > 1) 
 {
-	$settingsfile = parse_ini_file($argv[1]);
-	$settings = array_merge($settings, $settingsfile);
+	$settingsfile = parse_ini_file($argv[1],true);
+	$settings = array_merge($settings, $settingsfile["smartmeter"]);
 }
 
 // Initialize websocket
-$tcpsocket = stream_socket_server("tcp://0.0.0.0:".$settings["port"], $errno, $errstr);
+$tcpsocket = stream_socket_server("tcp://0.0.0.0:".$settings["tcpport"], $errno, $errstr);
 if (!$tcpsocket) {
 	echo "$errstr ($errno}\n";
 	exit(1);
@@ -50,14 +50,14 @@ $tcpsocketClients = array();
 array_push($tcpsocketClients, $tcpsocket);
 
 
-echo "Setting Serial Port Device ".$settings["device"]."...\n"; 
+echo "Setting Serial Port Device ".$settings["serialdevice"]."...\n"; 
 
 
 // Let's start the class
 $serial = new phpSerial;
 $serialready=0;
 $receivedpacket="";
-if ( $serial->deviceSet($settings["device"]))
+if ( $serial->deviceSet($settings["serialdevice"]))
 {
 	echo "Configuring Serial Port...\n";
 	// We can change the baud rate, parity, length, stop bits, flow control
@@ -152,7 +152,7 @@ while(1)
 							preg_match("'\((.*)\*'si", $value[1], $valuegas);
 							$data['gasmeter']['total']['m3'] = extractvalue($valuegas[1]);
 							
-							preg_match("'(..)(..)(..)(..)(..)(..)S\)'", $value[1], $gasdatetime);
+							preg_match("'(..)(..)(..)(..)(..)(..)W'", $value[1], $gasdatetime);
 							$data['gasmeter']['updatedatetime'] = '20' . $gasdatetime[1] . '-' . $gasdatetime[2] . '-' . $gasdatetime[3] . ' ' . $gasdatetime[4] . ':' . $gasdatetime[5] . ':' . $gasdatetime[6];    
 						}
 					}
