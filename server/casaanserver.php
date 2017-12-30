@@ -45,7 +45,7 @@ while (($websocket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)) === false) {
 	sleep(1);
 }
 socket_set_nonblock($websocket);
-
+socket_set_option($websocket, SOL_SOCKET, SO_REUSEADDR, 1); 
 while (socket_bind($websocket, $address, $settings["port"]) === false) {
 	echo "socket_bind() failed: reason: " . socket_strerror(socket_last_error($websocket)) . "\n";
 	sleep(1);
@@ -64,20 +64,37 @@ $sunelectricitysocket = null;
 $temperaturesocket = null;
 $buienradarsocket = null;
 $zwavesocket = null;
+$openthermsocket = null;
 
 $buienradarupdatetimeout = 0;
 $reconnecttimeout = 0;
 
 
 while (1) {
-	if ($buienradarupdatetimeout < time() - (60 * $buienradartimeout))
+	if ($buienradarupdatetimeout < time())
 	{
-		if ($buienradarsocket == null)
-		{
-			echo ("Connecting to buienradar server...\n");
-			$buienradarsocket = socketconnect('xml.buienradar.nl', 80);
-			$buienradarupdatetimeout = time();
-		}
+		//if ($buienradarsocket == null)
+		//{
+			// For now we use synchone fetching of buienradar because they changed from http to https :-(
+			echo ("Fetching data from  buienradar server...\n");
+			//$buienradarsocket = socketconnect('xml.buienradar.nl', 443);
+	               $url = "https://xml.buienradar.nl";
+	               $array = [];
+	               $simpleXml = simplexml_load_file($url);
+                       if ($simpleXml)
+                       {
+                                                simplexml_to_array($simpleXml, $array);
+                                                if (!isset($casaandata["buienradarnl"])) $casaandata["buienradarnl"] = array();
+                                                if (serialize($casaandata["buienradarnl"]) != serialize($array["buienradarnl"]))
+                                                {
+                                                        echo ("Buienradar is updated.\n");
+                                                        $casaandata["buienradarnl"] = $array["buienradarnl"];
+                                                        sendtowebsockets(json_encode($array));
+                                                }
+                        }
+
+			$buienradarupdatetimeout = time() + (60 * $buienradartimeout);
+		//}
 	}
 	
 	if ($reconnecttimeout < time() - 2)
@@ -98,7 +115,7 @@ while (1) {
 		if ($sunelectricitysocket == null)
 		{
 			echo ("Connecting to sunelectricity server...\n");
-			$sunelectricitysocket = socketconnect('server02', 58883);
+			$sunelectricitysocket = socketconnect('rpi01', 58883);
 		}
 
 		if ($temperaturesocket == null)
@@ -111,6 +128,12 @@ while (1) {
 		{
 			echo ("Connecting to zwave server...\n");
 			$zwavesocket = socketconnect('127.0.0.1', 58885);
+		}
+
+		if ($openthermsocket == null)
+		{
+			echo ("Connecting to opentherm server...\n");
+			$openthermsocket = socketconnect('rpi01', 58886);
 		}
 	}
 
@@ -155,7 +178,8 @@ function socketconnect($ip, $port)
 	global $writesocks;
 	$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	socket_set_nonblock($socket);
-	@socket_connect($socket, $ip, $port);
+	socket_set_option($socket, SOL_SOCKET, SO_KEEPALIVE, 1);
+	socket_connect($socket, $ip, $port);
 	array_push($writesocks, $socket);
 	return $socket;
 }
@@ -170,6 +194,7 @@ function socketconnected($sock)
 	global $buienradarsocket;
 	global $temperaturesocket;
 	global $zwavesocket;
+	global $openthermsocket;
 	
 	if (($sock == $smartmetersocket))
 	{
@@ -194,12 +219,18 @@ function socketconnected($sock)
 	if (($sock == $buienradarsocket))
 	{
 		echo ("Connected to buienradar server...\n");
-		socket_write($buienradarsocket, "GET / HTTP/1.1\nHost: xml.buienradar.nl\n\n");
+		stream_socket_enable_crypto ($buienradarsocket, TRUE, STREAM_CRYPTO_METHOD_ANY_CLIENT);
+		socket_write($buienradarsocket, "GET / HTTPS/1.1\nHost: xml.buienradar.nl\n\n");
 	}
 
 	if (($sock == $zwavesocket))
 	{
 		echo ("Connected to zwave server...\n");
+	}
+
+	if (($sock == $openthermsocket))
+	{
+		echo ("Connected to opentherm server...\n");
 	}
 
 	if(($key = array_search($sock, $writesocks)) !== false) {
@@ -216,6 +247,7 @@ function socketreceivedata($sock)
 	global $temperaturesocket;
 	global $buienradarsocket;
 	global $zwavesocket;
+	global $openthermsocket;
 	global $websocket;
 	global $readsocks;
 	global $casaandata;
@@ -266,6 +298,12 @@ function socketreceivedata($sock)
 			updatesunelectricity(json_decode($recvdata, true)["sunelectricity"]);
 
 		}
+		else if ($sock == $openthermsocket)
+		{
+			echo ("Received data from opentherm:\n".$recvdata."");
+			updateopentherm(json_decode($recvdata, true)["opentherm"]);
+
+		}
 		
 		else if ($sock == $temperaturesocket)
 		{
@@ -305,7 +343,7 @@ function socketreceivedata($sock)
 				{
 				}
 				$buienradardata = "";
-	                        socketdisconnect ($sock);
+	                        socketdisconnected ($sock, 0);
                         }
 		}
 		else
@@ -334,6 +372,11 @@ function socketreceivedata($sock)
 						socket_write($zwavesocket, $receivedMessage . chr(30));
 						echo ("Sending data to zwave:\n" . $receivedMessage . "\n\n");
 					}
+					if (isset($receivedjson["opentherm"]))
+					{
+						socket_write($openthermsocket, $receivedMessage);
+						echo ("Sending data to opentherm:\n" . $receivedMessage . "\n\n");
+					}
 				} 
 			}
 		}
@@ -345,10 +388,6 @@ function socketreceivedata($sock)
 	}
 }
 
-function socketdisconnect($sock)
-{
-	socketdisconnected($sock,0);
-}
 
 function socketdisconnected($sock, $errno)
 {
@@ -358,12 +397,13 @@ function socketdisconnected($sock, $errno)
 	global $watermetersocket;
 	global $buienradarsocket;
 	global $zwavesocket;
+	global $openthermsocket;
 	global $smartmetersocket;
 	global $sunelectricitysocket;
 	global $temperaturesocket;
-	
+		
 	$reason = socket_strerror($errno);
-
+	
 	if (($sock == $smartmetersocket))
 	{
 		echo ("Disconnected from smartmeter ($reason)...\n");
@@ -391,6 +431,11 @@ function socketdisconnected($sock, $errno)
 	{
 		echo ("Disconnected from zwave ($reason)...\n");
 		$zwavesocket = null;
+	}
+	else if (($sock == $openthermsocket))
+	{
+		echo ("Disconnected from opentherm ($reason)...\n");
+		$openthermsocket = null;
 	}
 	else if (($sock == $buienradarsocket))
 	{
@@ -1094,6 +1139,50 @@ function updatezwave($newdata)
 		$zwavereplacedata = array_replace_recursive($casaandata["zwave"], $newdata);
 		if (isset($zwavereplacedata))  $casaandata["zwave"] = $zwavereplacedata;
 		sendtowebsockets("{\"zwave\":".json_encode($newdata)."}");
+	}
+}
+
+function updateopentherm($newdata)
+{
+        echo ("Received new value from opentherm...\n");
+
+        global $settings;
+        global $casaandata;
+	if (isset($newdata)) 
+	{
+		if (!isset($casaandata["opentherm"])) $casaandata["opentherm"] = array();
+		$zwavereplacedata = array_replace_recursive($casaandata["opentherm"], $newdata);
+		if (isset($zwavereplacedata))  $casaandata["opentherm"] = $zwavereplacedata;
+		sendtowebsockets("{\"opentherm\":".json_encode($newdata)."}");
+	}
+
+
+        $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
+
+        if (class_exists("mysqli"))
+        {
+                if (!$mysqli->connect_errno)
+                {
+                        $type = NULL;
+                        $value = NULL;
+                        if ($value = $newdata["boiler"]["temperature"]) { $type = "boiler_temperature"; $sqlvalue = $value;}
+                        if ($value = $newdata["dhw"]["temperature"]) {$type = "dhw_temperature"; $sqlvalue = $value;}
+                        if ($value = $newdata["thermostat"]["setpoint"]) {$type = "thermostat_setpoint"; $sqlvalue = $value;}
+                        if ($value = $newdata["thermostat"]["temperature"]) {$type = "thermostat_temperature"; $sqlvalue = $value;}
+                        if ($value = $newdata["thermostat"]["heating"]["water"]["temperature"]["setpoint"]) {$type = "thermostat_water_setpoint"; $sqlvalue = $value;}
+                        if ($value = $newdata["burner"]["modulation"]["level"]) {$type = "burner_modulationlevel"; $sqlvalue = $value;}
+                        
+                        if ($type != NULL)
+                        {
+                        	$sql = "INSERT INTO `opentherm` (type, value) VALUES ('".$type."','".$sqlvalue."');";
+                        	echo $sql;
+                        	if (!$mysqli->query($sql))
+                        	{
+                                	echo "error writing opentherm value to database ".$mysqli->error."\n";
+				}
+			}
+			$mysqli->close();
+		}
 	}
 }
 
