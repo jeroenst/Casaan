@@ -75,7 +75,6 @@ while(1)
         $writemask = NULL;
         $errormask = NULL;
         $nroffd = stream_select($readmask, $writemask, $errormask, $timeout);
-        $timeout = 0;
         foreach ($readmask as $i) 
         {
             if ($i == $serial->_dHandle)
@@ -88,8 +87,9 @@ while(1)
                while (strpos($message, "\r\n") !== FALSE)
                { 
                 // Filter first message from serial data
-                $messages = explode("\r\n", $message);
-                $firstmessage = $messages[0];
+                //$messages = explode("\r\n", $message);
+                //$firstmessage = $messages[0];
+                $firstmessage = strtok ($message, "\r");
                 // Remove first message from serial data
                 $message = substr($message, strlen($firstmessage) + 2);
                 echo ("Message='".$firstmessage."'\n");
@@ -101,51 +101,53 @@ while(1)
                 // Check for messsage from boiler
                 if ($firstmessage[0] == "B")
                 {
-                $floatvalue = round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
-                $uintvalue = hexdec($firstmessage[5].$firstmessage[6]) << 8 | hexdec($firstmessage[7].$firstmessage[8]);
-                $intvalue = (hexdec($firstmessage[5].$firstmessage[6]) & 0x127) << 8 | hexdec($firstmessage[7].$firstmessage[8]) * (hexdec($firstmessage[5].$firstmessage[6])&0x128 ? -1 : 1);
                  switch (hexdec($firstmessage[3].$firstmessage[4]))
                  {
-                   case 14: $data["opentherm"]["burner"]["modulation"]["maxlevel"] = $floatvalue;
+                   case 14: 
+                    $data["opentherm"]["burner"]["modulation"]["maxlevel"] = floatvalue($firstmessage);;
                    break;
-                   case 17: $data["opentherm"]["burner"]["modulation"]["level"] = $floatvalue;
+                   case 17: 
+                    $data["opentherm"]["burner"]["modulation"]["level"] = floatvalue($firstmessage);
                    break;
-                   case 116: $data["opentherm"]["burner"]["starts"] = $uintvalue;
+                   case 116: $data["opentherm"]["burner"]["starts"] = uintvalue($firstmessage);
                    break;
-                   case 120: $data["opentherm"]["burner"]["hours"] = $uintvalue;
+                   case 120: $data["opentherm"]["burner"]["hours"] = uintvalue($firstmessage);
                    break;
-                   case 19: $data["opentherm"]["dhw"]["flowrate"]=$floatvalue;
+                   case 19: 
+                     $data["opentherm"]["dhw"]["flowrate"]=floatvalue($firstmessage);;
                    break;
-                   case 26: $data["opentherm"]["dhw"]["temperature"]=$floatvalue;
+                   case 26: 
+                   
+                     $data["opentherm"]["dhw"]["temperature"]=floatvalue($firstmessage);;
                    break;
-                   case 118: $data["opentherm"]["dhw"]["pump"]["starts"]=$uintvalue;
+                   case 118: $data["opentherm"]["dhw"]["pump"]["starts"]=uintvalue($firstmessage);
                    break;
-                   case 122: $data["opentherm"]["dhw"]["pump"]["hours"]=$uintvalue;
+                   case 122: $data["opentherm"]["dhw"]["pump"]["hours"]=uintvalue($firstmessage);
                    break;
-                   case 119: $data["opentherm"]["dhw"]["burner"]["starts"]=$uintvalue;
+                   case 119: $data["opentherm"]["dhw"]["burner"]["starts"]=uintvalue($firstmessage);
                    break;
-                   case 123: $data["opentherm"]["dhw"]["burner"]["hours"]=$uintvalue;
+                   case 123: $data["opentherm"]["dhw"]["burner"]["hours"]=uintvalue($firstmessage);
                    break;
                    
-                   case 25: $data["opentherm"]["boiler"]["temperature"]=$floatvalue;
+                   case 25: $data["opentherm"]["boiler"]["temperature"]=floatvalue($firstmessage);;
                    break;
-                   case 18: $data["opentherm"]["ch"]["water"]["pressure"]=$floatvalue;
+                   case 18: $data["opentherm"]["ch"]["water"]["pressure"]=floatvalue($firstmessage);;
                    break; 
-                   case 117: $data["opentherm"]["ch"]["pump"]["starts"]=$uintvalue;
+                   case 117: $data["opentherm"]["ch"]["pump"]["starts"]=uintvalue($firstmessage);
                    break; 
-                   case 121: $data["opentherm"]["ch"]["pump"]["hours"]=$uintvalue;
+                   case 121: $data["opentherm"]["ch"]["pump"]["hours"]=uintvalue($firstmessage);
                    break; 
-                   case 19: $data["opentherm"]["dhw"]["flowrate"]=$floatvalue;
+                   case 19: $data["opentherm"]["dhw"]["flowrate"]=floatvalue($firstmessage);;
                    break; 
-                   case 56: $data["opentherm"]["dhw"]["setpoint"]=$floatvalue;
+                   case 56: $data["opentherm"]["dhw"]["setpoint"]=floatvalue($firstmessage);;
                    break; 
-                   case 57: $data["opentherm"]["ch"]["water"]["maxsetpoint"]=$floatvalue;
+                   case 57: $data["opentherm"]["ch"]["water"]["maxsetpoint"]=floatvalue($firstmessage);;
                    break; 
-                   case 28: $data["opentherm"]["ch"]["water"]["returntemperature"]=$floatvalue;
+                   case 28: $data["opentherm"]["ch"]["water"]["returntemperature"]=floatvalue($firstmessage);;
                    break;
-                   case 27: $data["opentherm"]["outside"]["temperature"] = $floatvalue;
+                   case 27: $data["opentherm"]["outside"]["temperature"] = floatvalue($firstmessage);;
                    break;
-                   case 33: $data["opentherm"]["exhausttemperature"] = $intvalue;
+                   case 33: $data["opentherm"]["exhausttemperature"] = intvalue($firstmessage);
                    break;
                  }
                 }
@@ -159,14 +161,13 @@ while(1)
                  }
                  else
                  {
-                  $floatvalue = round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
                   switch (hexdec($firstmessage[3].$firstmessage[4]))
                   {
-                   case 1: $data["opentherm"]["thermostat"]["ch"]["water"]["setpoint"] = $floatvalue;
+                   case 1: $data["opentherm"]["thermostat"]["ch"]["water"]["setpoint"] = floatvalue($firstmessage);
                    break;
-                   case 16: $data["opentherm"]["thermostat"]["setpoint"] = $floatvalue;
+                   case 16: $data["opentherm"]["thermostat"]["setpoint"] = floatvalue($firstmessage);
                    break;
-                   case 24: $data["opentherm"]["thermostat"]["temperature"] = $floatvalue;
+                   case 24: $data["opentherm"]["thermostat"]["temperature"] = floatvalue($firstmessage);
                    break;
                   }
                  }
@@ -230,9 +231,11 @@ while(1)
 
           if ($nroffd == 0)
           { 
+              $timeout = 10;
+
               if ($buienradartime <= time())
               {
-               $url = "http://xml.buienradar.nl";
+               $url = "https://xml.buienradar.nl";
                $xml = simplexml_load_file($url);
                foreach($xml->weergegevens->actueel_weer->weerstations->weerstation as $weer)
                {
@@ -283,5 +286,19 @@ function twobytestosignedfloat($decimal, $fractional)
                   
                   
 
+function floatvalue ($firstmessage)
+{
+ return round(twobytestosignedfloat(hexdec($firstmessage[5].$firstmessage[6]), hexdec($firstmessage[7].$firstmessage[8])),1);
+}
+
+function uintvalue ($firstmessage)
+{
+ return hexdec($firstmessage[5].$firstmessage[6]) << 8 | hexdec($firstmessage[7].$firstmessage[8]);
+}
+
+function intvalue ($firstmessage)
+{
+ return (hexdec($firstmessage[5].$firstmessage[6]) & 0x127) << 8 | hexdec($firstmessage[7].$firstmessage[8]) * (hexdec($firstmessage[5].$firstmessage[6])&0x128 ? -1 : 1);
+}
 ?>  
 
