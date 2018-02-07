@@ -38,7 +38,6 @@ date_default_timezone_set ("Europe/Amsterdam");
 // First we must specify the device. This works on both linux and windows (if
 // your linux serial device is /dev/ttyS0 for COM1, etc)
 $buienradartime = time();
-$timeout = 0;
 $sendtimer = 0;
 $dataready = 0;
 $message=""; 
@@ -74,10 +73,11 @@ while(1)
         array_push($readmask, $serial->_dHandle);
         $writemask = NULL;
         $errormask = NULL;
-        $nroffd = stream_select($readmask, $writemask, $errormask, $timeout);
+        $nroffd = stream_select($readmask, $writemask, $errormask, 1);
+
         foreach ($readmask as $i) 
         {
-            if ($i == $serial->_dHandle)
+           if ($i == $serial->_dHandle)
            {
  
               $message .= $serial->readPort();
@@ -173,10 +173,13 @@ while(1)
                  }
                 }
 
-                // Only update clients when data has changed
-                $data2 = array_replace_recursive ($openthermdata, $data);
-                if (serialize($data2) != serialize($openthermdata)) sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n");
-                $openthermdata = array_replace_recursive ($openthermdata, $data);
+                if ($data != [])
+                {
+                 // Only update clients when data has changed
+                 $data2 = array_replace_recursive ($openthermdata, $data);
+                 if (serialize($data2) != serialize($openthermdata)) sendToAllTcpSocketClients($tcpsocketClients, json_encode($data)."\n");
+                 $openthermdata = array_replace_recursive ($openthermdata, $data);
+                }
                }
               }
             }
@@ -229,12 +232,9 @@ while(1)
             }
           }
 
-          if ($nroffd == 0)
-          { 
-              $timeout = 10;
-
               if ($buienradartime <= time())
               {
+               $buienradartime = time() + 600; // Next update in 10 minutes
                $url = "https://xml.buienradar.nl";
                $xml = simplexml_load_file($url);
                foreach($xml->weergegevens->actueel_weer->weerstations->weerstation as $weer)
@@ -250,9 +250,8 @@ while(1)
                     break;
                   } 
                }
-               $buienradartime = time() + 600; // Next update in 10 minutes
               }
-           }
+
            
 }
 
