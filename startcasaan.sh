@@ -22,4 +22,4 @@ nohup sudo php $SCRIPTPATH/sunelectricity/sunelectricity.php /etc/casaan.ini >$S
 sudo kill `ps aux | grep casaanzwave | awk '{print $2}'`
 nohup sudo $SCRIPTPATH/zwave/casaanzwave /etc/casaan.ini >$SCRIPTPATH/zwave.log 2>&1 &
 
-nohup php $SCRIPTPATH/server/casaanserver.php /etc/casaan.ini >$SCRIPTPATH/casaanserver.log 2>&1 &
+nohup php $SCRIPTPATH/server/casaanserver.php /etc/casaan.ini | ts '[%Y-%m-%d %H:%M:%S]' >$SCRIPTPATH/casaanserver.log 2>&1 &

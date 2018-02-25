@@ -7,6 +7,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
+<META HTTP-EQUIV="PRAGMA" CONTENT="NO-CACHE">
 <title>Casaan</title>
 
 </head>
@@ -26,12 +27,15 @@
 </div><span class="portraitbr"></span><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('domoticapage')">
 <div class="boxtitle">Domotica</div>
 <div class="boxweathericon"><img src="icon/Bulb.png" width=60% height=60%></img></div>
-</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('temperaturepage')">
-<div class="boxtitle">Huiskamer</div>
-<div class="boxvalue"><div id="livingroomtemperaturenow"></div></div>
+</div><div class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('climatecontrolpage')">
+<div class="boxtitle">Klimaatbeheersing</div>
+<div class="boxlabelsmall">Huiskamer</div>
+<div class="boxvalue"><span id="livingroomtemperaturenow">-</span> &deg;C</div>
 <div class="boxlabel2small">ingesteld</div>
-<div class="boxvalue2"><div id="livingroomtemperatureset"></div></div>
-<div class="tempgauge" id="insidetempgauge"></div>
+<div class="boxvalue2"><span id="livingroomtemperatureset">-</span> &deg;C</div>
+<div class="tempbuttons"><button class="tempbutton" onclick="settempup();">+</button><BR><button class="tempbutton"
+onclick="settempdown();">-</button></div>  
+<canvas  id="temperaturebar" class="boxverticalbar"></canvas>
 </div><br><div id="sunelectricity" class="floating-box" style="cursor: pointer; cursor: hand;" onclick="showPage('sunelectricitypage')">
 <div class="boxtitle">Zonnestroom</div>
 <canvas  id="sunelectricitybar" class="boxverticalbar"></canvas>

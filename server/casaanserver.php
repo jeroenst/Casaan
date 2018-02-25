@@ -21,7 +21,7 @@ ob_implicit_flush();
 $settings = array(      
 "mysqlserver" => "localhost",
 "mysqlusername" => "casaan",
-"mysqlpassword" => "casaan",
+"mysqlpassword" => "gWdtGxQDnq6NhSeG",
 "mysqldatabase" => "casaan",   
 "port" => "58880");
 if ($argc > 1)
@@ -724,7 +724,7 @@ function updategasmeter($newdata)
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
-        if (class_exists("mysqli"))
+        if ($mysqli)
         {
 	        if (!$mysqli->connect_errno)
 	        {
@@ -872,7 +872,7 @@ function updateelectricitymeter($newdata)
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
-        if (class_exists("mysqli"))
+        if ($mysqli)
         {
         	if (!$mysqli->connect_errno)
         	{
@@ -1038,7 +1038,7 @@ function updatewatermeter($newdata)
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
-        if (class_exists("mysqli"))
+        if ($mysqli)
         {
 	        if (!$mysqli->connect_errno)
 	        {
@@ -1050,6 +1050,7 @@ function updatewatermeter($newdata)
                 		$row = $result->fetch_object();
                 		//var_dump ($row);
                 		$newdata["today"]["m3"] = number_format($newdata["total"]["m3"] - $row->m3,3);
+                		$newdata["total"]["m3"] = $row->m3;
 			}
 			else
 			{
@@ -1057,7 +1058,70 @@ function updatewatermeter($newdata)
                         }
 
                                                 	
+
+			// Read values from database
+        	        if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
+        	        {
+	                	$row = $result->fetch_object();
+				$newdata['yesterday']['m3'] = round($newdata["total"]["m3"] - $row->m3 - ["today"]["m3"],3);
+			}
+			else
+			{
+                	       	echo "error reading water values from database ".$mysqli->error."\n"; 
+	                }
+
+
+			// Read values from database
+        	        if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 MONTH ORDER BY timestamp ASC LIMIT 1")) 
+        	        {
+	                	$row = $result->fetch_object();
+				$newdata['month']['m3'] = round($newdata["total"]["m3"]  - $row->m3, 3);
+			}
+			else
+			{
+                	       	echo "error reading water values from database ".$mysqli->error."\n"; 
+	                }
+
+                        // Read values from database
+                        if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') ORDER BY timestamp ASC LIMIT 1"))
+                        {
+                                $row = $result->fetch_object();
+                                var_dump ($row);
+                                $newdata['year']['m3'] = round($newdata["total"]["m3"]  - $row->m3, 3);
+                        }
+                        else
+                        {
+                                echo "error reading water values from database ".$mysqli->error."\n";
+                        }
+                        
+
+                        // Read values from database
+        	        if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE DATE(timestamp) = CURDATE() - INTERVAL 2 MONTH ORDER BY timestamp DESC LIMIT 1")) 
+        	        {
+	                	$row = $result->fetch_object();
+				$newdata['lastmonth']['m3'] = round($newdata['total']['m3'] - $row->m3 - $newdata['month']['m3'], 3);
+			}
+			else
+			{
+                	       	echo "error reading water values from database ".$mysqli->error."\n"; 
+	                }
+
+                        // Read values from database
+                        if ($result = $mysqli->query("SELECT * FROM `watermeter` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') - INTERVAL 1 YEAR ORDER BY timestamp ASC LIMIT 1"))
+                        {
+                                $row = $result->fetch_object();
+                                $newdata['lastyear']['m3'] = round($newdata['total']['m3'] - $row->m3 - $newdata['year']['m3'], 3);
+                        }
+                        else
+                        {
+                                echo "error reading water values from database ".$mysqli->error."\n";
+                        }
+                        
                 	$mysqli->close();
+
+
+
+
 		}
 		else
 		{
@@ -1077,7 +1141,7 @@ function updatesunelectricity($newdata)
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
-        if (class_exists("mysqli"))
+        if ($mysqli)
         {
 	        if (!$mysqli->connect_errno)
 	        {
@@ -1103,15 +1167,64 @@ function updatesunelectricity($newdata)
                                                 	
 
 			// Read values from database
-        	        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 DAY ORDER BY timestamp DESC LIMIT 1")) 
+        	        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 DAY ORDER BY timestamp ASC LIMIT 1")) 
         	        {
 	                	$row = $result->fetch_object();
-				$newdata['yesterday']['kwh'] = $row->kwh_today;
+				$newdata['yesterday']['kwh'] = round($newdata['total']['kwh'] - $row->kwh_total - $newdata['today']['kwh'],1);
 			}
 			else
 			{
                 	       	echo "error reading sunelectricty values from database ".$mysqli->error."\n"; 
 	                }
+
+
+			// Read values from database
+        	        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE DATE(timestamp) = CURDATE() - INTERVAL 1 MONTH ORDER BY timestamp ASC LIMIT 1")) 
+        	        {
+	                	$row = $result->fetch_object();
+				$newdata['month']['kwh'] = round($newdata['total']['kwh'] - $row->kwh_total, 1);
+			}
+			else
+			{
+                	       	echo "error reading sunelectricty values from database ".$mysqli->error."\n"; 
+	                }
+
+                        // Read values from database
+                        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') ORDER BY timestamp ASC LIMIT 1"))
+                        {
+                                $row = $result->fetch_object();
+                                var_dump ($row);
+                                $newdata['year']['kwh'] = round($newdata['total']['kwh'] - $row->kwh_total, 1);
+                        }
+                        else
+                        {
+                                echo "error reading sunelectricty values from database ".$mysqli->error."\n";
+                        }
+                        
+
+                        // Read values from database
+        	        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE DATE(timestamp) = CURDATE() - INTERVAL 2 MONTH ORDER BY timestamp DESC LIMIT 1")) 
+        	        {
+	                	$row = $result->fetch_object();
+				$newdata['lastmonth']['kwh'] = round($newdata['total']['kwh'] - $row->kwh_total - $newdata['month']['kwh'], 1);
+			}
+			else
+			{
+                	       	echo "error reading sunelectricty values from database ".$mysqli->error."\n"; 
+	                }
+
+                        // Read values from database
+                        if ($result = $mysqli->query("SELECT * FROM `sunelectricity` WHERE timestamp >= DATE_FORMAT(NOW() ,'%Y-01-01') - INTERVAL 1 YEAR ORDER BY timestamp ASC LIMIT 1"))
+                        {
+                                $row = $result->fetch_object();
+                                $newdata['lastyear']['kwh'] = round($newdata['total']['kwh'] - $row->kwh_total - $newdata['year']['kwh'], 1);
+                        }
+                        else
+                        {
+                                echo "error reading sunelectricty values from database ".$mysqli->error."\n";
+                        }
+                        
+
 
                 	$mysqli->close();
 		}
@@ -1159,18 +1272,18 @@ function updateopentherm($newdata)
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
-        if (class_exists("mysqli"))
+        if ($mysqli)
         {
                 if (!$mysqli->connect_errno)
                 {
                         $type = NULL;
                         $value = NULL;
-                        if ($value = $newdata["boiler"]["temperature"]) { $type = "boiler_temperature"; $sqlvalue = $value;}
-                        if ($value = $newdata["dhw"]["temperature"]) {$type = "dhw_temperature"; $sqlvalue = $value;}
-                        if ($value = $newdata["thermostat"]["setpoint"]) {$type = "thermostat_setpoint"; $sqlvalue = $value;}
-                        if ($value = $newdata["thermostat"]["temperature"]) {$type = "thermostat_temperature"; $sqlvalue = $value;}
-                        if ($value = $newdata["thermostat"]["heating"]["water"]["temperature"]["setpoint"]) {$type = "thermostat_water_setpoint"; $sqlvalue = $value;}
-                        if ($value = $newdata["burner"]["modulation"]["level"]) {$type = "burner_modulationlevel"; $sqlvalue = $value;}
+                        if (isset($newdata["boiler"]["temperature"])) { $type = "boiler_temperature"; $sqlvalue = $newdata["boiler"]["temperature"];}
+                        if (isset($newdata["dhw"]["temperature"])) {$type = "dhw_temperature"; $sqlvalue = $newdata["dhw"]["temperature"];}
+                        if (isset($newdata["thermostat"]["setpoint"])) {$type = "thermostat_setpoint"; $sqlvalue = $newdata["thermostat"]["setpoint"];}
+                        if (isset($newdata["thermostat"]["temperature"])) {$type = "thermostat_temperature"; $sqlvalue = $newdata["thermostat"]["temperature"];}
+                        if (isset($newdata["thermostat"]["heating"]["water"]["temperature"]["setpoint"])) {$type = "thermostat_water_setpoint"; $sqlvalue = $newdata["thermostat"]["heating"]["water"]["temperature"]["setpoint"];}
+                        if (isset($newdata["burner"]["modulation"]["level"])) {$type = "burner_modulationlevel"; $sqlvalue = $newdata["burner"]["modulation"]["level"];}
                         
                         if ($type != NULL)
                         {

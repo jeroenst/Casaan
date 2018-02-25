@@ -34,13 +34,13 @@ position:relative;
   justify-content: center;
   display: flex;
     margin-top: 30px;
-    
 }
 
 .domoticabutton {
     font-size:3vh;
 	height: 10vh;
 	width: 10vh;
+	padding: 0;
 }
 
 .mainarea {
@@ -227,6 +227,27 @@ position:relative;
     font-size: 220%;
     color: #800080;
   }
+
+.tempbuttons
+  {
+    display: inline-block;
+    position: absolute;
+    margin-top: 25%;
+    margin-left: 70%;
+    width: 20%;
+    height: 80%
+    text-align: center;
+    font-size: 220%;
+  }
+ 
+.tempbutton
+{
+    font-size:3%;
+    height: 100%;
+    width: 100%;
+    margin-top: 7%;
+}
+
 
 .boxdate, .boxweathertemp, .boxlowertext
   {
