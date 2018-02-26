@@ -65,6 +65,7 @@ $temperaturesocket = null;
 $buienradarsocket = null;
 $zwavesocket = null;
 $openthermsocket = null;
+$ducoboxsocket = null;
 
 $buienradarupdatetimeout = 0;
 $reconnecttimeout = 0;
@@ -115,7 +116,7 @@ while (1) {
 		if ($sunelectricitysocket == null)
 		{
 			echo ("Connecting to sunelectricity server...\n");
-			$sunelectricitysocket = socketconnect('rpi01', 58883);
+			$sunelectricitysocket = socketconnect('server02', 58883);
 		}
 
 		if ($temperaturesocket == null)
@@ -133,7 +134,13 @@ while (1) {
 		if ($openthermsocket == null)
 		{
 			echo ("Connecting to opentherm server...\n");
-			$openthermsocket = socketconnect('rpi01', 58886);
+			$openthermsocket = socketconnect('server02', 58886);
+		}
+
+		if ($ducoboxsocket == null)
+		{
+			echo ("Connecting to ducobox server...\n");
+			$ducoboxsocket = socketconnect('server02', 58887);
 		}
 	}
 
@@ -195,42 +202,48 @@ function socketconnected($sock)
 	global $temperaturesocket;
 	global $zwavesocket;
 	global $openthermsocket;
+	global $ducoboxsocket;
 	
 	if (($sock == $smartmetersocket))
 	{
 		echo ("Connected to smartmeter server...\n");
 	}
 	
-	if (($sock == $watermetersocket))
+	else if (($sock == $watermetersocket))
 	{
 		echo ("Connected to watermeter server...\n");
 	}
 
-	if (($sock == $sunelectricitysocket))
+	else if (($sock == $sunelectricitysocket))
 	{
 		echo ("Connected to sunelectricity server...\n");
 	}
 	
-	if (($sock == $temperaturesocket))
+	else if (($sock == $temperaturesocket))
 	{
 		echo ("Connected to temperature server...\n");
 	}
 
-	if (($sock == $buienradarsocket))
+	else if (($sock == $buienradarsocket))
 	{
 		echo ("Connected to buienradar server...\n");
 		stream_socket_enable_crypto ($buienradarsocket, TRUE, STREAM_CRYPTO_METHOD_ANY_CLIENT);
 		socket_write($buienradarsocket, "GET / HTTPS/1.1\nHost: xml.buienradar.nl\n\n");
 	}
 
-	if (($sock == $zwavesocket))
+	else if (($sock == $zwavesocket))
 	{
 		echo ("Connected to zwave server...\n");
 	}
 
-	if (($sock == $openthermsocket))
+	else if (($sock == $openthermsocket))
 	{
 		echo ("Connected to opentherm server...\n");
+	}
+
+	else if (($sock == $ducoboxsocket))
+	{
+		echo ("Connected to ducobox server...\n");
 	}
 
 	if(($key = array_search($sock, $writesocks)) !== false) {
@@ -248,6 +261,7 @@ function socketreceivedata($sock)
 	global $buienradarsocket;
 	global $zwavesocket;
 	global $openthermsocket;
+	global $ducoboxsocket;
 	global $websocket;
 	global $readsocks;
 	global $casaandata;
@@ -302,6 +316,13 @@ function socketreceivedata($sock)
 		{
 			echo ("Received data from opentherm:\n".$recvdata."");
 			updateopentherm(json_decode($recvdata, true)["opentherm"]);
+
+		}
+		
+		else if ($sock == $ducoboxsocket)
+		{
+			echo ("Received data from ducobox:\n".$recvdata."");
+			updateducobox(json_decode($recvdata, true)["ducobox"]);
 
 		}
 		
@@ -401,6 +422,7 @@ function socketdisconnected($sock, $errno)
 	global $smartmetersocket;
 	global $sunelectricitysocket;
 	global $temperaturesocket;
+	global $ducoboxsocket;
 		
 	$reason = socket_strerror($errno);
 	
@@ -441,6 +463,11 @@ function socketdisconnected($sock, $errno)
 	{
 		echo ("Disconnected from buienradar ($reason)...\n");
 		$buienradarsocket = null;
+	}
+	else if (($sock == $ducoboxsocket))
+	{
+		echo ("Disconnected from ducobox ($reason)...\n");
+		$ducoboxsocket = null;
 	}
 	else
 	{
@@ -1252,6 +1279,17 @@ function updatezwave($newdata)
 		$zwavereplacedata = array_replace_recursive($casaandata["zwave"], $newdata);
 		if (isset($zwavereplacedata))  $casaandata["zwave"] = $zwavereplacedata;
 		sendtowebsockets("{\"zwave\":".json_encode($newdata)."}");
+	}
+}
+
+function updateducobox($newdata)
+{
+        global $settings;
+        global $casaandata;
+	if (isset($newdata)) 
+	{
+		$casaandata["ducobox"] = $newdata;
+		sendtowebsockets("{\"ducobox\":".json_encode($newdata)."}");
 	}
 }
 
