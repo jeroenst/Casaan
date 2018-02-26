@@ -13,7 +13,7 @@ if (($tcpport = $iniarray["ducobox"]["tcpport"]) == "") $tcpport = "58887";
 
 $openthermdata["opentherm"]  = array();
 
-exec ('stty -F '.$serialdevice.'  1:0:8bd:0:3:1c:7f:15:4:5:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0');
+exec ('stty -F '.$serialdevice.'  1:0:18b2:0:3:1c:7f:15:4:5:1:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0');
 
 include("PhpSerial.php");
 $serial = new PhpSerial;
@@ -86,7 +86,7 @@ while(1)
           if ($sendtimer == 1)
           {
             writeserial ($serial, "fanspeed\r\n");
-            $requesteditem = "fanspeed" ;
+            $requesteditem = "fanspeed";
             $requestednodeid = 1;
           }
           
