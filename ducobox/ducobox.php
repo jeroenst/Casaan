@@ -117,7 +117,7 @@ while(1)
           }
           
           
-          if ($sendtimer > 20) $sendtimer = 0;
+          if ($sendtimer > 15) $sendtimer = 0;
         }
 
         foreach ($readmask as $i) 
