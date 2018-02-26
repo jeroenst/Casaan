@@ -86,28 +86,28 @@ while(1)
           if ($sendtimer == 1)
           {
             writeserial ($serial, "fanspeed\r\n");
-            $requesteditem = "FANSPEED" ;
+            $requesteditem = "fanspeed" ;
             $requestednodeid = 1;
           }
           
           if ($sendtimer == 3)
           {
             writeserial ($serial, "nodeparaget 2 74\r\n");
-            $requesteditem = "CO2";
+            $requesteditem = "co2";
             $requestednodeid = 2;
           }
           
           if ($sendtimer == 6)
           {
             writeserial ($serial, "nodeparaget 2 73\r\n");
-            $requesteditem = "TEMPERATURE" ;
+            $requesteditem = "temperature" ;
             $requestednodeid = 2;
           }
           
           if ($sendtimer == 9)
           {
             writeserial ($serial, "nodeparaget 2 75\r\n");
-            $requesteditem = "RH" ;
+            $requesteditem = "rh" ;
             $requestednodeid = 2;
           }
 
