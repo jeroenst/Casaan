@@ -1,8 +1,6 @@
 <?php  
-// This php program reads data from a growatt inverter
+// This php program reads data from a ducobox silent (and maybe others)
 // 
-// Thanks to Lennart Kuhlmeier for providing PVOUT_GROWATT.PY on http://www.sisand.dk/?page_id=139 
-//
 echo ("Casaan Opentherm Gateway Software...\n"); 
 
 $iniarray = parse_ini_file("/etc/casaan.ini",true);
@@ -41,6 +39,7 @@ $buienradartime = time();
 $sendtimer = 0;
 $dataready = 0;
 $requesteditem = ""; 
+$requestitemid = 0;
 $requestednodeid = ""; 
 $message=""; 
 $ducodata = array();
@@ -69,8 +68,8 @@ while(1)
    {
 
     echo "Opened Serial Port.\n";
-    writeserial($serial, "\r\n");
-    $sendtimer = -5;
+//    writeserial($serial, "\r\n");
+    $sendtimer = 0;
     }
  }
 
@@ -82,50 +81,23 @@ while(1)
 
         if ($nroffd == 0)
         {
-          $sendtimer++;
-          if ($sendtimer == 1)
+          if ($sendtimer == 0)
           {
+            $sendtimer = 0;
+            $requestitemid = 0;
             writeserial ($serial, "fanspeed\r\n");
             $requesteditem = "fanspeed";
             $requestednodeid = 1;
           }
-          
-          if ($sendtimer == 3)
-          {
-            writeserial ($serial, "nodeparaget 2 74\r\n");
-            $requesteditem = "co2";
-            $requestednodeid = 2;
-          }
-          
-          if ($sendtimer == 6)
-          {
-            writeserial ($serial, "nodeparaget 2 73\r\n");
-            $requesteditem = "temperature" ;
-            $requestednodeid = 2;
-          }
-          
-          if ($sendtimer == 9)
-          {
-            writeserial ($serial, "nodeparaget 2 75\r\n");
-            $requesteditem = "rh" ;
-            $requestednodeid = 2;
-          }
-
-          if ($sendtimer == 12)
-          {
-            sendToAllTcpSocketClients($tcpsocketClients, json_encode($ducodata)."\n");
-          }
-          
-          
-          if ($sendtimer > 15) $sendtimer = 0;
+          $sendtimer++;
+          // If 30 seconds are past retry...
+          if ($sendtimer > 30) $sendtimer = 0;
         }
 
         foreach ($readmask as $i) 
         {
            if ($i == $serial->_dHandle)
            {
- 
-              
               $message .= str_replace(array("\r", "\n"), "\n", $serial->readPort());  
 //              echo $message;
              
@@ -136,22 +108,50 @@ while(1)
                {
                  $firstmessage = strtok ($message, "\n");
                  // Remove first message from serial data
-                 $message = substr($message, strlen($firstmessage) + 2);
+                 $message = substr($message, strlen($firstmessage) + 1);
                  echo ("Message='".$firstmessage."'\n");
                  if  (strpos($firstmessage, " -->") !== FALSE)
                  {
-                  $ducodata["ducobox"][$requestednodeid][$requesteditem] = substr($firstmessage, 5);
-//                  var_dump ($ducodata);
+                  $senddata["ducobox"][$requestednodeid][$requesteditem] =  substr($firstmessage, 5);
                  }
 
                  if  (strpos($firstmessage, " FanSpeed: ") !== FALSE)
                  {
-                  $ducodata["ducobox"][$requestednodeid][$requesteditem] = explode(" ",$firstmessage)[7];
- //                 var_dump ($ducodata);
+                  $senddata["ducobox"][$requestednodeid][$requesteditem] = explode(" ",$firstmessage)[8];
                  }
                  
-                
-               }
+               }  
+
+                 if (strpos($message, ">") === 0)
+                 {
+                   $message = substr($message, 2);
+
+                  echo "Ducobox ready for next command.\n";
+                  switch ($requestitemid) 
+                  {
+                   case 0:
+                    writeserial ($serial, "nodeparaget 2 73\r\n");
+                    $requesteditem = "temperature" ;
+                    $requestednodeid = 2;
+                   break;
+                   case 1:
+                    writeserial ($serial, "nodeparaget 2 74\r\n");
+                    $requesteditem = "co2";
+                    $requestednodeid = 2;
+                   break;
+                   case 2:
+                    writeserial ($serial, "nodeparaget 2 75\r\n");
+                    $requesteditem = "rh" ;
+                    $requestednodeid = 2;
+                   break;
+                   case 3:
+                    sendToAllTcpSocketClients($tcpsocketClients, json_encode($senddata));
+                    echo "Waiting for next query...\n";
+                    $sendtimer = -10; // Wait 10 seconds before next query
+                   break;
+                  }
+                  $requestitemid++;
+                 }
               }
 
             }
@@ -209,7 +209,7 @@ exit(1);
 function sendToAllTcpSocketClients($sockets, $msg)
 {
    echo ("Sending to all clients: ");
-   echo ($msg);
+   echo ($msg."\n");
    foreach ($sockets as $conn) 
    {
      fwrite($conn, $msg);
@@ -249,12 +249,13 @@ function intvalue ($firstmessage)
 
 function writeserial ($serial, $message)
 {
- while (strlen($message) > 0)
+ $pos = 0;
+ while ($pos < strlen($message))
  {
-//   echo $message;
-   $serial->sendMessage($message[0]);
-   $message = substr ($message, 1);
-   sleep(0.01);
+   $serial->sendMessage($message[$pos], 0);
+   echo $message[$pos];
+   $pos++;
+   usleep(10000);
  }
  
 }
