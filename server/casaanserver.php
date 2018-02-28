@@ -49,10 +49,11 @@ if(!$mqtt->connect(true, NULL, $username, $password)) {
 echo "Connected to mqtt server...\n";
 
 $topics['home/ducobox/#'] = array("qos" => 0, "function" => "procMQTTducobox");
+$topics['home/smartmeter/#'] = array("qos" => 0, "function" => "procMQTTsmartmeter");
 $mqtt->subscribe($topics, 0);
 
 function procMQTTducobox($topic, $msg){
-                echo "Received data from MQTT: $topic=$msg\n";
+                echo "Received ducobox data from MQTT: $topic=$msg\n";
                 switch ($topic)
                 {
                 	case "home/ducobox/1/fanspeed":
@@ -73,6 +74,46 @@ function procMQTTducobox($topic, $msg){
 			break;
 		}
 		
+}
+
+function procMQTTsmartmeter($topic, $msg){
+	static  $smartmeterdata = array();
+                echo "Received smartmeter data from MQTT: $topic=$msg\n";
+                switch ($topic)
+                {
+                	case "home/smartmeter/electricity/kw_using":
+                		$smartmeterdata["electricitymeter"]["now"]["kw_using"] = $msg;
+			break;
+                	case "home/smartmeter/electricity/kw_providing":
+                		$smartmeterdata["electricitymeter"]["now"]["kw_providing"] = $msg;
+			break;
+                	case "home/smartmeter/electricity/kwh_used1":
+                		$smartmeterdata["electricitymeter"]["total"]["kwh_used1"] = $msg;
+			break;
+                	case "home/smartmeter/electricity/kwh_used2":
+                		$smartmeterdata["electricitymeter"]["total"]["kwh_used2"] = $msg;
+			break;
+                	case "home/smartmeter/electricity/kwh_provided1":
+                		$smartmeterdata["electricitymeter"]["total"]["kwh_provided1"] = $msg;
+			break;
+                	case "home/smartmeter/electricity/kwh_provided2":
+                		$smartmeterdata["electricitymeter"]["total"]["kwh_provided2"] = $msg;
+			break;
+                	case "home/smartmeter/gas/m3":
+                		$smartmeterdata["gasmeter"]["total"]["m3"] = $msg;
+			break;
+                	case "home/smartmeter/gas/updatedatetime":
+                		$smartmeterdata["gasmeter"]["updatedatetime"] = $msg;
+			break;
+                	case "home/smartmeter/ready":
+                		if ($msg == "1")
+                		{
+                			updategasmeter($smartmeterdata["gasmeter"]);
+                			updateelectricitymeter($smartmeterdata["electricitymeter"]);
+				}
+			break;
+			
+		}
 }
 
 
@@ -150,8 +191,9 @@ while (1) {
 		$reconnecttimeout = time();
 		if ($smartmetersocket == null)
 		{
-			echo ("Connecting to smartmeter server...\n");
-			$smartmetersocket = socketconnect('127.0.0.1', 58881);
+			// Now by mqtt
+			//echo ("Connecting to smartmeter server...\n");
+			//$smartmetersocket = socketconnect('127.0.0.1', 58881);
 		}
 
 		if ($watermetersocket == null)
@@ -196,7 +238,7 @@ while (1) {
 	$read = $readsocks;
 	$null = null;
 
-	if (socket_select($read, $write, $null, 1) === 0)
+	if (socket_select($read, $write, $null, 0.1) === 0)
 	{
 		//echo ("Select timeout!!\n");
 		$mqtt->proc();
@@ -946,6 +988,8 @@ function updateelectricitymeter($newdata)
 {
         global $settings;
         global $casaandata;
+        
+        print_r($newdata);
 
         $mysqli = mysqli_connect($settings["mysqlserver"],$settings["mysqlusername"],$settings["mysqlpassword"],$settings["mysqldatabase"]);
 
