@@ -31,7 +31,7 @@ if ($argc > 1)
 }
 
 
-require("../../phpMQTT/phpMQTT.php");
+require(realpath(dirname(__FILE__))."/../../phpMQTT/phpMQTT.php");
 
 
 $server = "127.0.0.1";     // change if necessary
