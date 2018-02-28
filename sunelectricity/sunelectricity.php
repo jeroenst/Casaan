@@ -5,13 +5,11 @@
 // Thanks to Lennart Kuhlmeier for providing PVOUT_GROWATT.PY on http://www.sisand.dk/?page_id=139 
 //
 
+$settings = parse_ini_file("/etc/casaan.ini",true)["sunelectricity"];
 
-$settings = array("serialdevice" => "/dev/ttyUSB0", "tcpport" => "58883");
-if ($argc > 1)
-{
-        $settingsfile = parse_ini_file($argv[1],true);
-        $settings = array_merge($settings, $settingsfile["sunelectricity"]);
-}
+if (($settings["serialdevice"]) == "") $settings["serialdevice"]  = "/dev/ttyUSB0";;
+if (($settings["tcpport"]) == "") $settings["tcpport"] = "58886";
+
 
 
 $data = array();
