@@ -31,6 +31,53 @@ if ($argc > 1)
 }
 
 
+require("../../phpMQTT/phpMQTT.php");
+
+
+$server = "127.0.0.1";     // change if necessary
+$port = 1883;                     // change if necessary
+$username = "";                   // set your username
+$password = "";                   // set your password
+$client_id = uniqid("casaanserver"); // make sure this is unique for connecting to sever - you could use uniqid()
+
+$mqtt = new phpMQTT($server, $port, $client_id);
+
+if(!$mqtt->connect(true, NULL, $username, $password)) {
+        exit(1);
+}
+
+echo "Connected to mqtt server...\n";
+
+$topics['home/ducobox/#'] = array("qos" => 0, "function" => "procMQTTducobox");
+$mqtt->subscribe($topics, 0);
+
+function procMQTTducobox($topic, $msg){
+                echo "Received data from MQTT: $topic=$msg\n";
+                switch ($topic)
+                {
+                	case "home/ducobox/1/fanspeed":
+                		$data["1"]["fanspeed"] = $msg;
+                		updateducobox($data);
+			break;
+                	case "home/ducobox/2/co2":
+                		$data["2"]["co2"] = $msg;
+                		updateducobox($data);
+			break;
+                	case "home/ducobox/2/temperature":
+                		$data["2"]["temperature"] = $msg;
+                		updateducobox($data);
+			break;
+                	case "home/ducobox/2/rh":
+                		$data["2"]["rh"] = $msg;
+                		updateducobox($data);
+			break;
+		}
+		
+}
+
+
+
+
 $address = '127.0.0.1';
 $mysqlserver = $settings["mysqlserver"];
 $mysqlusername = $settings["mysqlusername"];
@@ -139,8 +186,9 @@ while (1) {
 
 		if ($ducoboxsocket == null)
 		{
-			echo ("Connecting to ducobox server...\n");
-			$ducoboxsocket = socketconnect('server02', 58887);
+			// Now by mqtt
+			//echo ("Connecting to ducobox server...\n");
+			//$ducoboxsocket = socketconnect('server02', 58887);
 		}
 	}
 
@@ -148,12 +196,14 @@ while (1) {
 	$read = $readsocks;
 	$null = null;
 
-	if (socket_select($read, $write, $null, 10) === 0)
+	if (socket_select($read, $write, $null, 1) === 0)
 	{
 		//echo ("Select timeout!!\n");
+		$mqtt->proc();
 	}
 	else
 	{
+		$mqtt->proc();
 		foreach ($write as $sock) 
 		{
 			$errno = socket_get_option($sock, SOL_SOCKET, SO_ERROR);
