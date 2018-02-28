@@ -6,7 +6,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 
 sudo kill `ps aux | grep casaanserver.php | awk '{print $2}'`
 
-sudo kill `ps aux | grep smartmeter.php | awk '{print $2}'`
+sudo kill `ps aux | grep smartmeterMQTT.php | awk '{print $2}'`
 
 sudo kill `ps aux | grep watermeter | awk '{print $2}'`
 
