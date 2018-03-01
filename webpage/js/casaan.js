@@ -1,6 +1,6 @@
 // The object casaandata is filled with data from the casaan server
 var casaandata = {};
-
+var currentpage = ""; 
 
 //
 //	Autochangesizes calculates the size of fonts and elements
@@ -124,6 +124,14 @@ function autochangesizes()
 		document.getElementsByClassName('domoticabutton')[i].style.fontSize = floatingboxWidthHeight /10 + "px";
 	}
 
+	elements = document.getElementsByClassName('tempbutton');
+	for(i=0; i<elements.length; i++)
+	{
+		elements[i].style.width = floatingboxWidthHeight /4 + "px";
+		elements[i].style.height = floatingboxWidthHeight /4 + "px";
+		elements[i].style.fontSize = floatingboxWidthHeight /10 + "px";
+	}
+
 	elements = document.getElementsByClassName('domoticabuttons');
 	for(i=0; i<elements.length; i++)
 	{
@@ -185,6 +193,9 @@ var waterbar;
 var gasbar;
 var electricitybar;
 var sunelectricitybar;
+var temperaturebar;
+var overviewpagebar = [];
+
 function createBars()
 {
 	waterbar = new RGraph.VProgress(
@@ -198,6 +209,25 @@ textAccessible: true,
 tickmarks: false,
 shadow: false,
 colors: ['Gradient(#699:#5ff:#5ff)'],
+gutterTop: 0,
+gutterBottom: 0,
+gutterLeft: 0,
+gutterRight: 0
+			
+		}
+	}).draw();
+
+	temperaturebar = new RGraph.VProgress(
+	{
+id: 'temperaturebar',
+min: 16,
+max: 22,
+value: 0,
+options: {
+textAccessible: true,
+tickmarks: false,
+shadow: false,
+colors: ['Gradient(#966:#f55:#f55)'],
 gutterTop: 0,
 gutterBottom: 0,
 gutterLeft: 0,
@@ -263,7 +293,6 @@ gutterRight: 0
 		}
 	}).draw();
 
-	var overviewpagebar = [];
 	for (i=0; i < 8; i++)
 	{
 		overviewpagebar[i] = new RGraph.VProgress(
@@ -301,7 +330,10 @@ function startcasaan()
 	autochangesizes();
 	starttimepage();
 	createBars();
-	createDomoticaPage()
+	createDomoticaPage();
+	document.onHistoryGo = showPage("previouspage");
+
+	
 }
 
 function createDomoticaPage()
@@ -309,22 +341,59 @@ function createDomoticaPage()
 
 	var domoticapagestring;
 	
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div>';
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,\'setswitchbinairy\',0)">Uit</button><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,\'setswitchbinairy\',1)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave3off" onclick="sendzwave(4,1,\'setswitchbinairy\',0)">Uit</button><button class="domoticabutton" id="buttonzwave3off" onclick="sendzwave(4,1,\'setswitchbinairy\',1)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave4off" onclick="sendzwave(5,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave4dim" onclick="sendzwave(5,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave4dim" onclick="sendzwave(5,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave4on" onclick="sendzwave(5,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div><br>';
-	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwavescene1" onclick="sendzwave(2,1,\'setswitchmultilevel\',10); sendzwave(3,1,\'setswitchbinairy\',1); sendzwave(4,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',10);">Avond</button><button class="domoticabutton" id="buttonzwavescene2" onclick="sendzwave(2,1,\'setswitchmultilevel\',1); sendzwave(3,1,\'setswitchbinairy\',0); sendzwave(4,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',1);">Film</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',99); sendzwave(3,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',99);">Fel</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,\'setswitchmultilevel\',0); sendzwave(3,1,\'setswitchbinairy\',0); sendzwave(4,1,\'setswitchbinairy\',0); sendzwave(5,1,\'setswitchmultilevel\',0);">Uit</button></div></div><div class="domoticainfo">-</div></div>';
-//	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwavescene1" onclick="sendzwave(2,1,\'setswitchmultilevel\',10); sendzwave(3,1,\'setswitchbinairy\',1); sendzwave(4,1,\'setswitchbinairy\',1); sendzwave(5,1,\'setswitchmultilevel\',10);">Avond</button><button class="domoticabutton" id="buttonzwavescene2" onclick="sendzwave(2,1,\'setswitchmultilevel\',0); sendzwave(3,1,\'setswitchbinairy\',0); sendzwave(4,1,\'setswitchbinairy\',0); sendzwave(5,1,\'setswitchmultilevel\',0);">Alles Uit</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(5,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(5,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div>';
-	for (var i = 0; i < 3; i++)
-	{	
-	 	domoticapagestring += '<div class="floating-box"><div class="boxtitle"></div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,26,0,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,1)">1%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,26,0,25)">25%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,26,0,99)">99%</button></div></div><div class="domoticainfo">-</div></div>';
-	}
-
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Spots Huiskamer</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave4off" onclick="sendzwave(10,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave4dim" onclick="sendzwave(10,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave4dim" onclick="sendzwave(10,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave4on" onclick="sendzwave(10,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">TV & Radio</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave3off" onclick="sendzwave(4,1,\'setswitchbinairy\',0)">Uit</button><button class="domoticabutton" id="buttonzwave3off" onclick="sendzwave(4,1,\'setswitchbinairy\',1)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Stalamp Huiskamer</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave6off" onclick="sendzwave(11,1,\'setswitchmultilevel\',0);">Off</button><button class="domoticabutton" id="buttonzwave6ww" onclick="sendzwave(11,1,\'setcolor\',\'#FF80180000\'); sendzwave(11,1,\'setswitchmultilevel\',10);">10%</button><br><button class="domoticabutton" id="buttonzwave6ww" onclick="sendzwave(11,1,\'setcolor\',\'#FF90200000\'); sendzwave(11,1,\'setswitchmultilevel\',50);">50%</button><button class="domoticabutton" id="buttonzwave6ww" onclick="sendzwave(11,1,\'setcolor\',\'#FFAA330000\'); sendzwave(11,1,\'setswitchmultilevel\',99);">100%</button></div></div><div class="domoticainfo"></div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Lamp Eettafel</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave5off" onclick="sendzwave(9,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave5dim" onclick="sendzwave(9,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave5dim" onclick="sendzwave(9,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave5on" onclick="sendzwave(9,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div><br>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Keuken</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave1off" onclick="sendzwave(2,1,\'setswitchmultilevel\' ,0)">Uit</button><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',10)">10%</button><br><button class="domoticabutton" id="buttonzwave1dim" onclick="sendzwave(2,1,\'setswitchmultilevel\',50)">50%</button><button class="domoticabutton" id="buttonzwave1on" onclick="sendzwave(2,1,\'setswitchmultilevel\',99)">100%</button></div></div><div class="domoticainfo">-</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Wasmachine</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave2off" onclick="">Uit</button><button class="domoticabutton" id="buttonzwave2off" onclick="sendzwave(3,1,\'setswitchbinairy\',1)">Aan</button></div></div><div class="domoticainfo">test</div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Scenes</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwavescene1" onclick="zwavescene(\'avond\');">Avond</button><button class="domoticabutton" id="buttonzwavescene2" onclick="zwavescene(\'film\');">Film</button><br><button class="domoticabutton" id="buttonzwavescene3"" onclick="zwavescene(\'fel\');">Fel</button><button class="domoticabutton" id="buttonzwavescene4" onclick="zwavescene(\'uit\');">Uit</button></div></div><div class="domoticainfo"></div></div>';
+	domoticapagestring += '<div class="floating-box"><div class="boxtitle">Stalamp Huiskamer</div><div class="domoticabuttons"><div><button class="domoticabutton" id="buttonzwave6off" onclick="sendzwave(11,1,\'setcolor\',\'#FF00000000\');">Rood</button><button class="domoticabutton" id="buttonzwave6ww" onclick="sendzwave(11,1,\'setcolor\',\'#00ff000000\');">Groen</button><br><button class="domoticabutton" id="buttonzwave6ww" onclick="sendzwave(11,1,\'setcolor\',\'#0000FF0000\');">Blauw</button><button class="domoticabutton" id="buttonzwave6ww" onclick="sendzwave(11,1,\'setcolor\',\'#5522FF0000\');">Paars</button></div></div><div class="domoticainfo"></div></div>';
 	document.getElementById("domoticapage").innerHTML = domoticapagestring;
 }
 
+function zwavescene(sceneid)
+{
+	switch (sceneid)
+	{
+		case "avond":
+			sendzwave(2,1,"setswitchmultilevel",20); 
+			sendzwave(4,1,"setswitchbinairy",1); 
+			sendzwave(9,1,"setswitchmultilevel",0);
+			sendzwave(10,1,"setswitchmultilevel",20);
+			sendzwave(11,1,"setcolor","#FF88200000");
+			sendzwave(11,1,"setswitchmultilevel",50); 
+		break;
+		case "film":
+			sendzwave(2,1,"setswitchmultilevel",1);
+			sendzwave(4,1,"setswitchbinairy",1); 
+			sendzwave(9,1,"setswitchmultilevel",0); 
+			sendzwave(10,1,"setswitchmultilevel",1); 
+			sendzwave(11,1,"setcolor","#FF88180000");
+			sendzwave(11,1,"setswitchmultilevel",1);
+		break
+		case "fel":
+			sendzwave(2,1,"setswitchmultilevel",99); 
+			sendzwave(4,1,"setswitchbinairy",1); 
+			sendzwave(9,1,"setswitchmultilevel",99); 
+			sendzwave(10,1,"setswitchmultilevel",99); 
+			sendzwave(11,1,"setcolor","#FF90300000");
+			sendzwave(11,1,"setswitchmultilevel",99); 
+		break;
+		case "uit":
+			sendzwave(2,1,"setswitchmultilevel",0); 
+			sendzwave(4,1,"setswitchbinairy",0); 
+			sendzwave(9,1,"setswitchmultilevel",0); 
+			sendzwave(10,1,"setswitchmultilevel",0); 
+			sendzwave(11,1,"setcolor","#FF88180000");
+			sendzwave(11,1,"setswitchmultilevel",0); 
+		break;
+	}
+}
 
-	var ws;
+
+
+var ws;
 function startcasaanwebsocket()
 {	
 	// Let us open a web socket
@@ -366,8 +435,8 @@ function startcasaanwebsocket()
 				var kwhtoday = "-";
 				try
 				{
-					var kwhtoday =  Math.round((data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
-					- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"])*10)/10;
+					var kwhtoday =  (data["electricitymeter"]["today"]["kwh_used1"] + data["electricitymeter"]["today"]["kwh_used2"]
+					- data["electricitymeter"]["today"]["kwh_provided1"] - data["electricitymeter"]["today"]["kwh_provided2"]).toFixed(3);
 					if (data["electricitymeter"]["today"]["kwh_used1"] == null) kwhusedtoday = "-";
 				}
 				catch(err)
@@ -496,9 +565,45 @@ function startcasaanwebsocket()
 				document.getElementById('sunelectricitytoday').innerHTML = kwhtoday + " kwh";
 				sunelectricitybar.value = kwbarvalue;
 				sunelectricitybar.grow();
+				
+				if (currentpage == "sunelectricitypage")
+				{
+					fillSunElectricityPage();
+				}
 			}
 
+			if (data["opentherm"])
+			{
+			   try
+			   {
+			   	if (data["opentherm"]["thermostat"]["temperature"])
+			   	{
+			   		document.getElementById('livingroomtemperaturenow').innerHTML = parseFloat(data["opentherm"]["thermostat"]["temperature"]).toFixed(1);
+			   		temperaturebar.value =  data["opentherm"]["thermostat"]["temperature"];
+			   		temperaturebar.grow();
+				}
+			   }
+			   catch(err)
+			   {
+			   }
+			   try
+			   {
+			   	if (data["opentherm"]["thermostat"]["setpoint"])
+			   	{
+			   		document.getElementById('livingroomtemperatureset').innerHTML = parseFloat(data["opentherm"]["thermostat"]["setpoint"]).toFixed(1);  
+				}
+			   }
+			   catch(err)
+			   {
+			   }
+			   if (currentpage == "climatecontrolpage") fillClimateControlPage();
+ 			} 
 
+			if (data["ducobox"])
+			{
+			   if (currentpage == "climatecontrolpage") fillClimateControlPage();
+ 			} 
+ 			
 			if (data["zwave"])
 			{
 				console.log("Received zwave update: "+JSON.stringify(data["zwave"]));
@@ -511,13 +616,28 @@ function startcasaanwebsocket()
 					buttonoffcolor = "";  
 					try
 					{
-						var value = casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"];
-						var watt = casaandata["zwave"]["2"]["1"]["sensormultilevel"]["power"]["watt"];
-						document.getElementsByClassName('domoticabutton')[0].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[1].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[2].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[3].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticainfo')[0].innerHTML = value + "% - " + watt + " watt";
+						// Spots Keuken
+						var value = casaandata["zwave"]["2"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"];
+						var watt = casaandata["zwave"]["2"]["1"]["SENSOR_MULTILEVEL"]["Power"]["value"];
+						document.getElementsByClassName('domoticabutton')[14].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[15].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[16].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[17].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[4].innerHTML = value + "% - " + watt + " watt";
+		                        }        
+					catch(err)
+                		        {
+                		        }
+
+					try
+					{
+						// Stalamp
+						var value = casaandata["zwave"]["11"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"];
+						document.getElementsByClassName('domoticabutton')[6].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[7].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[8].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[9].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
+						//document.getElementsByClassName('domoticainfo')[4].innerHTML = value + "% - " + watt + " watt";
 		                        }        
 					catch(err)
                 		        {
@@ -525,8 +645,23 @@ function startcasaanwebsocket()
 
                 		        try
                 		        {
-						var value = casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"];
-						var watt = casaandata["zwave"]["3"]["1"]["meter"]["electric"]["watt"];
+                		        	// Wasmachine
+						var value = casaandata["zwave"]["3"]["1"]["SWITCH_BINARY"]["Switch"]["value"] == "True";
+						var watt = casaandata["zwave"]["3"]["1"]["METER"]["Power"]["value"];
+						document.getElementsByClassName('domoticabutton')[18].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[19].style.backgroundColor = value == 1 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[5].innerHTML = (watt < 1 ? "Uit " : watt < 4 ? "Klaar " : "Wassen ") + watt + " watt";
+					}
+					catch(err)
+					{
+					}
+					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
+
+					try
+					{
+						// Gereserveerd
+						var value = casaandata["zwave"]["4"]["1"]["SWITCH_BINARY"]["Switch"]["value"] == "True";
+						var watt = casaandata["zwave"]["4"]["1"]["METER"]["Power"]["value"];
 						document.getElementsByClassName('domoticabutton')[4].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
 						document.getElementsByClassName('domoticabutton')[5].style.backgroundColor = value == 1 ? buttononcolor : buttonoffcolor;
 						document.getElementsByClassName('domoticainfo')[1].innerHTML = value == 1 ? "Aan - " + watt + " watt" : "Uit - " + watt + " watt";
@@ -536,57 +671,61 @@ function startcasaanwebsocket()
 					}
 					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
 
-                		        try
-                		        {
-						var value = casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"];
-						var watt = casaandata["zwave"]["4"]["1"]["meter"]["electric"]["watt"];
-						document.getElementsByClassName('domoticabutton')[6].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[7].style.backgroundColor = value == 1 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticainfo')[2].innerHTML = value == 1 ? "Aan - " + watt + " watt" : "Uit - " + watt + " watt";
+					try
+					{
+						// Lamp Eettafel
+						var value = casaandata["zwave"]["9"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"];
+						var watt = casaandata["zwave"]["9"]["1"]["SENSOR_MULTILEVEL"]["Power"]["value"];
+						document.getElementsByClassName('domoticabutton')[10].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[11].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[12].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[13].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[3].innerHTML = value + "% - " + watt + " watt";
 					}
 					catch(err)
 					{
 					}
-					//console.log ("Watt=" + casaandata["zwave"]["node"]["2"]["1"]["4"]);     
 
 					try
 					{
-						var value = casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"];
-						var watt = casaandata["zwave"]["5"]["1"]["sensormultilevel"]["power"]["watt"];
-						document.getElementsByClassName('domoticabutton')[8].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[9].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[10].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticabutton')[11].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
-						document.getElementsByClassName('domoticainfo')[3].innerHTML = value + "% - " + watt + " watt";
-		                        }        
+						// Spots Huiskamer
+						var value = casaandata["zwave"]["10"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"];
+						var watt = casaandata["zwave"]["10"]["1"]["SENSOR_MULTILEVEL"]["Power"]["value"];
+						document.getElementsByClassName('domoticabutton')[0].style.backgroundColor = value == 0 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[1].style.backgroundColor = value == 10 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[2].style.backgroundColor = value == 50 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticabutton')[3].style.backgroundColor = value == 99 ? buttononcolor : buttonoffcolor;
+						document.getElementsByClassName('domoticainfo')[0].innerHTML = value + "% - " + watt + " watt";
+					}
 					catch(err)
-                		        {
-                		        }
+					{
+					}
+					
+					try
+					{
+						// Scenes
+						var value = (casaandata["zwave"]["2"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 10) && 
+						            (casaandata["zwave"]["3"]["1"]["SWITCH_BINARY"]["Switch"]["value"]  == "True" ) &&
+						            (casaandata["zwave"]["4"]["1"]["SWITCH_BINARY"]["Switch"]["value"]  == "True") &&
+						            (casaandata["zwave"]["10"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 10)
+						document.getElementsByClassName('domoticabutton')[20].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
 
-                		        try
-                		        {
-						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 10) && 
-						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 1) &&
-						            (casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"] == 1) &&
-						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 10)
-						document.getElementsByClassName('domoticabutton')[12].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+						var value = (casaandata["zwave"]["2"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 1) && 
+						            (casaandata["zwave"]["3"]["1"]["SWITCH_BINARY"]["Switch"]["value"] == "False") &&
+						            (casaandata["zwave"]["4"]["1"]["SWITCH_BINARY"]["Switch"]["value"]  == "True") &&
+						            (casaandata["zwave"]["10"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 1)
+						document.getElementsByClassName('domoticabutton')[21].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
 
-						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 1) && 
-						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 0) &&
-						            (casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"] == 1) &&
-						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 1)
-						document.getElementsByClassName('domoticabutton')[13].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+						var value = (casaandata["zwave"]["2"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 99) && 
+						            (casaandata["zwave"]["3"]["1"]["SWITCH_BINARY"]["Switch"]["value"] == "True") &&
+						            (casaandata["zwave"]["10"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 99)
+						document.getElementsByClassName('domoticabutton')[22].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
 
-						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 99) && 
-						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 1) &&
-						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 99)
-						document.getElementsByClassName('domoticabutton')[14].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
-
-						var value = (casaandata["zwave"]["2"]["1"]["switchmultilevel"]["value"] == 0) && 
-						            (casaandata["zwave"]["3"]["1"]["switchbinairy"]["value"] == 0) &&
-						            (casaandata["zwave"]["4"]["1"]["switchbinairy"]["value"] == 0) &&
-						            (casaandata["zwave"]["5"]["1"]["switchmultilevel"]["value"] == 0)
-						document.getElementsByClassName('domoticabutton')[15].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
+						var value = (casaandata["zwave"]["2"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 0) && 
+						            (casaandata["zwave"]["3"]["1"]["SWITCH_BINARY"]["Switch"]["value"]  == "False") &&
+						            (casaandata["zwave"]["4"]["1"]["SWITCH_BINARY"]["Switch"]["value"]  == "False" ) &&
+						            (casaandata["zwave"]["10"]["1"]["SWITCH_MULTILEVEL"]["Level"]["value"] == 0)
+						document.getElementsByClassName('domoticabutton')[23].style.backgroundColor = value ? buttonsceneoncolor : buttonoffcolor;
 					}
 					catch(err)
 					{
@@ -689,16 +828,167 @@ function objectnulltodash(obj)
 //
 // Filloverviewpage fills all the items in the overviewpages
 //
-function fillDomoticaPage()
+/*function fillDomoticaPage()
 {
-	var titels = ["Spots Keuken", "Stalamp huiskamer", "Tv & Radio", "Spots Huiskamer", "Scenes", "", "", ""];
+	var titels = ["Spots Keuken", "Stalamp huiskamer", "Tv & Radio", "Lamp Eettafel", "Spots Huiskamer", "Scenes", "", ""];
 	var elements = document.getElementById("domoticapage").getElementsByClassName("floating-box");
 	for (var key = 0; key < elements.length; key++)
 	{
 		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
 	}
 
+}*/
+function settempup()
+{
+        var jsonobject = new Object;
+        jsonobject['opentherm'] = new Object;
+        jsonobject['opentherm']['command'] = "tempup";
+        ws.send (JSON.stringify(jsonobject));
+
+
+var e = window.event; 
+  e.cancelBubble = true;
+  if (e.stopPropagation) e.stopPropagation();
 }
+
+function settempdown()
+{
+        var jsonobject = new Object;
+        jsonobject['opentherm'] = new Object;
+        jsonobject['opentherm']['command'] = "tempdown";
+        ws.send (JSON.stringify(jsonobject));
+var e = window.event; 
+  e.cancelBubble = true;
+  if (e.stopPropagation) e.stopPropagation();
+}
+
+function fillClimateControlPage()
+{
+	elements = document.getElementById("overviewpage").getElementsByClassName("floating-box");
+	for (var key = 0; key < elements.length; key++)
+	{
+		titel = "";
+		label1= "";
+		value1 = "";
+		label2 = "";
+		value2 = "";
+		    
+		switch (key)
+		{
+			case 0:
+			titel = "Cv Ketel"
+			label1 = "Boiler"
+			if (casaandata["opentherm"]["boiler"] !== undefined)
+			{
+				value1 = casaandata["opentherm"]["boiler"]["temperature"] + " &deg;C";  
+				overviewpagebar[key].max = 60;
+				overviewpagebar[key].value = casaandata["opentherm"]["boiler"]["temperature"];
+				overviewpagebar[key].grow();
+			}
+
+
+			label2 = "Warmwater"
+			if (casaandata["opentherm"]["dhw"] !== undefined)value2 = casaandata["opentherm"]["dhw"]["temperature"] + " &deg;C";
+			break;  
+			case 1:
+			titel = "Cv Ketel"
+			label1 = "Vlam"
+			if (casaandata["opentherm"]["burner"] !== undefined)
+			{
+				value1 = casaandata["opentherm"]["burner"]["modulation"]["level"] + " %";  
+				overviewpagebar[key].max = 100;
+				overviewpagebar[key].value = casaandata["opentherm"]["burner"]["modulation"]["level"];
+				overviewpagebar[key].grow();
+			}
+
+			label2 = "CV Druk"
+			if (casaandata["opentherm"]["ch"] !== undefined)value2 = casaandata["opentherm"]["ch"]["water"]["pressure"] + " bar";
+			break;  
+			case 2:
+			titel = "Thermostaat"
+			label1 = "Water Instelling"
+			if (casaandata["opentherm"]["thermostat"] !== undefined)
+			{
+				value1 = casaandata["opentherm"]["thermostat"]["ch"]["water"]["setpoint"] + " &deg;C";    
+				overviewpagebar[key].max = 60;
+				overviewpagebar[key].value = casaandata["opentherm"]["thermostat"]["ch"]["water"]["setpoint"];
+				overviewpagebar[key].grow();
+			}
+
+			label2 = "Ruimte &Delta;T"
+			if (casaandata["opentherm"]["thermostat"] !== undefined) value2 = (casaandata["opentherm"]["thermostat"]["temperature"]-casaandata["opentherm"]["thermostat"]["setpoint"] ).toFixed(1) + " &deg;C";
+			break;
+			case 4:
+			titel = "Ventilatie Box"
+			label1 = "Ventilator"
+			if (casaandata["ducobox"]["1"] !== undefined)
+			{
+				value1 = casaandata["ducobox"]["1"]["fanspeed"] + " rpm";
+				overviewpagebar[key].max = 2500;
+				overviewpagebar[key].value = casaandata["ducobox"]["1"]["fanspeed"];
+				overviewpagebar[key].grow();
+			}
+			break;  
+			case 5:
+                        titel = "Ventilatie Huiskamer"
+                        label1 = "CO2"
+                        if ((casaandata["ducobox"]["1"] !== undefined) && (casaandata["ducobox"]["2"]["co2"] !== ""))
+                        {
+	 	                      	value1 = casaandata["ducobox"]["2"]["co2"] + " ppm";
+        	                        overviewpagebar[key].max = 3000;
+                	                overviewpagebar[key].value = casaandata["ducobox"]["2"]["co2"];
+                        	        overviewpagebar[key].grow();
+			}
+			else
+			{
+                                       value1 = "- ppm";
+                                       overviewpagebar[key].value = 0;
+                                       overviewpagebar[key].grow();
+			}
+                        label2 = "Temperatuur"
+                        if ((casaandata["ducobox"]["2"] !== undefined) && (casaandata["ducobox"]["2"]["temperature"] !== "")) value2 = (casaandata["ducobox"]["2"]["temperature"]/10) + " &deg;C";
+                        else value2 = "- &deg;C"; 
+                        break;
+
+		}
+		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titel;
+		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
+		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
+		elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = label1;
+		elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = label2;
+	}
+}
+
+function fillSunElectricityPage()
+{
+	fillOverviewPage("sunelectricity");
+	elements = document.getElementById("overviewpage").getElementsByClassName("floating-box");
+	for (var key = 0; key < elements.length; key++)
+	{
+
+		var fillbox = 0;
+		switch (key)
+		{
+			case 7:
+			titel = "Technische Info"
+			label1 = "Netspanning"
+			value1 = casaandata["sunelectricity"]["now"]["grid"]["volt"] + " V";  
+			label2 = "Netfrequentie"
+			value2 = casaandata["sunelectricity"]["now"]["grid"]["frequency"] + " Hz";
+			fillbox = 1; 
+			break; 
+		}
+		if (fillbox)
+		{
+			elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titel;
+			elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
+			elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
+			elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = label1;
+			elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = label2;
+		}
+	}
+}
+
 
 function fillOverviewPage(nodename)
 {
@@ -711,22 +1001,31 @@ function fillOverviewPage(nodename)
 	var label1 = "";
 	var label2 = "";
 
-	if ((nodename == "sunelectricity") || (nodename == "electricitymeter"))
+	if (nodename == "electricitymeter")
 	{
 		titels = ["Vandaag", "Deze Maand", "Dit Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "kwh"
-		jsonitems = ["today",  "month", "year", "total", "yesterday", "lastmonth", "lastyear"];
+		jsonitems = ["today",  "month", "year", "total", "yesterday", "lastmonth", "lastyear", ""];
 		label1 = "Verbruikt";
 		jsonunit = "kwh_used";
 		label2 = "Teruggeleverd";
 		jsonunit2 = "kwh_provided";
 	}
 	
+	if (nodename == "sunelectricity")
+	{
+		titels = ["Vandaag", "Deze Maand", "Dit Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", "Technische Info"];
+		unit = "kwh"
+		jsonitems = ["today",  "month", "year", "total", "yesterday", "lastmonth", "lastyear", ""];
+		label1 = "Opgewekt";
+		jsonunit = "kwh";
+	}
+	
 	if ((nodename == "gasmeter") || (nodename == "watermeter"))
 	{
 		titels = ["Vandaag", "Deze Maand", "Dit Jaar", "Totaal", "Gisteren", "Vorige Maand", "Vorig Jaar", ""];
 		unit = "m3"
-		jsonitems = ["today", "month", "year", "total",  "yesterday", "lastmonth", "lastyear", "" ];
+		jsonitems = ["today", "month", "year", "total",  "yesterday", "lastmonth", "lastyear", ""];
 		jsonunit = "m3";
 	}
 
@@ -743,7 +1042,7 @@ function fillOverviewPage(nodename)
 		var value1 = null;
 		try
 		{
-			value1 = casaandata[nodename][jsonitems[key]][jsonunit];
+			if (jsonitems[key] != "") value1 = casaandata[nodename][jsonitems[key]][jsonunit];
 		}
 		catch (err)
 		{
@@ -752,7 +1051,7 @@ function fillOverviewPage(nodename)
 		var value2 = null;
 		try
 		{
-			value2 = casaandata[nodename][jsonitems[key]][jsonunit2];
+			if (jsonitems[key] != "") value2 = casaandata[nodename][jsonitems[key]][jsonunit2];
 		}
 		catch (err)
 		{
@@ -760,24 +1059,35 @@ function fillOverviewPage(nodename)
 		}
 		if ((nodename == "sunelectricitymeter") || (nodename == "electricitymeter"))
 		{
-			value1 = Math.round(value1*10)/10;
-			value2 = Math.round(value2*10)/10;
+			if (value1 != null) value1 = Math.round(value1*10)/10;
+			if (value1 != null) value2 = Math.round(value2*10)/10;
 		}
 		if (value1 != null) value1 = value1 + " " + unit;
-		else value1 = "- " + unit;
+		else value1 = "";
 		
 		if (label2 != "")
 		{
 			if (value2 != null) value2 = value2 + " " + unit;
-			else value2 = "- " + unit;
+			else value2 = "";
 		}
 		else value2="";
 		
-		elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
-		elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
-		elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
-		elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = label1;
-		elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = label2;
+		if (value1 != "")
+		{
+			elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
+			elements[key].getElementsByClassName("boxvalue")[0].innerHTML = value1;
+			elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = value2;
+			elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = label1;
+			elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = label2;
+		}
+		else
+		{
+			elements[key].getElementsByClassName("boxtitle")[0].innerHTML = titels[key];
+			elements[key].getElementsByClassName("boxvalue")[0].innerHTML = "" ;
+			elements[key].getElementsByClassName("boxvalue2")[0].innerHTML = "";
+			elements[key].getElementsByClassName("boxlabelsmall")[0].innerHTML = "";
+			elements[key].getElementsByClassName("boxlabel2small")[0].innerHTML = "";
+		}
 	}
 }
 
@@ -785,8 +1095,19 @@ function fillOverviewPage(nodename)
 // showPage hides the current page and shows the page selected
 //
 
+
 function showPage(pageName) {
+	currentpage = pageName;
         document.getElementById("graphbuttons").style.display = "none";
+	elements = document.getElementById("overviewpage").getElementsByClassName("floating-box");
+
+        for (var key = 0; key < elements.length; key++)
+        {
+                overviewpagebar[key].max = 10;
+                overviewpagebar[key].value = 0;
+                overviewpagebar[key].grow();
+	}
+
 	if (pageName == '') pageName = 'mainpage';
 	if (pageName == "previouspage")
 	{
@@ -822,7 +1143,7 @@ function showPage(pageName) {
 		graphcolors = ["#00FF00", "#00FFFF"];
 		graphnames = ["Geleverd Omvormer", "Opgewekt Zonnepanelen"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("sunelectricity");
+		fillSunElectricityPage();
 	}
 	else if (pageName == "domoticapage")
 	{
@@ -835,7 +1156,7 @@ function showPage(pageName) {
 		graphcolors = ["#00FF00", "#00FFFF"];
 		graphnames = ["Geleverd Omvormer", "Opgewekt Zonnepanelen"];*/
 		document.getElementById("domoticapage").style.display = "inline-block"; 
-		fillDomoticaPage();
+		//createDomoticaPage();
 	}
 	else if (pageName == "electricitypage")
 	{
@@ -873,17 +1194,10 @@ function showPage(pageName) {
 		document.getElementById("overviewpage").style.display = "inline-block"; 
 		fillOverviewPage("watermeter");
 	}
-	else if (pageName == "temperaturepage")
+	else if (pageName == "climatecontrolpage")
 	{
-		graphjsonsource = "temperature";
-		graphjsonitem1 = "temp";
-		graphjsonitem2 = "";
-		graphylabel = "&deg;C";
-		graphtitle = "Temperatuur";
-		graphcolors = ["#FF0000"];
-		graphnames = ["Temperatuur"];
 		document.getElementById("overviewpage").style.display = "inline-block"; 
-		fillOverviewPage("temperature");
+		fillClimateControlPage();
 	}
 	else if (pageName == "graphdaypage")
 	{
@@ -1004,7 +1318,7 @@ function showPage(pageName) {
 	else document.getElementById("mainpage").style.display = "inline-block";
 	autochangesizes();
 	
-	if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 60000);
+	if (pageName != "mainpage") pageTimer = setTimeout(function(){showPage("mainpage");}, 600000);
 }
 
 function drawgraph(graphname, graphtitle, xtitle, ytitle, names, labels, values, colors)
