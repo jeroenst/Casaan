@@ -418,16 +418,27 @@ function startcasaanwebsocket()
 			if (data != null)
 			{
 			_.merge(casaandata, data);
-			if (data["electricitymeter"])
+			if ((data["smartmeter"]) && (data["smartmeter"]["electricity"]))
 			{
 				console.log("Received electricitymeter update");
-				var watt =  "-";
-				try
+				if ((data["smartmeter"]["electricity"]["kw_using"]) || (data["smartmeter"]["electricity"]["kw_providing"]))
 				{
-					watt = Math.round((data["electricitymeter"]["now"]["kw_using"]-data["electricitymeter"]["now"]["kw_providing"])*1000);
-				}
-				catch(err)
-				{
+					var watt = null;
+					if (data["smartmeter"]["electricity"]["kw_using"]) watt = Math.round(data["smartmeter"]["electricity"]["kw_using"] * 1000);
+					if (data["smartmeter"]["electricity"]["kw_providing"]) watt = -Math.round(data["smartmeter"]["electricity"]["kw_providing"] * 1000);
+					if (watt != null) 
+					{
+						document.getElementById('electricitycurrent').innerHTML = watt + " watt";
+						electricitybar.value = watt;
+						electricitybar.grow();
+					}
+					else
+                                        {
+                                                document.getElementById('electricitycurrent').innerHTML = "- watt";
+                                                electricitybar.value = 0;
+                                                electricitybar.grow();
+                                        }
+ 
 				}
 				
 				if (isNaN(watt)) watt = "-";
@@ -444,43 +455,21 @@ function startcasaanwebsocket()
 					kwhtoday = "-";
 				}
 				
-				try
-				{	
-
-					if (data["electricitymeter"]["now"]["kw_using"] == null)
-					{
-						watt = "-";
-						wattbar = 0;
-					}
-					else
-					{
-						wattbar = watt;
-					}
-				}
-				catch(err)
-				{
-					watt = "-";							
-					wattbar = 0;
-				}
-				
 				if (isNaN(kwhtoday)) kwhtoday = "-";
 
 				
-				document.getElementById('electricitycurrent').innerHTML = watt + " watt";
 				document.getElementById('electricityusedtoday').innerHTML = kwhtoday + " kwh";
-				electricitybar.value = wattbar;
-				electricitybar.grow();
 			}
 
-			if (data["gasmeter"])
+			if (data["smartmeter"])
 			{
 				console.log("Received gasmeter update");
 				var gasm3h = "-";
 				var gasm3today = "-";
 				try
 				{
-					var gasm3h = data["gasmeter"]["now"]["m3h"];
-					var gasm3today = data["gasmeter"]["today"]["m3"];
+					var gasm3h = data["smartmeter"]["gas"]["m3h"];
+					var gasm3today = data["smartmeter"]["gas"]["today"]["m3"];
 				}
 				catch(err)
 				{
@@ -543,28 +532,33 @@ function startcasaanwebsocket()
 				waterbar.grow();
 			}
 
-			if (data["sunelectricity"])
+			if (data["growatt"])
 			{
-				console.log("Received sunelectricity update");
+				console.log("Received growatt update");
 				var watt = "-";
 				var kwhtoday = "-";
 				var kwbarvalue = 0;
 				
-				try
-				{					
-					watt = Math.round(data["sunelectricity"]["now"]["grid"]["watt"]);
-					kwhtoday = (data["sunelectricity"]["today"]["kwh"]);
-					if (watt == null) watt = "-"; else kwbarvalue = watt;
-					if (kwhtoday == null) kwhtoday = "-";
-				}
-				catch (err)
+				if (data["growatt"]["grid"])
 				{
+				if (data["growatt"]["grid"]["watt"] !== undefined)
+				{					
+					watt = Math.round(data["growatt"]["grid"]["watt"]);
+					if (watt == null) watt = "-"; 
+						else kwbarvalue = watt;
+					document.getElementById('sunelectricitycurrent').innerHTML = watt + " watt";
+					sunelectricitybar.value = kwbarvalue;
+					sunelectricitybar.grow();
 				}
 
-				document.getElementById('sunelectricitycurrent').innerHTML = watt + " watt";
-				document.getElementById('sunelectricitytoday').innerHTML = kwhtoday + " kwh";
-				sunelectricitybar.value = kwbarvalue;
-				sunelectricitybar.grow();
+				if ((data["growatt"]["grid"]["today"]) && (data["growatt"]["grid"]["today"]["kwh"] !== undefined))
+				{					
+
+					kwhtoday = (data["growatt"]["grid"]["today"]["kwh"]);
+					if (kwhtoday == null) kwhtoday = "-";
+					document.getElementById('sunelectricitytoday').innerHTML = kwhtoday + " kwh";
+				}
+				}
 				
 				if (currentpage == "sunelectricitypage")
 				{
@@ -888,7 +882,7 @@ function fillClimateControlPage()
 
 
 			label2 = "Warmwater"
-			if (casaandata["opentherm"]["dhw"] !== undefined)value2 = casaandata["opentherm"]["dhw"]["temperature"] + " &deg;C";
+			if (casaandata["opentherm"]["dhw"] !== undefined) value2 = casaandata["opentherm"]["dhw"]["temperature"] + " &deg;C";
 			break;  
 			case 1:
 			titel = "Cv Ketel"
@@ -921,18 +915,25 @@ function fillClimateControlPage()
 			case 4:
 			titel = "Ventilatie Box"
 			label1 = "Ventilator"
-			if (casaandata["ducobox"]["1"] !== undefined)
+			if ((casaandata["ducobox"]["1"] !== undefined) && (casaandata["ducobox"]["1"]["fanspeed"] !== ""))
 			{
 				value1 = casaandata["ducobox"]["1"]["fanspeed"] + " rpm";
 				overviewpagebar[key].max = 2500;
 				overviewpagebar[key].value = casaandata["ducobox"]["1"]["fanspeed"];
 				overviewpagebar[key].grow();
 			}
+			else
+                        {
+                                value1 = "- rpm";
+                                overviewpagebar[key].value = 0;
+                                overviewpagebar[key].grow();
+                        }
+
 			break;  
 			case 5:
                         titel = "Ventilatie Huiskamer"
                         label1 = "CO2"
-                        if ((casaandata["ducobox"]["1"] !== undefined) && (casaandata["ducobox"]["2"]["co2"] !== ""))
+                        if ((casaandata["ducobox"]["2"] !== undefined) && (casaandata["ducobox"]["2"]["co2"] !== ""))
                         {
 	 	                      	value1 = casaandata["ducobox"]["2"]["co2"] + " ppm";
         	                        overviewpagebar[key].max = 3000;

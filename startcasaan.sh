@@ -7,7 +7,7 @@ cd $SCRIPTPATH
 
 sudo kill `ps aux | grep casaanserver.php | awk '{print $2}'`
 
-sudo kill `ps aux | grep smartmeter.php | awk '{print $2}'`
+sudo kill `ps aux | grep smartmeterMQTT.php | awk '{print $2}'`
 nohup sudo php $SCRIPTPATH/../smartmeterMQTT/smartmeterMQTT.php >$SCRIPTPATH/smartmeter.log 2>&1 &
 
 sudo kill `ps aux | grep watermeter | awk '{print $2}'`

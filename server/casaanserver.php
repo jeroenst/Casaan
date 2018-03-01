@@ -51,86 +51,48 @@ echo "Connected to mqtt server...\n";
 $topics['home/ducobox/#'] = array("qos" => 0, "function" => "procMQTTducobox");
 $topics['home/smartmeter/#'] = array("qos" => 0, "function" => "procMQTTsmartmeter");
 $topics['home/opentherm/#'] = array("qos" => 0, "function" => "procMQTTopentherm");
+$topics['home/growatt/#'] = array("qos" => 0, "function" => "procMQTTgrowatt");
 $mqtt->subscribe($topics, 0);
 
-
-function procMQTTopentherm($topic, $msg){
-                echo "Received opentherm data from MQTT: $topic=$msg\n";
-		$count = 0;
+function mqtttoarray($topic, $msg)
+{
+                $count = 0;
                 $json = "{\"".str_replace("/", "\":{\"", $topic, $count)."\":\"".$msg."\"";
                 while ($count >= 0)
-		{
-			$json .= "}";
-			$count--;
-		}
-		$data = json_decode($json, true)["home"]["opentherm"];
-		updateopentherm($data);
+                {
+                        $json .= "}";
+                        $count--;
+                }
+                return json_decode($json, true);
 }
 
-function procMQTTducobox($topic, $msg){
-                echo "Received ducobox data from MQTT: $topic=$msg\n";
-                switch ($topic)
-                {
-                	case "home/ducobox/1/fanspeed":
-                		$data["1"]["fanspeed"] = $msg;
-                		updateducobox($data);
-			break;
-                	case "home/ducobox/2/co2":
-                		$data["2"]["co2"] = $msg;
-                		updateducobox($data);
-			break;
-                	case "home/ducobox/2/temperature":
-                		$data["2"]["temperature"] = $msg;
-                		updateducobox($data);
-			break;
-                	case "home/ducobox/2/rh":
-                		$data["2"]["rh"] = $msg;
-                		updateducobox($data);
-			break;
-		}
-		
+
+function procMQTTopentherm($topic, $msg)
+{
+        echo "MQTT: Received opentherm data: $topic=$msg\n";
+        updateopentherm(mqtttoarray($topic, $msg)["home"]["opentherm"]);
 }
 
-function procMQTTsmartmeter($topic, $msg){
-	static  $smartmeterdata = array();
-                echo "Received smartmeter data from MQTT: $topic=$msg\n";
-                switch ($topic)
-                {
-                	case "home/smartmeter/electricity/kw_using":
-                		$smartmeterdata["electricitymeter"]["now"]["kw_using"] = $msg;
-                		$wsdata["electricitymeter"]["now"]["kw_using"] = $msg;
-                		sendtowebsockets(json_encode($wsdata));
-			break;
-                	case "home/smartmeter/electricity/kw_providing":
-                		$smartmeterdata["electricitymeter"]["now"]["kw_providing"] = $msg;
-			break;
-                	case "home/smartmeter/electricity/kwh_used1":
-                		$smartmeterdata["electricitymeter"]["total"]["kwh_used1"] = $msg;
-			break;
-                	case "home/smartmeter/electricity/kwh_used2":
-                		$smartmeterdata["electricitymeter"]["total"]["kwh_used2"] = $msg;
-			break;
-                	case "home/smartmeter/electricity/kwh_provided1":
-                		$smartmeterdata["electricitymeter"]["total"]["kwh_provided1"] = $msg;
-			break;
-                	case "home/smartmeter/electricity/kwh_provided2":
-                		$smartmeterdata["electricitymeter"]["total"]["kwh_provided2"] = $msg;
-			break;
-                	case "home/smartmeter/gas/m3":
-                		$smartmeterdata["gasmeter"]["total"]["m3"] = $msg;
-			break;
-                	case "home/smartmeter/gas/datetime":
-                		$smartmeterdata["gasmeter"]["updatedatetime"] = $msg;
-			break;
-                	case "home/smartmeter/ready":
-                		if ($msg == "1")
-                		{
-                			updategasmeter($smartmeterdata["gasmeter"]);
-                 			updateelectricitymeter($smartmeterdata["electricitymeter"]);
-				}
-			break;
-			
-		}
+function procMQTTducobox($topic, $msg)
+{
+        echo "MQTT: Received ducobox data: $topic=$msg\n";
+        updateducobox(mqtttoarray($topic, $msg)["home"]["ducobox"]);
+}
+
+function procMQTTsmartmeter($topic, $msg)
+{
+	global $casaandata;
+        echo "MQTT: Received smartmeter data: $topic=$msg\n";
+	sendtowebsockets(json_encode(mqtttoarray($topic, $msg)["home"]));
+	$casaandata = array_replace_recursive($casaandata, mqtttoarray($topic,$msg)["home"]);
+}
+
+function procMQTTgrowatt($topic, $msg)
+{
+	global $casaandata;
+        echo "MQTT: Received growatt data: $topic=$msg\n";
+	sendtowebsockets(json_encode(mqtttoarray($topic, $msg)["home"]));
+	$casaandata = array_replace_recursive($casaandata, mqtttoarray($topic,$msg)["home"]);
 }
 
 
@@ -221,8 +183,9 @@ while (1) {
 
 		if ($sunelectricitysocket == null)
 		{
-			echo ("Connecting to sunelectricity server...\n");
-			$sunelectricitysocket = socketconnect('server02', 58883);
+			// Now by mqtt
+			//echo ("Connecting to sunelectricity server...\n");
+			//$sunelectricitysocket = socketconnect('server02', 58883);
 		}
 
 		if ($temperaturesocket == null)
@@ -660,7 +623,7 @@ function sendtowebsockets($msg)
 	foreach ($activewebsockets as $sock) 
 	{
 		socket_write($sock, websocketEncode($msg));
-		echo ("Sending data to websocketclients:\n".$msg."\n\n");
+		echo ("WEBSOCKET: Sending data to all clients: ".$msg."\n");
 	}
 }
 
